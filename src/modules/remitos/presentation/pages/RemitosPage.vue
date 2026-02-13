@@ -2,9 +2,9 @@
   <div class="d-flex flex-column gap-3">
     <section class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Remitos</h2>
-          <div class="d-flex gap-2">
+          <div class="fitba-toolbar-actions d-flex gap-2">
             <button
               type="button"
               class="btn btn-sm btn-outline-secondary"
@@ -52,9 +52,10 @@
             @update:page-size="remitosPagination.setPageSize"
           />
 
-          <div class="table-responsive">
+          <div class="table-responsive fitba-table-responsive fitba-table-responsive--wide">
             <table
-              class="table table-sm table-striped table-hover align-middle"
+              class="table table-sm table-striped table-hover align-middle fitba-table-grid"
+              data-nav-table="true"
               aria-label="Tabla de remitos de venta"
             >
               <caption class="visually-hidden">
@@ -78,12 +79,15 @@
                 <tr
                   v-for="remito in paginatedVisibleRemitos"
                   :key="rowKey(remito)"
+                  data-nav-row="true"
+                  tabindex="-1"
                   :class="{ 'table-primary': isSelectedRemito(remito) }"
                 >
                   <td>
                     <a
                       v-if="remito.transaccionId"
                       class="fitba-inline-link"
+                      data-nav-main="true"
                       :href="buildRemitoLink(remito.transaccionId)"
                       :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
                       :aria-current="isSelectedRemito(remito) ? 'true' : undefined"
@@ -95,7 +99,12 @@
                   </td>
                   <td class="remitos-numero-remito-col">{{ remito.numeroRemito || "-" }}</td>
                   <td class="remitos-fecha-col">{{ formatDateDdMmYyyy(remito.fecha) }}</td>
-                  <td>{{ remito.observacion || "-" }}</td>
+                  <td
+                    class="fitba-cell-truncate fitba-cell-truncate--lg"
+                    :title="remito.observacion || undefined"
+                  >
+                    {{ remito.observacion || "-" }}
+                  </td>
                   <td>
                     <a
                       v-if="remito.clienteId"
@@ -109,10 +118,10 @@
                     <span v-else>-</span>
                   </td>
                   <td>{{ remito.vendedorId ?? "-" }}</td>
-                  <td>{{ remito.comisionVendedor ?? "-" }}</td>
+                  <td class="fitba-cell-num">{{ remito.comisionVendedor ?? "-" }}</td>
                   <td>{{ remito.depositoId ?? "-" }}</td>
                   <td>{{ remito.circuitoContableId ?? "-" }}</td>
-                  <td>{{ remito.items.length }}</td>
+                  <td class="fitba-cell-num">{{ remito.items.length }}</td>
                 </tr>
               </tbody>
             </table>
@@ -135,8 +144,15 @@
           message="El remito seleccionado no tiene items."
         />
 
-        <div v-else class="fitba-table-shell table-responsive">
-          <table class="table table-sm table-striped align-middle" aria-label="Items del remito">
+        <div
+          v-else
+          class="fitba-table-shell table-responsive fitba-table-responsive fitba-table-responsive--wide"
+        >
+          <table
+            class="table table-sm table-striped align-middle fitba-table-grid"
+            data-nav-table="true"
+            aria-label="Items del remito"
+          >
             <caption class="visually-hidden">
               Items del remito seleccionado con acceso directo al producto.
             </caption>
@@ -152,7 +168,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in selectedRemito.items" :key="itemRowKey(item)">
+              <tr v-for="item in selectedRemito.items" :key="itemRowKey(item)" data-nav-row="true" tabindex="-1">
                 <td>{{ item.transaccionCVItemId ?? "-" }}</td>
                 <td>{{ item.transaccionId ?? "-" }}</td>
                 <td>{{ item.productoID ?? "-" }}</td>
@@ -160,6 +176,7 @@
                   <a
                     v-if="item.productoId"
                     class="fitba-inline-link"
+                    data-nav-main="true"
                     :href="buildProductoLink(item.productoId)"
                     :aria-label="buildGoToProductoLabel(item.productoId)"
                     @click.prevent="goToProducto(item.productoId)"
@@ -169,8 +186,8 @@
                   <span v-else>{{ item.productoid ?? "-" }}</span>
                 </td>
                 <td>{{ item.descripcion || "-" }}</td>
-                <td>{{ item.cantidad ?? "-" }}</td>
-                <td>{{ item.precio ?? "-" }}</td>
+                <td class="fitba-cell-num">{{ item.cantidad ?? "-" }}</td>
+                <td class="fitba-cell-num">{{ item.precio ?? "-" }}</td>
               </tr>
             </tbody>
           </table>
@@ -189,6 +206,7 @@ import type { Remito, RemitoItem } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
+import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
@@ -278,6 +296,8 @@ const errorMessage = computed(() => {
   }
   return resolveErrorMessage(error, "Error inesperado al cargar remitos.");
 });
+
+useTableRowNavigation();
 
 useAs400Shortcuts({
   onF2: () => {

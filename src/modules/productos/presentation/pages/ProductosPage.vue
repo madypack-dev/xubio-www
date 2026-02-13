@@ -3,7 +3,7 @@
     <div class="card-body">
       <h2 class="h5 mb-3">Producto por ID (MVP)</h2>
 
-      <form class="row g-2 mb-3" @submit.prevent="submitSearch">
+      <form class="fitba-search-form row g-2 mb-3" @submit.prevent="submitSearch">
         <div class="col-12 col-md-4">
           <label class="form-label mb-1" for="producto-id-input">productoId</label>
           <input
@@ -22,7 +22,7 @@
             Ingresa el identificador del producto para consultar el detalle.
           </small>
         </div>
-        <div class="col-12 col-md-auto d-flex gap-2 align-items-end">
+        <div class="fitba-form-actions col-12 col-md-auto d-flex gap-2 align-items-end">
           <button type="submit" class="btn btn-success" aria-label="Buscar producto">
             Buscar
           </button>
@@ -54,32 +54,35 @@
         message="No se encontro producto para el ID indicado."
       />
 
-      <div v-else class="fitba-table-shell table-responsive">
-        <table class="table table-sm align-middle" aria-label="Detalle de producto">
+      <div
+        v-else
+        class="fitba-table-shell table-responsive fitba-table-responsive fitba-table-responsive--detail"
+      >
+        <table class="table table-sm align-middle fitba-table-grid" aria-label="Detalle de producto">
           <caption class="visually-hidden">Detalle del producto seleccionado por ID.</caption>
           <tbody>
             <tr>
-              <th scope="row">productoId</th>
+              <th scope="row" class="fitba-detail-key">productoId</th>
               <td>{{ producto.productoId ?? "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">nombre</th>
+              <th scope="row" class="fitba-detail-key">nombre</th>
               <td>{{ producto.nombre || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">codigo</th>
+              <th scope="row" class="fitba-detail-key">codigo</th>
               <td>{{ producto.codigo || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">codigoBarra</th>
+              <th scope="row" class="fitba-detail-key">codigoBarra</th>
               <td>{{ producto.codigoBarra || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">precioUltCompra</th>
-              <td>{{ producto.precioUltCompra ?? "-" }}</td>
+              <th scope="row" class="fitba-detail-key">precioUltCompra</th>
+              <td class="fitba-cell-num">{{ producto.precioUltCompra ?? "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">activo</th>
+              <th scope="row" class="fitba-detail-key">activo</th>
               <td>{{ formatBoolean(producto.activo) }}</td>
             </tr>
           </tbody>

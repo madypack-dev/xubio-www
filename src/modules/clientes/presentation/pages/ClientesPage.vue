@@ -3,7 +3,7 @@
     <div class="card-body">
       <h2 class="h5 mb-3">Cliente por ID (MVP)</h2>
 
-      <form class="row g-2 mb-3" @submit.prevent="submitSearch">
+      <form class="fitba-search-form row g-2 mb-3" @submit.prevent="submitSearch">
         <div class="col-12 col-md-4">
           <label class="form-label mb-1" for="cliente-id-input">clienteId</label>
           <input
@@ -22,7 +22,7 @@
             Ingresa el identificador del cliente para consultar el detalle.
           </small>
         </div>
-        <div class="col-12 col-md-auto d-flex gap-2 align-items-end">
+        <div class="fitba-form-actions col-12 col-md-auto d-flex gap-2 align-items-end">
           <button type="submit" class="btn btn-success" aria-label="Buscar cliente">
             Buscar
           </button>
@@ -54,36 +54,39 @@
         message="No se encontro cliente para el ID indicado."
       />
 
-      <div v-else class="fitba-table-shell table-responsive">
-        <table class="table table-sm align-middle" aria-label="Detalle de cliente">
+      <div
+        v-else
+        class="fitba-table-shell table-responsive fitba-table-responsive fitba-table-responsive--detail"
+      >
+        <table class="table table-sm align-middle fitba-table-grid" aria-label="Detalle de cliente">
           <caption class="visually-hidden">Detalle del cliente seleccionado por ID.</caption>
           <tbody>
             <tr>
-              <th scope="row">clienteId</th>
+              <th scope="row" class="fitba-detail-key">clienteId</th>
               <td>{{ cliente.clienteId ?? "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">nombre</th>
+              <th scope="row" class="fitba-detail-key">nombre</th>
               <td>{{ cliente.nombre || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">razonSocial</th>
+              <th scope="row" class="fitba-detail-key">razonSocial</th>
               <td>{{ cliente.razonSocial || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">cuit</th>
+              <th scope="row" class="fitba-detail-key">cuit</th>
               <td>{{ cliente.cuit || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">email</th>
+              <th scope="row" class="fitba-detail-key">email</th>
               <td>{{ cliente.email || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">telefono</th>
+              <th scope="row" class="fitba-detail-key">telefono</th>
               <td>{{ cliente.telefono || "-" }}</td>
             </tr>
             <tr>
-              <th scope="row">direccion</th>
+              <th scope="row" class="fitba-detail-key">direccion</th>
               <td>{{ cliente.direccion || "-" }}</td>
             </tr>
           </tbody>

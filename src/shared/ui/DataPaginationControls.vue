@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fitba-pagination d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2"
+    class="fitba-pagination d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-2"
     role="group"
     :aria-label="`Controles de paginacion para ${props.entityLabel}`"
   >
@@ -9,42 +9,46 @@
       {{ props.entityLabel }}.
     </p>
 
-    <div class="d-flex flex-wrap align-items-center gap-2">
-      <label class="small mb-0" :for="pageSizeId">Filas</label>
-      <select
-        :id="pageSizeId"
-        class="form-select form-select-sm fitba-page-size-select"
-        :value="props.pageSize"
-        @change="onPageSizeChange"
-      >
-        <option v-for="option in props.pageSizeOptions" :key="option" :value="option">
-          {{ option }}
-        </option>
-      </select>
+    <div class="fitba-pagination-controls d-flex flex-wrap align-items-center gap-2">
+      <div class="fitba-page-size-group d-flex align-items-center gap-1">
+        <label class="small mb-0" :for="pageSizeId">Filas</label>
+        <select
+          :id="pageSizeId"
+          class="form-select form-select-sm fitba-page-size-select"
+          :value="props.pageSize"
+          @change="onPageSizeChange"
+        >
+          <option v-for="option in props.pageSizeOptions" :key="option" :value="option">
+            {{ option }}
+          </option>
+        </select>
+      </div>
 
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        :disabled="props.page <= 1"
-        aria-label="Pagina anterior"
-        @click="emit('update:page', props.page - 1)"
-      >
-        Anterior
-      </button>
+      <div class="fitba-page-nav d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          :disabled="props.page <= 1"
+          aria-label="Pagina anterior"
+          @click="emit('update:page', props.page - 1)"
+        >
+          Anterior
+        </button>
 
-      <span class="fitba-pagination-counter" aria-live="polite">
-        Pagina {{ props.page }} / {{ props.totalPages }}
-      </span>
+        <span class="fitba-pagination-counter" aria-live="polite">
+          Pagina {{ props.page }} / {{ props.totalPages }}
+        </span>
 
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        :disabled="props.page >= props.totalPages"
-        aria-label="Pagina siguiente"
-        @click="emit('update:page', props.page + 1)"
-      >
-        Siguiente
-      </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          :disabled="props.page >= props.totalPages"
+          aria-label="Pagina siguiente"
+          @click="emit('update:page', props.page + 1)"
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   </div>
 </template>

@@ -2,8 +2,18 @@
   --fitba-font-mono:
     "IBM Plex Mono", "Cascadia Mono", "Liberation Mono", Consolas, "Courier New",
     monospace;
+  --fitba-density-scale: 0.92;
+  --fitba-table-font-size: 0.74rem;
+  --fitba-table-head-font-size: 0.66rem;
+  --fitba-cell-padding-y: calc(0.34rem * var(--fitba-density-scale));
+  --fitba-cell-padding-x: calc(0.45rem * var(--fitba-density-scale));
+  --fitba-control-font-size: 0.78rem;
+  --fitba-control-padding-y: 0.22rem;
+  --fitba-control-padding-x: 0.42rem;
+  --fitba-control-radius: 2px;
   --fitba-bg: #dae4d8;
   --fitba-grid: rgba(16, 33, 20, 0.09);
+  --fitba-grid-strong: rgba(16, 33, 20, 0.2);
   --fitba-panel: #f5fbf4;
   --fitba-panel-border: #1d4220;
   --fitba-ink: #112515;
@@ -17,6 +27,10 @@
   --fitba-row-hover: #d2e8d6;
   --fitba-table-head: #1b3520;
   --fitba-table-head-ink: #f5fff4;
+  --fitba-command-strip-bg: rgba(226, 240, 226, 0.86);
+  --fitba-command-strip-border: rgba(28, 60, 33, 0.55);
+  --fitba-command-key-bg: #182f1d;
+  --fitba-command-key-ink: #eff9ef;
 }
 
 *,
@@ -35,6 +49,7 @@ body {
   background-size: 24px 24px;
   color: var(--fitba-ink);
   font-family: var(--fitba-font-mono);
+  line-height: 1.35;
 }
 
 #app {
@@ -52,20 +67,70 @@ body {
   background-color: rgba(245, 251, 244, 0.86);
 }
 
+.fitba-workspace {
+  border-top: 2px solid rgba(29, 66, 32, 0.18);
+}
+
+.fitba-title-row {
+  border: 1px solid rgba(29, 66, 32, 0.28);
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(229, 240, 227, 0.2)),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 15px,
+      rgba(29, 66, 32, 0.05) 15px,
+      rgba(29, 66, 32, 0.05) 16px
+    );
+  padding: 0.4rem 0.55rem;
+}
+
 .app-subtitle {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   color: var(--fitba-ink-muted);
 }
 
 .app-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.32rem 0.45rem;
   margin: 0;
-  font-size: 0.73rem;
+  border: 1px dashed var(--fitba-command-strip-border);
+  border-radius: 2px;
+  background-color: var(--fitba-command-strip-bg);
+  padding: 0.22rem 0.3rem;
+}
+
+.fitba-command-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.67rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #2d4f35;
+}
+
+.fitba-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  border: 1px solid #17321c;
+  border-radius: 2px;
+  background-color: var(--fitba-command-key-bg);
+  color: var(--fitba-command-key-ink);
+  font-family: var(--fitba-font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.16rem 0.3rem;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .skip-link {
@@ -91,20 +156,30 @@ body {
 }
 
 .card {
-  border-radius: 4px;
+  border-radius: 2px;
   border: 2px solid var(--fitba-panel-border);
   background-color: var(--fitba-panel);
-  box-shadow: 4px 4px 0 rgba(29, 66, 32, 0.15);
+  box-shadow:
+    3px 3px 0 rgba(29, 66, 32, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42);
 }
 
 .card .card-body {
-  padding: 0.85rem;
+  padding: 0.68rem 0.72rem;
 }
 
 .h5,
 .h6 {
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.fitba-toolbar {
+  gap: 0.4rem 0.6rem;
+}
+
+.fitba-toolbar-actions {
+  flex-wrap: wrap;
 }
 
 .nav-link,
@@ -132,11 +207,18 @@ body {
 }
 
 .btn {
-  border-radius: 2px;
-  font-size: 0.74rem;
+  border-radius: var(--fitba-control-radius);
+  font-size: var(--fitba-control-font-size);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  padding: var(--fitba-control-padding-y) var(--fitba-control-padding-x);
+  line-height: 1.15;
+}
+
+.btn.btn-sm {
+  padding: calc(var(--fitba-control-padding-y) - 0.02rem)
+    calc(var(--fitba-control-padding-x) - 0.04rem);
 }
 
 .btn-success {
@@ -196,16 +278,36 @@ body {
 .fitba-table-shell {
   border: 1px solid #9fb9a4;
   border-radius: 2px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.fitba-table-responsive {
+  scrollbar-width: thin;
+  scrollbar-color: #6e8b74 rgba(224, 235, 223, 0.65);
+}
+
+.fitba-table-responsive--wide .table {
+  min-width: 1160px;
+}
+
+.fitba-table-responsive--medium .table {
+  min-width: 760px;
+}
+
+.fitba-table-responsive--detail .table {
+  min-width: 420px;
 }
 
 .table {
   margin-bottom: 0;
   color: var(--fitba-ink);
-  font-size: 0.79rem;
+  font-size: var(--fitba-table-font-size);
+  line-height: 1.2;
 }
 
 .table > :not(caption) > * > * {
-  padding: 0.34rem 0.45rem;
+  padding: var(--fitba-cell-padding-y) var(--fitba-cell-padding-x);
   border-bottom-color: #9eb8a3;
 }
 
@@ -215,8 +317,11 @@ body {
   border-bottom: 2px solid #102516;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-size: 0.7rem;
+  font-size: var(--fitba-table-head-font-size);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .table-striped > tbody > tr:nth-of-type(odd) > * {
@@ -236,28 +341,71 @@ body {
   outline-offset: -2px;
 }
 
+.table tbody tr:focus > * {
+  outline: 2px solid var(--fitba-focus);
+  outline-offset: -2px;
+}
+
+.fitba-table-grid tbody tr {
+  transition: background-color 140ms ease-out;
+}
+
+.fitba-table-grid tbody tr[data-nav-row="true"] {
+  cursor: default;
+}
+
+.fitba-cell-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fitba-cell-truncate--lg {
+  max-width: 320px;
+}
+
+.fitba-cell-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fitba-detail-key {
+  width: 170px;
+  white-space: nowrap;
+  background-color: rgba(195, 216, 197, 0.28);
+}
+
 .fitba-pagination {
   border: 1px dashed #7f9d85;
   background-color: rgba(255, 255, 255, 0.55);
   border-radius: 2px;
-  padding: 0.45rem 0.6rem;
+  padding: 0.28rem 0.42rem;
+}
+
+.fitba-pagination-controls {
+  border-left: 1px dashed rgba(53, 82, 60, 0.35);
+  padding-left: 0.45rem;
 }
 
 .fitba-pagination-summary,
 .fitba-pagination-counter {
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   color: var(--fitba-ink-muted);
+  letter-spacing: 0.03em;
 }
 
 .fitba-page-size-select {
-  width: 92px;
+  width: 84px;
 }
 
 .form-control,
 .form-select {
-  border-radius: 2px;
+  border-radius: var(--fitba-control-radius);
   border-color: #88a48d;
-  font-size: 0.82rem;
+  font-size: var(--fitba-control-font-size);
+  min-height: 1.85rem;
+  padding-top: 0.18rem;
+  padding-bottom: 0.18rem;
 }
 
 .form-control:focus,
@@ -266,32 +414,83 @@ body {
   box-shadow: 0 0 0 0.16rem rgba(240, 182, 63, 0.33);
 }
 
+.fitba-search-form .form-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.66rem;
+}
+
+.fitba-search-form .text-body-secondary {
+  font-size: 0.67rem;
+  line-height: 1.2;
+}
+
+.fitba-form-actions .btn {
+  min-width: 5.4rem;
+}
+
 .fitba-async-message {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
+  border-left: 3px solid transparent;
+  padding-left: 0.42rem;
+  letter-spacing: 0.01em;
 }
 
 .fitba-async-loading {
   color: var(--fitba-ink-muted);
+  border-left-color: #6f8c74;
 }
 
 .fitba-async-error {
   color: var(--fitba-danger);
+  border-left-color: var(--fitba-danger);
 }
 
 .fitba-async-empty {
   color: var(--fitba-ink-muted);
+  border-left-color: #7a987f;
 }
 
 @media (max-width: 767px) {
   .card .card-body {
-    padding: 0.7rem;
+    padding: 0.6rem 0.62rem;
+  }
+
+  .fitba-title-row {
+    padding: 0.36rem 0.44rem;
+  }
+
+  .fitba-pagination-controls {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .fitba-form-actions {
+    width: 100%;
+  }
+
+  .fitba-form-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .fitba-table-responsive--wide .table {
+    min-width: 980px;
+  }
+
+  .fitba-table-responsive--medium .table {
+    min-width: 680px;
+  }
+
+  .fitba-detail-key {
+    width: 132px;
   }
 
   .table {
-    font-size: 0.74rem;
+    font-size: 0.7rem;
   }
 
   .table > :not(caption) > * > * {
-    padding: 0.3rem 0.36rem;
+    padding: calc(var(--fitba-cell-padding-y) - 0.02rem)
+      calc(var(--fitba-cell-padding-x) - 0.06rem);
   }
 }

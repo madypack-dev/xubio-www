@@ -1,7 +1,7 @@
 <template>
   <section class="card shadow-sm" :aria-busy="listasPrecioQuery.isLoading.value">
     <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
         <h2 class="h5 mb-0">Listas de precio (MVP)</h2>
         <button
           type="button"
@@ -41,9 +41,9 @@
           @update:page-size="listasPrecioPagination.setPageSize"
         />
 
-        <div class="table-responsive">
+        <div class="table-responsive fitba-table-responsive fitba-table-responsive--medium">
           <table
-            class="table table-sm table-striped table-hover align-middle"
+            class="table table-sm table-striped table-hover align-middle fitba-table-grid"
             aria-label="Tabla de listas de precio"
           >
             <caption class="visually-hidden">

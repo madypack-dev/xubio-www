@@ -4,11 +4,36 @@
 
     <header class="app-header border-bottom border-2 border-success-subtle mb-3">
       <div class="container-fluid py-3">
-        <h1 class="h4 mb-2 fw-semibold">FITBA Frontend Vue</h1>
-        <p class="app-subtitle mb-2">Consola comercial estilo AS400</p>
-        <p class="app-shortcuts mb-3" aria-label="Atajos de teclado AS400">
-          F2 Foco | F3 Limpiar | F5 Recargar | F12 Volver
-        </p>
+        <div class="fitba-title-row d-flex flex-column gap-2 mb-3">
+          <h1 class="h4 mb-0 fw-semibold">FITBA Frontend Vue</h1>
+          <p class="app-subtitle mb-0">Consola comercial estilo AS400</p>
+          <div class="app-shortcuts" aria-label="Atajos de teclado AS400">
+            <span class="fitba-command-item">
+              <kbd class="fitba-key">F2</kbd>
+              <span>Foco</span>
+            </span>
+            <span class="fitba-command-item">
+              <kbd class="fitba-key">F3</kbd>
+              <span>Limpiar</span>
+            </span>
+            <span class="fitba-command-item">
+              <kbd class="fitba-key">F5</kbd>
+              <span>Recargar</span>
+            </span>
+            <span class="fitba-command-item">
+              <kbd class="fitba-key">F12</kbd>
+              <span>Volver</span>
+            </span>
+            <span class="fitba-command-item">
+              <kbd class="fitba-key">↑ ↓</kbd>
+              <span>Mover fila</span>
+            </span>
+            <span class="fitba-command-item">
+              <kbd class="fitba-key">Enter</kbd>
+              <span>Abrir</span>
+            </span>
+          </div>
+        </div>
         <nav class="nav nav-pills gap-2" aria-label="Modulos principales">
           <RouterLink
             v-for="item in navItems"
@@ -23,7 +48,7 @@
       </div>
     </header>
 
-    <main id="main-content" class="container-fluid pb-4" tabindex="-1">
+    <main id="main-content" class="container-fluid pb-4 fitba-workspace" tabindex="-1">
       <RouterView />
     </main>
   </div>
