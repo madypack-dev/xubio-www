@@ -9,6 +9,7 @@
           <input
             id="producto-id-input"
             v-model="productoIdInput"
+            ref="productoInputRef"
             type="text"
             class="form-control"
             name="productoId"
@@ -93,6 +94,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useProductoByIdQuery } from "../../application";
 import { createProductosHttpRepository } from "../../infrastructure";
+import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
@@ -102,6 +104,7 @@ import { runtimeConfig } from "@/shared/config/runtimeConfig";
 
 const route = useRoute();
 const router = useRouter();
+const productoInputRef = ref<HTMLInputElement | null>(null);
 const productoIdInput = ref("");
 const submittedProductoId = ref<string | null>(readQueryValue(route.query.producto));
 const productosRepository = createProductosHttpRepository(runtimeConfig.apiBaseUrl);
@@ -124,6 +127,13 @@ const errorMessage = computed(() => {
     return null;
   }
   return resolveErrorMessage(error, "Error inesperado al cargar producto.");
+});
+
+useAs400Shortcuts({
+  onF2: () => productoInputRef.value?.focus(),
+  onF3: clearSearch,
+  onF5: reloadProducto,
+  onF12: () => router.back()
 });
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
@@ -175,6 +185,19 @@ async function clearSearch() {
     });
   } catch (error) {
     console.error("[MVP] Error al limpiar busqueda de producto", error);
+  }
+}
+
+async function reloadProducto() {
+  if (!submittedProductoId.value) {
+    productoInputRef.value?.focus();
+    return;
+  }
+
+  try {
+    await productoQuery.refetch();
+  } catch (error) {
+    console.error("[MVP] Error al recargar producto", error);
   }
 }
 </script>

@@ -9,6 +9,7 @@
               type="button"
               class="btn btn-sm btn-outline-secondary"
               aria-label="Limpiar remito seleccionado"
+              ref="clearButtonRef"
               @click="clearSelectedRemito"
             >
               Limpiar
@@ -187,6 +188,7 @@ import { createRemitosHttpRepository } from "../../infrastructure";
 import type { Remito, RemitoItem } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
+import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
@@ -198,6 +200,7 @@ const router = useRouter();
 const remitosRepository = createRemitosHttpRepository(runtimeConfig.apiBaseUrl);
 const remitosQuery = useRemitosQuery(remitosRepository);
 const selectedRemitoId = ref<string | null>(readQueryValue(route.query.remitoVenta));
+const clearButtonRef = ref<HTMLButtonElement | null>(null);
 
 watch(
   () => route.query.remitoVenta,
@@ -274,6 +277,22 @@ const errorMessage = computed(() => {
     return null;
   }
   return resolveErrorMessage(error, "Error inesperado al cargar remitos.");
+});
+
+useAs400Shortcuts({
+  onF2: () => {
+    const firstContextLink = document.querySelector<HTMLAnchorElement>(
+      ".fitba-table-shell tbody a.fitba-inline-link"
+    );
+    if (firstContextLink) {
+      firstContextLink.focus();
+      return;
+    }
+    clearButtonRef.value?.focus();
+  },
+  onF3: clearSelectedRemito,
+  onF5: reloadRemitos,
+  onF12: () => router.back()
 });
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {

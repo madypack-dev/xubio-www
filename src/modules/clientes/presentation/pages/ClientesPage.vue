@@ -9,6 +9,7 @@
           <input
             id="cliente-id-input"
             v-model="clienteIdInput"
+            ref="clienteInputRef"
             type="text"
             class="form-control"
             name="clienteId"
@@ -97,6 +98,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useClienteByIdQuery } from "../../application";
 import { createClientesHttpRepository } from "../../infrastructure";
+import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
@@ -106,6 +108,7 @@ import { runtimeConfig } from "@/shared/config/runtimeConfig";
 
 const route = useRoute();
 const router = useRouter();
+const clienteInputRef = ref<HTMLInputElement | null>(null);
 const clienteIdInput = ref("");
 const submittedClienteId = ref<string | null>(readQueryValue(route.query.cliente));
 const clientesRepository = createClientesHttpRepository(runtimeConfig.apiBaseUrl);
@@ -128,6 +131,13 @@ const errorMessage = computed(() => {
     return null;
   }
   return resolveErrorMessage(error, "Error inesperado al cargar cliente.");
+});
+
+useAs400Shortcuts({
+  onF2: () => clienteInputRef.value?.focus(),
+  onF3: clearSearch,
+  onF5: reloadCliente,
+  onF12: () => router.back()
 });
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
@@ -172,6 +182,19 @@ async function clearSearch() {
     });
   } catch (error) {
     console.error("[MVP] Error al limpiar busqueda de cliente", error);
+  }
+}
+
+async function reloadCliente() {
+  if (!submittedClienteId.value) {
+    clienteInputRef.value?.focus();
+    return;
+  }
+
+  try {
+    await clienteQuery.refetch();
+  } catch (error) {
+    console.error("[MVP] Error al recargar cliente", error);
   }
 }
 </script>

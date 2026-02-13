@@ -6,6 +6,9 @@
       <div class="container-fluid py-3">
         <h1 class="h4 mb-2 fw-semibold">FITBA Frontend Vue</h1>
         <p class="app-subtitle mb-2">Consola comercial estilo AS400</p>
+        <p class="app-shortcuts mb-3" aria-label="Atajos de teclado AS400">
+          F2 Foco | F3 Limpiar | F5 Recargar | F12 Volver
+        </p>
         <nav class="nav nav-pills gap-2" aria-label="Modulos principales">
           <RouterLink
             v-for="item in navItems"

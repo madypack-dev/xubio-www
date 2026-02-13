@@ -7,6 +7,7 @@
           type="button"
           class="btn btn-sm btn-outline-success"
           aria-label="Recargar listas de precio"
+          ref="reloadButtonRef"
           @click="reloadListasPrecio"
         >
           Recargar
@@ -75,17 +76,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import { useListasPrecioQuery } from "../../application";
 import { createListasPrecioHttpRepository } from "../../infrastructure";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
+import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 
+const router = useRouter();
+const reloadButtonRef = ref<HTMLButtonElement | null>(null);
 const listasPrecioRepository = createListasPrecioHttpRepository(runtimeConfig.apiBaseUrl);
 const listasPrecioQuery = useListasPrecioQuery(listasPrecioRepository);
 
@@ -105,6 +110,12 @@ const errorMessage = computed(() => {
     return null;
   }
   return resolveErrorMessage(error, "Error inesperado al cargar listas de precio.");
+});
+
+useAs400Shortcuts({
+  onF2: () => reloadButtonRef.value?.focus(),
+  onF5: reloadListasPrecio,
+  onF12: () => router.back()
 });
 
 function formatBoolean(value: boolean | null) {

@@ -60,6 +60,14 @@ body {
   color: var(--fitba-ink-muted);
 }
 
+.app-shortcuts {
+  margin: 0;
+  font-size: 0.73rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2d4f35;
+}
+
 .skip-link {
   position: absolute;
   left: 1rem;
