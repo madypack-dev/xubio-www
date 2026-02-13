@@ -1,5 +1,5 @@
 <template>
-  <p class="text-danger mb-0">
+  <p class="fitba-async-message fitba-async-error mb-0" role="alert" aria-live="assertive">
     {{ message }}
   </p>
 </template>

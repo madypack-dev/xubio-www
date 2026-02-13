@@ -52,18 +52,26 @@ Directriz activa (2026-02-13):
 
 ## Baja prioridad
 
-- [ ] Implementar tema visual AS400 (IBM) sobre Bootstrap.
-  Que hacer: crear tokens CSS, tipografia monoespaciada, componentes tabla densos y estados visuales accesibles.
-- [ ] Mejorar accesibilidad de tablas y acciones.
-  Que hacer: asegurar navegacion por teclado, foco visible, contraste AA y etiquetas ARIA donde aplique.
-- [ ] Optimizar performance para datasets grandes.
-  Que hacer: evaluar paginacion server-side o virtualizacion de filas en vistas de alto volumen.
-- [ ] Agregar observabilidad frontend.
-  Que hacer: registrar errores JS y tiempos de carga para detectar regresiones funcionales.
+- [x] Implementar tema visual AS400 (IBM) sobre Bootstrap.
+  Resuelto (2026-02-13): tokens CSS centralizados, tipografia monoespaciada, tablas densas y estados visuales accesibles en `frontend-vue/src/shared/design/theme.css`.
+- [x] Mejorar accesibilidad de tablas y acciones.
+  Resuelto (2026-02-13): navegacion por teclado en acciones, foco visible global, contraste reforzado, skip-link, labels de formularios y ARIA en tablas/mensajes async.
+- [x] Optimizar performance para datasets grandes.
+  Resuelto (2026-02-13): paginacion reutilizable para render acotado de tablas de alto volumen (`usePaginatedRows` + `DataPaginationControls`) en remitos/listas/comprobantes.
+- [x] Agregar observabilidad frontend.
+  Resuelto (2026-02-13): captura de errores JS globales, metricas de carga/navegacion y timings HTTP con muestreo y endpoint configurable.
+
+## Dudas abiertas (post-hardening)
+
+- [ ] Definir backend de observabilidad destino.
+  Pregunta: ¿enviar eventos a endpoint propio (`VITE_OBSERVABILITY_ENDPOINT`) o solo consola/buffer en esta fase?
+- [ ] Confirmar estrategia objetivo para volumen extremo.
+  Pregunta: ¿mantener paginacion cliente actual o priorizar paginacion server-side en endpoints legacy?
 
 ## En proceso
 
 - [>] Mantener este backlog actualizado por sprint.
+  Estado (2026-02-13): pendientes de baja prioridad movidos a finalizado; dudas abiertas registradas para decision funcional/infra.
   Que hacer: mover tareas entre estados, agregar fechas y responsables, y descomponer items grandes en subtareas ejecutables.
 
 ## Fuera de alcance temporal (legacy)

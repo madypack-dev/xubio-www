@@ -4,7 +4,9 @@ test("smoke: modulos y drill-down principal", async ({ page }) => {
   await page.goto("/remitos");
 
   await expect(page.getByRole("heading", { name: "Remitos" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "38925753" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Seleccionar remito 38925753" })
+  ).toBeVisible();
 
   await page.getByRole("link", { name: "Listas de precio" }).click();
   await expect(page).toHaveURL(/\/listas-precio/);

@@ -1,20 +1,36 @@
 <template>
-  <section class="card shadow-sm">
+  <section class="card shadow-sm" :aria-busy="clienteQuery.isLoading.value">
     <div class="card-body">
       <h2 class="h5 mb-3">Cliente por ID (MVP)</h2>
 
       <form class="row g-2 mb-3" @submit.prevent="submitSearch">
         <div class="col-12 col-md-4">
+          <label class="form-label mb-1" for="cliente-id-input">clienteId</label>
           <input
+            id="cliente-id-input"
             v-model="clienteIdInput"
             type="text"
             class="form-control"
+            name="clienteId"
+            inputmode="text"
+            autocomplete="off"
             placeholder="clienteId"
+            aria-describedby="cliente-search-help"
           />
+          <small id="cliente-search-help" class="text-body-secondary">
+            Ingresa el identificador del cliente para consultar el detalle.
+          </small>
         </div>
-        <div class="col-12 col-md-auto d-flex gap-2">
-          <button type="submit" class="btn btn-success">Buscar</button>
-          <button type="button" class="btn btn-outline-secondary" @click="clearSearch">
+        <div class="col-12 col-md-auto d-flex gap-2 align-items-end">
+          <button type="submit" class="btn btn-success" aria-label="Buscar cliente">
+            Buscar
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            aria-label="Limpiar busqueda de cliente"
+            @click="clearSearch"
+          >
             Limpiar
           </button>
         </div>
@@ -37,8 +53,9 @@
         message="No se encontro cliente para el ID indicado."
       />
 
-      <div v-else class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
+      <div v-else class="fitba-table-shell table-responsive">
+        <table class="table table-sm align-middle" aria-label="Detalle de cliente">
+          <caption class="visually-hidden">Detalle del cliente seleccionado por ID.</caption>
           <tbody>
             <tr>
               <th scope="row">clienteId</th>

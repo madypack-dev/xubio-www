@@ -1,3 +1,5 @@
+import { trackHttpRequest } from "@/shared/lib/observability/telemetry";
+
 export class HttpClientError extends Error {
   readonly status: number;
   readonly url: string;
@@ -164,6 +166,19 @@ async function request<TResponse, TBody = unknown>(
   const serializedBody = serializeBody(body, headers);
   const requestSignal = mergeSignals(timeoutController.signal, signal);
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
+  const startedAt =
+    typeof performance !== "undefined" && typeof performance.now === "function"
+      ? performance.now()
+      : Date.now();
+  let responseStatus: number | null = null;
+
+  const elapsedMs = () => {
+    const now =
+      typeof performance !== "undefined" && typeof performance.now === "function"
+        ? performance.now()
+        : Date.now();
+    return Math.round((now - startedAt) * 100) / 100;
+  };
 
   try {
     const response = await fetch(url, {
@@ -172,6 +187,7 @@ async function request<TResponse, TBody = unknown>(
       body: serializedBody,
       signal: requestSignal
     });
+    responseStatus = response.status;
 
     if (!response.ok) {
       const bodyText = await readErrorBody(response);
@@ -183,11 +199,36 @@ async function request<TResponse, TBody = unknown>(
       });
     }
 
-    return await parseBody<TResponse>(response, parseAs);
+    const payload = await parseBody<TResponse>(response, parseAs);
+    trackHttpRequest({
+      method,
+      url,
+      durationMs: elapsedMs(),
+      status: responseStatus,
+      outcome: "success"
+    });
+    return payload;
   } catch (error) {
     if (isAbortError(error)) {
-      throw new HttpTimeoutError({ timeoutMs, url });
+      const timeoutError = new HttpTimeoutError({ timeoutMs, url });
+      trackHttpRequest({
+        method,
+        url,
+        durationMs: elapsedMs(),
+        status: responseStatus,
+        outcome: "timeout",
+        errorName: timeoutError.name
+      });
+      throw timeoutError;
     }
+    trackHttpRequest({
+      method,
+      url,
+      durationMs: elapsedMs(),
+      status: responseStatus,
+      outcome: "error",
+      errorName: error instanceof Error ? error.name : "UnknownError"
+    });
     throw error;
   } finally {
     clearTimeout(timeoutId);

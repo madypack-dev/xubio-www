@@ -46,6 +46,9 @@ Variables utiles para Vue (`frontend-vue/.env`):
 - `VITE_API_BASE_URL`: base URL real del backend.
 - `VITE_USE_MOCKS`: `true/false` para forzar modo mock.
 - `VITE_FALLBACK_TO_MOCKS_ON_ERROR`: `true/false` para usar mock si la API responde con error.
+- `VITE_OBSERVABILITY_ENABLED`: `auto/true/false` para captura de errores y metricas.
+- `VITE_OBSERVABILITY_ENDPOINT`: endpoint HTTP opcional para recibir eventos de frontend.
+- `VITE_OBSERVABILITY_SAMPLE_RATE`: muestreo `0..1` para limitar volumen de eventos.
 
 Nota CORS en desarrollo:
 

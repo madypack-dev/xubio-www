@@ -1,20 +1,36 @@
 <template>
-  <section class="card shadow-sm">
+  <section class="card shadow-sm" :aria-busy="productoQuery.isLoading.value">
     <div class="card-body">
       <h2 class="h5 mb-3">Producto por ID (MVP)</h2>
 
       <form class="row g-2 mb-3" @submit.prevent="submitSearch">
         <div class="col-12 col-md-4">
+          <label class="form-label mb-1" for="producto-id-input">productoId</label>
           <input
+            id="producto-id-input"
             v-model="productoIdInput"
             type="text"
             class="form-control"
+            name="productoId"
+            inputmode="text"
+            autocomplete="off"
             placeholder="productoId"
+            aria-describedby="producto-search-help"
           />
+          <small id="producto-search-help" class="text-body-secondary">
+            Ingresa el identificador del producto para consultar el detalle.
+          </small>
         </div>
-        <div class="col-12 col-md-auto d-flex gap-2">
-          <button type="submit" class="btn btn-success">Buscar</button>
-          <button type="button" class="btn btn-outline-secondary" @click="clearSearch">
+        <div class="col-12 col-md-auto d-flex gap-2 align-items-end">
+          <button type="submit" class="btn btn-success" aria-label="Buscar producto">
+            Buscar
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            aria-label="Limpiar busqueda de producto"
+            @click="clearSearch"
+          >
             Limpiar
           </button>
         </div>
@@ -37,8 +53,9 @@
         message="No se encontro producto para el ID indicado."
       />
 
-      <div v-else class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
+      <div v-else class="fitba-table-shell table-responsive">
+        <table class="table table-sm align-middle" aria-label="Detalle de producto">
+          <caption class="visually-hidden">Detalle del producto seleccionado por ID.</caption>
           <tbody>
             <tr>
               <th scope="row">productoId</th>

@@ -4,6 +4,9 @@ const fallbackToMocksOnErrorRaw =
   import.meta.env.VITE_FALLBACK_TO_MOCKS_ON_ERROR ?? "";
 const verboseStartupLogsRaw = import.meta.env.VITE_VERBOSE_STARTUP_LOGS ?? "";
 const debugRemitosRaw = import.meta.env.VITE_DEBUG_REMITOS ?? "";
+const observabilityEnabledRaw = import.meta.env.VITE_OBSERVABILITY_ENABLED ?? "";
+const observabilityEndpointRaw = import.meta.env.VITE_OBSERVABILITY_ENDPOINT ?? "";
+const observabilitySampleRateRaw = import.meta.env.VITE_OBSERVABILITY_SAMPLE_RATE ?? "";
 const normalizedUseMocks = String(useMocksRaw).trim().toLowerCase();
 const normalizedFallbackToMocksOnError = String(fallbackToMocksOnErrorRaw)
   .trim()
@@ -13,6 +16,10 @@ const normalizedVerboseStartupLogs = String(verboseStartupLogsRaw)
   .trim()
   .toLowerCase();
 const normalizedDebugRemitos = String(debugRemitosRaw).trim().toLowerCase();
+const normalizedObservabilityEnabled = String(observabilityEnabledRaw)
+  .trim()
+  .toLowerCase();
+const normalizedObservabilityEndpoint = String(observabilityEndpointRaw).trim();
 const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(normalizedApiBaseUrl);
 const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
 
@@ -61,9 +68,34 @@ function shouldUseRelativeApiBase(apiBaseUrl: string) {
   }
 }
 
+function parseObservabilitySampleRate(value: string) {
+  if (!value) {
+    return 1;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 1;
+  }
+  if (parsed < 0) {
+    return 0;
+  }
+  if (parsed > 1) {
+    return 1;
+  }
+  return parsed;
+}
+
 const useRelativeApiBase = shouldUseRelativeApiBase(normalizedApiBaseUrl);
 const resolvedApiBaseUrl =
   useDevProxyForApi || useRelativeApiBase ? "" : normalizedApiBaseUrl;
+const observabilitySampleRate = parseObservabilitySampleRate(
+  String(observabilitySampleRateRaw).trim()
+);
+const observabilityEnabled =
+  normalizedObservabilityEnabled === "true" ||
+  normalizedObservabilityEnabled === "1" ||
+  ((normalizedObservabilityEnabled === "" || normalizedObservabilityEnabled === "auto") &&
+    import.meta.env.PROD);
 
 export const runtimeConfig = {
   apiBaseUrl: resolvedApiBaseUrl,
@@ -80,5 +112,8 @@ export const runtimeConfig = {
     (import.meta.env.DEV && normalizedApiBaseUrl === ""),
   fallbackToMocksOnError:
     normalizedFallbackToMocksOnError === "true" ||
-    (normalizedFallbackToMocksOnError !== "false" && import.meta.env.DEV)
+    (normalizedFallbackToMocksOnError !== "false" && import.meta.env.DEV),
+  observabilityEnabled,
+  observabilityEndpoint: normalizedObservabilityEndpoint || null,
+  observabilitySampleRate
 };

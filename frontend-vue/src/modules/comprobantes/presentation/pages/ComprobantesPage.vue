@@ -1,12 +1,13 @@
 <template>
   <div class="d-flex flex-column gap-3">
-    <section class="card shadow-sm">
+    <section class="card shadow-sm" :aria-busy="comprobantesQuery.isLoading.value">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Comprobantes (MVP)</h2>
           <button
             type="button"
             class="btn btn-sm btn-outline-success"
+            aria-label="Recargar comprobantes"
             @click="reloadComprobantes"
           >
             Recargar
@@ -28,52 +29,76 @@
           message="No hay comprobantes disponibles."
         />
 
-        <div v-else class="table-responsive">
-          <table class="table table-sm table-striped table-hover align-middle mb-0">
-            <thead class="table-dark">
-              <tr>
-                <th scope="col">id</th>
-                <th scope="col">nombre</th>
-                <th scope="col">fecha</th>
-                <th scope="col">cliente</th>
-                <th scope="col">importeTotal</th>
-                <th scope="col">accion</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="comprobante in comprobantes"
-                :key="comprobante.comprobanteVentaId ?? comprobante.nombre"
-              >
-                <td>{{ comprobante.comprobanteVentaId ?? "-" }}</td>
-                <td>{{ comprobante.nombre || "-" }}</td>
-                <td>{{ comprobante.fecha ?? "-" }}</td>
-                <td>{{ comprobante.clienteNombre || "-" }}</td>
-                <td>{{ comprobante.importeTotal ?? "-" }}</td>
-                <td>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    :disabled="!comprobante.comprobanteVentaId"
-                    @click="selectComprobanteById(comprobante.comprobanteVentaId)"
-                  >
-                    Ver detalle
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-else class="fitba-table-shell">
+          <DataPaginationControls
+            v-if="comprobantesPagination.isActive.value"
+            entity-label="comprobantes"
+            :page="comprobantesPagination.page.value"
+            :page-size="comprobantesPagination.pageSize.value"
+            :page-size-options="comprobantesPagination.pageSizeOptions"
+            :total-rows="comprobantesPagination.totalRows.value"
+            :total-pages="comprobantesPagination.totalPages.value"
+            :page-start="comprobantesPagination.pageStart.value"
+            :page-end="comprobantesPagination.pageEnd.value"
+            @update:page="comprobantesPagination.setPage"
+            @update:page-size="comprobantesPagination.setPageSize"
+          />
+
+          <div class="table-responsive">
+            <table
+              class="table table-sm table-striped table-hover align-middle"
+              aria-label="Tabla de comprobantes"
+            >
+              <caption class="visually-hidden">
+                Listado de comprobantes con acceso al detalle.
+              </caption>
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col">id</th>
+                  <th scope="col">nombre</th>
+                  <th scope="col">fecha</th>
+                  <th scope="col">cliente</th>
+                  <th scope="col">importeTotal</th>
+                  <th scope="col">accion</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="comprobante in paginatedComprobantes"
+                  :key="comprobante.comprobanteVentaId ?? comprobante.nombre"
+                >
+                  <td>{{ comprobante.comprobanteVentaId ?? "-" }}</td>
+                  <td>{{ comprobante.nombre || "-" }}</td>
+                  <td>{{ comprobante.fecha ?? "-" }}</td>
+                  <td>{{ comprobante.clienteNombre || "-" }}</td>
+                  <td>{{ comprobante.importeTotal ?? "-" }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      :disabled="!comprobante.comprobanteVentaId"
+                      :aria-label="buildDetailLabel(comprobante.comprobanteVentaId)"
+                      @click="selectComprobanteById(comprobante.comprobanteVentaId)"
+                    >
+                      Ver detalle
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="card shadow-sm">
+    <section class="card shadow-sm" :aria-busy="detailQuery.isLoading.value">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h3 class="h6 mb-0">Detalle de comprobante</h3>
           <button
             type="button"
             class="btn btn-sm btn-outline-secondary"
+            aria-label="Limpiar comprobante seleccionado"
             @click="clearSelection"
           >
             Limpiar
@@ -100,8 +125,9 @@
           message="No se encontro detalle para el comprobante seleccionado."
         />
 
-        <div v-else class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
+        <div v-else class="fitba-table-shell table-responsive">
+          <table class="table table-sm align-middle" aria-label="Detalle de comprobante">
+            <caption class="visually-hidden">Detalle del comprobante seleccionado.</caption>
             <tbody>
               <tr>
                 <th scope="row">ID</th>
@@ -142,10 +168,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useComprobanteDetailQuery, useComprobantesQuery } from "../../application";
+import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
+import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 
 const comprobantesQuery = useComprobantesQuery();
@@ -154,6 +182,14 @@ const detailQuery = useComprobanteDetailQuery(selectedComprobanteId);
 
 const comprobantes = computed(() => comprobantesQuery.data.value ?? []);
 const comprobanteDetail = computed(() => detailQuery.data.value ?? null);
+
+const comprobantesPagination = usePaginatedRows(comprobantes, {
+  threshold: 120,
+  defaultPageSize: 100,
+  pageSizeOptions: [50, 100, 250, 500]
+});
+
+const paginatedComprobantes = computed(() => comprobantesPagination.rows.value);
 
 const listErrorMessage = computed(() => {
   const error = comprobantesQuery.error.value;
@@ -170,6 +206,13 @@ const detailErrorMessage = computed(() => {
   }
   return resolveErrorMessage(error, "Error inesperado al cargar detalle.");
 });
+
+function buildDetailLabel(comprobanteVentaId: string | null) {
+  if (!comprobanteVentaId) {
+    return "Ver detalle de comprobante";
+  }
+  return `Ver detalle de comprobante ${comprobanteVentaId}`;
+}
 
 async function reloadComprobantes() {
   try {

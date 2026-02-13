@@ -1,5 +1,5 @@
 <template>
-  <p class="text-secondary mb-0">
+  <p class="fitba-async-message fitba-async-empty mb-0" role="status" aria-live="polite">
     {{ message }}
   </p>
 </template>

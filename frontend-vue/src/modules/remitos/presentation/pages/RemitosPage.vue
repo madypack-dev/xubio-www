@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-column gap-3">
-    <section class="card shadow-sm">
+    <section class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Remitos</h2>
@@ -8,6 +8,7 @@
             <button
               type="button"
               class="btn btn-sm btn-outline-secondary"
+              aria-label="Limpiar remito seleccionado"
               @click="clearSelectedRemito"
             >
               Limpiar
@@ -15,6 +16,7 @@
             <button
               type="button"
               class="btn btn-sm btn-outline-success"
+              aria-label="Recargar listado de remitos"
               @click="reloadRemitos"
             >
               Recargar
@@ -34,61 +36,109 @@
           message="No hay remitos disponibles."
         />
 
-        <div v-else class="table-responsive">
-          <table class="table table-sm table-striped table-hover align-middle mb-0">
-            <thead class="table-dark">
-              <tr>
-                <th scope="col">transaccionId</th>
-                <th scope="col" class="remitos-numero-remito-col">numeroRemito</th>
-                <th scope="col" class="remitos-fecha-col">fecha</th>
-                <th scope="col">observacion</th>
-                <th scope="col">clienteId</th>
-                <th scope="col">vendedorId</th>
-                <th scope="col">comisionVendedor</th>
-                <th scope="col">depositoId</th>
-                <th scope="col">circuitoContableId</th>
-                <th scope="col">items</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="remito in visibleRemitos"
-                :key="rowKey(remito)"
-                :class="{ 'table-primary': isSelectedRemito(remito) }"
-              >
-                <td>
-                  <a
-                    v-if="remito.transaccionId"
-                    href="#"
-                    class="link-primary"
-                    @click.prevent="selectRemito(remito.transaccionId)"
-                  >
-                    {{ remito.transaccionId }}
-                  </a>
-                  <span v-else>-</span>
-                </td>
-                <td class="remitos-numero-remito-col">{{ remito.numeroRemito || "-" }}</td>
-                <td class="remitos-fecha-col">{{ formatDateDdMmYyyy(remito.fecha) }}</td>
-                <td>{{ remito.observacion || "-" }}</td>
-                <td>
-                  <a
-                    v-if="remito.clienteId"
-                    href="#"
-                    class="link-success"
-                    @click.prevent="goToCliente(remito.clienteId)"
-                  >
-                    {{ remito.clienteId }}
-                  </a>
-                  <span v-else>-</span>
-                </td>
-                <td>{{ remito.vendedorId ?? "-" }}</td>
-                <td>{{ remito.comisionVendedor ?? "-" }}</td>
-                <td>{{ remito.depositoId ?? "-" }}</td>
-                <td>{{ remito.circuitoContableId ?? "-" }}</td>
-                <td>{{ remito.items.length }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-else class="fitba-table-shell">
+          <DataPaginationControls
+            v-if="remitosPagination.isActive.value"
+            entity-label="remitos"
+            :page="remitosPagination.page.value"
+            :page-size="remitosPagination.pageSize.value"
+            :page-size-options="remitosPagination.pageSizeOptions"
+            :total-rows="remitosPagination.totalRows.value"
+            :total-pages="remitosPagination.totalPages.value"
+            :page-start="remitosPagination.pageStart.value"
+            :page-end="remitosPagination.pageEnd.value"
+            @update:page="remitosPagination.setPage"
+            @update:page-size="remitosPagination.setPageSize"
+          />
+
+          <div class="table-responsive">
+            <table
+              class="table table-sm table-striped table-hover align-middle"
+              aria-label="Tabla de remitos de venta"
+            >
+              <caption class="visually-hidden">
+                Listado de remitos con acceso a detalle de items y cliente.
+              </caption>
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col">transaccionId</th>
+                  <th scope="col" class="remitos-numero-remito-col">numeroRemito</th>
+                  <th scope="col" class="remitos-fecha-col">fecha</th>
+                  <th scope="col">observacion</th>
+                  <th scope="col">clienteId</th>
+                  <th scope="col">vendedorId</th>
+                  <th scope="col">comisionVendedor</th>
+                  <th scope="col">depositoId</th>
+                  <th scope="col">circuitoContableId</th>
+                  <th scope="col">items</th>
+                  <th scope="col">acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="remito in paginatedVisibleRemitos"
+                  :key="rowKey(remito)"
+                  :class="{ 'table-primary': isSelectedRemito(remito) }"
+                >
+                  <td>
+                    <button
+                      v-if="remito.transaccionId"
+                      type="button"
+                      class="btn btn-link btn-sm fitba-link-button p-0"
+                      :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
+                      :aria-pressed="isSelectedRemito(remito)"
+                      @click="selectRemito(remito.transaccionId)"
+                    >
+                      {{ remito.transaccionId }}
+                    </button>
+                    <span v-else>-</span>
+                  </td>
+                  <td class="remitos-numero-remito-col">{{ remito.numeroRemito || "-" }}</td>
+                  <td class="remitos-fecha-col">{{ formatDateDdMmYyyy(remito.fecha) }}</td>
+                  <td>{{ remito.observacion || "-" }}</td>
+                  <td>
+                    <button
+                      v-if="remito.clienteId"
+                      type="button"
+                      class="btn btn-link btn-sm fitba-link-button p-0"
+                      :aria-label="buildGoToClienteLabel(remito.clienteId)"
+                      @click="goToCliente(remito.clienteId)"
+                    >
+                      {{ remito.clienteId }}
+                    </button>
+                    <span v-else>-</span>
+                  </td>
+                  <td>{{ remito.vendedorId ?? "-" }}</td>
+                  <td>{{ remito.comisionVendedor ?? "-" }}</td>
+                  <td>{{ remito.depositoId ?? "-" }}</td>
+                  <td>{{ remito.circuitoContableId ?? "-" }}</td>
+                  <td>{{ remito.items.length }}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="!remito.transaccionId"
+                        :aria-label="buildSelectRemitoLabel(remito.transaccionId)"
+                        @click="selectRemito(remito.transaccionId)"
+                      >
+                        Ver items
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-success"
+                        :disabled="!remito.clienteId"
+                        :aria-label="buildGoToClienteLabel(remito.clienteId)"
+                        @click="goToCliente(remito.clienteId)"
+                      >
+                        Cliente
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -107,8 +157,11 @@
           message="El remito seleccionado no tiene items."
         />
 
-        <div v-else class="table-responsive">
-          <table class="table table-sm table-striped align-middle mb-0">
+        <div v-else class="fitba-table-shell table-responsive">
+          <table class="table table-sm table-striped align-middle" aria-label="Items del remito">
+            <caption class="visually-hidden">
+              Items del remito seleccionado con acceso directo al producto.
+            </caption>
             <thead class="table-dark">
               <tr>
                 <th scope="col">itemId</th>
@@ -135,6 +188,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-success"
                     :disabled="!item.productoId"
+                    :aria-label="buildGoToProductoLabel(item.productoId)"
                     @click="goToProducto(item.productoId)"
                   >
                     Producto
@@ -155,9 +209,11 @@ import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useRemitosQuery } from "../../application";
 import type { Remito, RemitoItem } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
+import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 
 const route = useRoute();
@@ -226,6 +282,14 @@ const visibleRemitos = computed(() => {
   return remitos.value;
 });
 
+const remitosPagination = usePaginatedRows(visibleRemitos, {
+  threshold: 120,
+  defaultPageSize: 100,
+  pageSizeOptions: [50, 100, 250, 500]
+});
+
+const paginatedVisibleRemitos = computed(() => remitosPagination.rows.value);
+
 const errorMessage = computed(() => {
   const error = remitosQuery.error.value;
   if (!error) {
@@ -255,6 +319,34 @@ function itemRowKey(item: RemitoItem) {
 
 function isSelectedRemito(remito: Remito) {
   return String(remito.transaccionId ?? "") === selectedRemitoId.value;
+}
+
+function buildSelectRemitoLabel(transaccionId: string | null) {
+  if (!transaccionId) {
+    return "Ver items del remito";
+  }
+  return `Ver items del remito ${transaccionId}`;
+}
+
+function buildSelectRemitoIdLabel(transaccionId: string | null) {
+  if (!transaccionId) {
+    return "Seleccionar remito";
+  }
+  return `Seleccionar remito ${transaccionId}`;
+}
+
+function buildGoToClienteLabel(clienteId: string | null) {
+  if (!clienteId) {
+    return "Abrir cliente";
+  }
+  return `Abrir cliente ${clienteId}`;
+}
+
+function buildGoToProductoLabel(productoId: string | null) {
+  if (!productoId) {
+    return "Abrir producto";
+  }
+  return `Abrir producto ${productoId}`;
 }
 
 function pad2(value: number) {
