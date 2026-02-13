@@ -1,4 +1,6 @@
-export type ClienteId = string;
+import type { ClienteId as SharedClienteId } from "@/shared/types/valueObjects";
+
+export type ClienteId = SharedClienteId;
 
 export type SimpleCatalog = {
   id: string | null;

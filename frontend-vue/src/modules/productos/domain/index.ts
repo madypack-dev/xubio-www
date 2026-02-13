@@ -1,4 +1,10 @@
-export type ProductoId = string;
+import type {
+  Money as SharedMoney,
+  ProductoId as SharedProductoId
+} from "@/shared/types/valueObjects";
+
+export type ProductoId = SharedProductoId;
+export type Money = SharedMoney;
 
 export type SimpleCatalog = {
   id: string | null;
@@ -19,7 +25,7 @@ export type Producto = {
   tasaIva: SimpleCatalog | null;
   cuentaContable: SimpleCatalog | null;
   catFormIVA2002: string | null;
-  precioUltCompra: number | null;
+  precioUltCompra: Money | null;
   activo: boolean | null;
   sincronizaStock: boolean | null;
 };

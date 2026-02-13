@@ -7,6 +7,11 @@ import {
   pickFirstDefined
 } from "@/shared/lib/acl/legacyPayload";
 import { parseLegacyDateToTimestamp } from "@/shared/lib/date/legacyDate";
+import {
+  toFechaComercial,
+  toMoney,
+  toTransaccionId
+} from "@/shared/types/valueObjects";
 
 function resolveVendedorNombre(value: unknown) {
   const vendedor = asRecord(value);
@@ -28,16 +33,17 @@ function resolveClienteNombre(value: unknown) {
 
 function mapComprobante(dto: ComprobanteDto): ComprobanteVenta {
   return {
-    comprobanteVentaId:
+    comprobanteVentaId: toTransaccionId(
       pickFirstDefined(
         asStringOrNull(dto.transaccionid),
         asStringOrNull(dto.transaccionId),
         asStringOrNull(dto.id),
         asStringOrNull(dto.ID)
-      ) ?? null,
+      )
+    ),
     nombre: asStringOrNull(dto.nombre) ?? "",
-    fecha: asStringOrNull(dto.fecha),
-    fechaVto: asStringOrNull(dto.fechaVto),
+    fecha: toFechaComercial(asStringOrNull(dto.fecha)),
+    fechaVto: toFechaComercial(asStringOrNull(dto.fechaVto)),
     tipo: asStringOrNull(dto.tipo),
     numeroDocumento: asStringOrNull(dto.numeroDocumento) ?? "",
     cae: asStringOrNull(dto.CAE) ?? "",
@@ -45,18 +51,20 @@ function mapComprobante(dto: ComprobanteDto): ComprobanteVenta {
     externalId:
       pickFirstDefined(asStringOrNull(dto.externalId), asStringOrNull(dto.externalid)) ??
       "",
-    importeTotal:
+    importeTotal: toMoney(
       pickFirstDefined(
         asNumberOrNull(dto.importetotal),
         asNumberOrNull(dto.importeTotal),
         asNumberOrNull(dto.importeMonPrincipal)
-      ) ?? null,
-    importeImpuestos:
+      )
+    ),
+    importeImpuestos: toMoney(
       pickFirstDefined(
         asNumberOrNull(dto.importeImpuestos),
         asNumberOrNull(dto.impuestoTotal)
-      ) ?? null,
-    importeGravado: asNumberOrNull(dto.importeGravado),
+      )
+    ),
+    importeGravado: toMoney(asNumberOrNull(dto.importeGravado)),
     clienteNombre:
       pickFirstDefined(
         asStringOrNull(dto.clienteNombre),

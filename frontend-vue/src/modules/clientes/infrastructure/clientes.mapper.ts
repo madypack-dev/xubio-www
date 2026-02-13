@@ -6,6 +6,7 @@ import {
   asStringOrNull,
   pickFirstDefined
 } from "@/shared/lib/acl/legacyPayload";
+import { toClienteId } from "@/shared/types/valueObjects";
 
 function toSimpleCatalog(value: unknown): SimpleCatalog | null {
   const item = asRecord(value);
@@ -23,9 +24,9 @@ function toSimpleCatalog(value: unknown): SimpleCatalog | null {
 
 export function toClienteDomain(dto: ClienteDto): Cliente {
   return {
-    clienteId:
-      pickFirstDefined(asStringOrNull(dto.cliente_id), asStringOrNull(dto.clienteId)) ??
-      null,
+    clienteId: toClienteId(
+      pickFirstDefined(asStringOrNull(dto.cliente_id), asStringOrNull(dto.clienteId))
+    ),
     nombre: asStringOrNull(dto.nombre) ?? "",
     razonSocial: asStringOrNull(dto.razonSocial) ?? "",
     identificacionTributaria: toSimpleCatalog(dto.identificacionTributaria),

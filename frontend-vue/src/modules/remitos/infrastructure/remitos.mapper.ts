@@ -7,6 +7,13 @@ import {
   pickFirstDefined
 } from "@/shared/lib/acl/legacyPayload";
 import { parseLegacyDateToTimestamp } from "@/shared/lib/date/legacyDate";
+import {
+  toClienteId,
+  toFechaComercial,
+  toMoney,
+  toProductoId,
+  toTransaccionId
+} from "@/shared/types/valueObjects";
 
 const debugRemitos =
   import.meta.env.DEV &&
@@ -18,24 +25,26 @@ let missingObservacionLogCount = 0;
 
 function toRemitoItem(item: RemitoItemDto): RemitoItem {
   const producto = asRecord(item.producto);
-  const productoID =
-    pickFirstDefined(asStringOrNull(producto?.ID), asStringOrNull(item.productoId)) ??
-    null;
-  const productoid =
-    pickFirstDefined(asStringOrNull(producto?.id), asStringOrNull(item.productoid)) ??
-    null;
+  const productoID = toProductoId(
+    pickFirstDefined(asStringOrNull(producto?.ID), asStringOrNull(item.productoId))
+  );
+  const productoid = toProductoId(
+    pickFirstDefined(asStringOrNull(producto?.id), asStringOrNull(item.productoid))
+  );
   const productoId =
-    pickFirstDefined(productoID, productoid, asStringOrNull(item.productoId)) ?? null;
+    toProductoId(
+      pickFirstDefined(productoID, productoid, asStringOrNull(item.productoId))
+    );
 
   return {
     transaccionCVItemId: asStringOrNull(item.transaccionCVItemId),
-    transaccionId: asStringOrNull(item.transaccionId),
+    transaccionId: toTransaccionId(asStringOrNull(item.transaccionId)),
     productoID,
     productoid,
     productoId,
     descripcion: asStringOrNull(item.descripcion) ?? "",
     cantidad: asNumberOrNull(item.cantidad),
-    precio: asNumberOrNull(item.precio)
+    precio: toMoney(asNumberOrNull(item.precio))
   };
 }
 
@@ -65,23 +74,24 @@ function mapRemito(dto: RemitoDto): Remito {
   }
 
   return {
-    transaccionId: asStringOrNull(dto.transaccionId),
+    transaccionId: toTransaccionId(asStringOrNull(dto.transaccionId)),
     numeroRemito:
       pickFirstDefined(
         asStringOrNull(dto.numeroRemito),
         asStringOrNull(encabezado?.numeroRemito)
       ) ?? "",
-    fecha:
-      pickFirstDefined(asStringOrNull(dto.fecha), asStringOrNull(encabezado?.fecha)) ??
-      null,
+    fecha: toFechaComercial(
+      pickFirstDefined(asStringOrNull(dto.fecha), asStringOrNull(encabezado?.fecha))
+    ),
     observacion,
-    clienteId:
+    clienteId: toClienteId(
       pickFirstDefined(
         asStringOrNull(dto.clienteId),
         asStringOrNull(dto.cliente_id),
         asStringOrNull(relaciones?.clienteId),
         asStringOrNull(relaciones?.cliente_id)
-      ) ?? null,
+      )
+    ),
     vendedorId:
       pickFirstDefined(
         asStringOrNull(dto.vendedorId),
@@ -89,13 +99,14 @@ function mapRemito(dto: RemitoDto): Remito {
         asStringOrNull(relaciones?.vendedorId),
         asStringOrNull(relaciones?.vendedor_id)
       ) ?? null,
-    comisionVendedor:
+    comisionVendedor: toMoney(
       pickFirstDefined(
         asNumberOrNull(dto.comisionVendedor),
         asNumberOrNull(dto.comision_vendedor),
         asNumberOrNull(relaciones?.comisionVendedor),
         asNumberOrNull(relaciones?.comision_vendedor)
-      ) ?? null,
+      )
+    ),
     depositoId:
       pickFirstDefined(
         asStringOrNull(dto.depositoId),

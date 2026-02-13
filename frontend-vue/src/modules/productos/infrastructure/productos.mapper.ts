@@ -7,6 +7,7 @@ import {
   asStringOrNull,
   pickFirstDefined
 } from "@/shared/lib/acl/legacyPayload";
+import { toMoney, toProductoId } from "@/shared/types/valueObjects";
 
 function toSimpleCatalog(value: unknown): SimpleCatalog | null {
   const item = asRecord(value);
@@ -24,13 +25,14 @@ function toSimpleCatalog(value: unknown): SimpleCatalog | null {
 
 export function toProductoDomain(dto: ProductoDto): Producto {
   return {
-    productoId:
+    productoId: toProductoId(
       pickFirstDefined(
         asStringOrNull(dto.productoid),
         asStringOrNull(dto.productoID),
         asStringOrNull(dto.id),
         asStringOrNull(dto.ID)
-      ) ?? null,
+      )
+    ),
     nombre: asStringOrNull(dto.nombre) ?? "",
     codigo: asStringOrNull(dto.codigo) ?? "",
     usrCode:
@@ -42,7 +44,7 @@ export function toProductoDomain(dto: ProductoDto): Producto {
     tasaIva: toSimpleCatalog(dto.tasaIva),
     cuentaContable: toSimpleCatalog(dto.cuentaContable),
     catFormIVA2002: asStringOrNull(dto.catFormIVA2002),
-    precioUltCompra: asNumberOrNull(dto.precioUltCompra),
+    precioUltCompra: toMoney(asNumberOrNull(dto.precioUltCompra)),
     activo: asBooleanOrNull(dto.activo),
     sincronizaStock: asBooleanOrNull(dto.sincronizaStock)
   };

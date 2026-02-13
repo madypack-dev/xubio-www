@@ -7,18 +7,14 @@ import {
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
+import { toClienteId } from "@/shared/types/valueObjects";
 
 const clientesHttpRepository = createClientesHttpRepository(runtimeConfig.apiBaseUrl);
 const clientesMockRepository = createClientesMockRepository();
 
 export function useClienteByIdQuery(clienteId: MaybeRefOrGetter<string | null>) {
   const resolvedId = computed(() => {
-    const value = toValue(clienteId);
-    if (value === null || value === undefined) {
-      return null;
-    }
-    const normalized = String(value).trim();
-    return normalized ? normalized : null;
+    return toClienteId(toValue(clienteId));
   });
 
   return useQuery({

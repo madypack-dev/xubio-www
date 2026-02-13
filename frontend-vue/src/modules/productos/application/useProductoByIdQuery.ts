@@ -7,6 +7,7 @@ import {
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
+import { toProductoId } from "@/shared/types/valueObjects";
 
 const productosHttpRepository = createProductosHttpRepository(runtimeConfig.apiBaseUrl);
 const productosMockRepository = createProductosMockRepository();
@@ -15,12 +16,7 @@ export function useProductoByIdQuery(
   productoId: MaybeRefOrGetter<string | null>
 ) {
   const resolvedId = computed(() => {
-    const value = toValue(productoId);
-    if (value === null || value === undefined) {
-      return null;
-    }
-    const normalized = String(value).trim();
-    return normalized ? normalized : null;
+    return toProductoId(toValue(productoId));
   });
 
   return useQuery({

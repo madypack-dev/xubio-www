@@ -7,6 +7,7 @@ import {
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
+import { toTransaccionId } from "@/shared/types/valueObjects";
 
 const comprobantesHttpRepository = createComprobantesHttpRepository(
   runtimeConfig.apiBaseUrl
@@ -17,12 +18,7 @@ export function useComprobanteDetailQuery(
   comprobanteVentaId: MaybeRefOrGetter<string | null>
 ) {
   const resolvedId = computed(() => {
-    const value = toValue(comprobanteVentaId);
-    if (value === null || value === undefined) {
-      return null;
-    }
-    const normalized = String(value).trim();
-    return normalized ? normalized : null;
+    return toTransaccionId(toValue(comprobanteVentaId));
   });
 
   return useQuery({

@@ -47,7 +47,7 @@ Directriz activa (2026-02-13):
   Que hacer: implementar drill-down completo con rutas equivalentes a query params legacy.
 - [x] Eliminar duplicacion entre capas de datos en Vue (`infrastructure`/`shared/lib`).
   Que hacer: consolidar responsabilidades de acceso y transformacion de datos, borrando codigo no referenciado.
-- [ ] Formalizar modelo de dominio minimo en Vue.
+- [x] Formalizar modelo de dominio minimo en Vue.
   Que hacer: definir entidades y value objects clave (`TransaccionId`, `ClienteId`, `ProductoId`, `FechaComercial`, `Money`).
 
 ## Baja prioridad
