@@ -1,5 +1,6 @@
 const DEFAULT_RUNTIME_ENV = {
   apiBaseUrl: "",
+  devApiBaseUrl: "http://127.0.0.1:8000",
   verboseStartupLogs: false,
   debugRemitos: false,
   observabilityEnabled: import.meta.env.PROD,
@@ -120,9 +121,10 @@ function warnIfLegacyMockFlagEnabled(
   );
 }
 
+const envApiBaseUrl = parseOptionalString(import.meta.env.VITE_API_BASE_URL);
 const apiBaseUrlInput =
-  parseOptionalString(import.meta.env.VITE_API_BASE_URL) ??
-  DEFAULT_RUNTIME_ENV.apiBaseUrl;
+  envApiBaseUrl ??
+  (import.meta.env.DEV ? DEFAULT_RUNTIME_ENV.devApiBaseUrl : DEFAULT_RUNTIME_ENV.apiBaseUrl);
 const normalizedApiBaseUrl = normalizeString(apiBaseUrlInput);
 const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(normalizedApiBaseUrl);
 const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
@@ -142,6 +144,11 @@ warnIfLegacyMockFlagEnabled(
   "VITE_FALLBACK_TO_MOCKS_ON_ERROR",
   fallbackToMocksOnErrorFromEnv
 );
+if (import.meta.env.DEV && envApiBaseUrl === null) {
+  console.info(
+    `[MVP] VITE_API_BASE_URL no definido. Se usa default de desarrollo ${DEFAULT_RUNTIME_ENV.devApiBaseUrl}.`
+  );
+}
 if (import.meta.env.DEV && normalizedApiBaseUrl === "" && !useDevProxyForApi) {
   console.warn(
     "[MVP] VITE_API_BASE_URL esta vacio. Se usara base URL relativa y cualquier error vendra del backend real."

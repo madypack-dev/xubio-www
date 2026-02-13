@@ -4,7 +4,8 @@ import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vitest/config";
 
 const DEFAULT_VITE_ENV = {
-  apiBaseUrl: ""
+  apiBaseUrl: "",
+  devApiBaseUrl: "http://127.0.0.1:8000"
 } as const;
 
 function normalizeProxyTarget(input: string) {
@@ -21,7 +22,11 @@ function normalizeProxyTarget(input: string) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiBaseUrl = String(env.VITE_API_BASE_URL ?? DEFAULT_VITE_ENV.apiBaseUrl).trim();
+  const defaultApiBaseUrl =
+    mode === "development"
+      ? DEFAULT_VITE_ENV.devApiBaseUrl
+      : DEFAULT_VITE_ENV.apiBaseUrl;
+  const apiBaseUrl = String(env.VITE_API_BASE_URL ?? defaultApiBaseUrl).trim();
   const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(apiBaseUrl);
   const proxyTarget = isAbsoluteApiBaseUrl
     ? normalizeProxyTarget(apiBaseUrl)
