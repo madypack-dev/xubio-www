@@ -60,6 +60,7 @@ Decisiones MVP vigentes:
 
 - Performance de tablas: paginacion cliente (sin server-side por ahora).
 - Observabilidad: backend local en `localhost:8000` con endpoint configurable por entorno.
+- Contrato backend observado: `POST /observability/events` responde `202` (ok), `400` (payload invalido), `415` (content-type invalido), `413` (payload grande).
 
 Nota CORS en desarrollo:
 
