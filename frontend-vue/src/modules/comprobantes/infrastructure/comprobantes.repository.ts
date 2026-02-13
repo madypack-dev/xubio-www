@@ -1,11 +1,12 @@
 import type { ComprobantesRepository } from "../domain";
 import { API_ENDPOINTS } from "@/shared/config/apiEndpoints";
 import { MOCK_COMPROBANTES } from "@/shared/config/mockData";
-import { parseListItems, parseSinglePayload } from "@/shared/lib/acl/legacyPayload";
 import {
-  HttpClientError,
-  httpClient
-} from "@/shared/lib/http/httpClient";
+  cloneMockData,
+  fetchLegacyByIdOrNull,
+  fetchLegacyList,
+  getMockByIdOrNull
+} from "@/shared/lib/http/legacyRepository";
 import { toComprobanteDomain, toComprobantesDomain } from "./comprobantes.mapper";
 import { comprobanteDtoSchema } from "./comprobantes.schemas";
 
@@ -14,31 +15,27 @@ export function createComprobantesHttpRepository(
 ): ComprobantesRepository {
   return {
     async list() {
-      const payload = await httpClient.get<unknown>(
-        `${baseUrl}${API_ENDPOINTS.comprobantesVenta}`
-      );
-      const dtos = parseListItems(comprobanteDtoSchema, payload, "comprobantes.list");
-      return toComprobantesDomain(dtos);
+      return fetchLegacyList({
+        baseUrl,
+        endpoint: API_ENDPOINTS.comprobantesVenta,
+        schema: comprobanteDtoSchema,
+        context: "comprobantes.list",
+        transform: toComprobantesDomain
+      });
     },
     async getById(comprobanteVentaId) {
-      const safeId = encodeURIComponent(String(comprobanteVentaId));
-      const endpoint = `${baseUrl}${API_ENDPOINTS.comprobantesVenta}/${safeId}`;
-
-      try {
-        const payload = await httpClient.get<unknown>(endpoint);
-        const dto = parseSinglePayload(
-          comprobanteDtoSchema,
-          payload,
-          "comprobantes.getById"
-        );
-        return toComprobanteDomain(dto);
-      } catch (error) {
-        if (error instanceof HttpClientError && error.status === 404) {
-          console.warn("[MVP] Comprobante no encontrado", { comprobanteVentaId });
-          return null;
+      return fetchLegacyByIdOrNull({
+        baseUrl,
+        endpoint: API_ENDPOINTS.comprobantesVenta,
+        id: comprobanteVentaId,
+        schema: comprobanteDtoSchema,
+        context: "comprobantes.getById",
+        map: toComprobanteDomain,
+        notFound: {
+          message: "[MVP] Comprobante no encontrado",
+          meta: { comprobanteVentaId }
         }
-        throw error;
-      }
+      });
     }
   };
 }
@@ -46,19 +43,18 @@ export function createComprobantesHttpRepository(
 export function createComprobantesMockRepository(): ComprobantesRepository {
   return {
     async list() {
-      return JSON.parse(JSON.stringify(MOCK_COMPROBANTES));
+      return cloneMockData(MOCK_COMPROBANTES);
     },
     async getById(comprobanteVentaId) {
-      const key = String(comprobanteVentaId);
-      const found =
-        MOCK_COMPROBANTES.find(
-          (comprobante) => String(comprobante.comprobanteVentaId) === key
-        ) ?? null;
-      if (!found) {
-        console.warn("[MVP] Comprobante no encontrado en mock", { comprobanteVentaId });
-        return null;
-      }
-      return JSON.parse(JSON.stringify(found));
+      return getMockByIdOrNull({
+        collection: MOCK_COMPROBANTES,
+        id: comprobanteVentaId,
+        resolveItemId: (comprobante) => comprobante.comprobanteVentaId,
+        notFound: {
+          message: "[MVP] Comprobante no encontrado en mock",
+          meta: { comprobanteVentaId }
+        }
+      });
     }
   };
 }

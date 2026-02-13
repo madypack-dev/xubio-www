@@ -5,7 +5,7 @@ const listEnvelopeSchema = z.object({
   items: z.array(z.unknown())
 });
 
-export function parseListPayload(input: unknown, context: string): unknown[] {
+function parseListPayload(input: unknown, context: string): unknown[] {
   if (Array.isArray(input)) {
     return input;
   }
