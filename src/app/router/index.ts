@@ -5,6 +5,7 @@ import ComprobantesPage from "@/modules/comprobantes/presentation/pages/Comproba
 import ListasPrecioPage from "@/modules/listas-precio/presentation/pages/ListasPrecioPage.vue";
 import ProductosPage from "@/modules/productos/presentation/pages/ProductosPage.vue";
 import RemitosPage from "@/modules/remitos/presentation/pages/RemitosPage.vue";
+import VendedoresPage from "@/modules/vendedores/presentation/pages/VendedoresPage.vue";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -30,6 +31,11 @@ const routes: RouteRecordRaw[] = [
     path: "/clientes",
     name: "clientes",
     component: ClientesPage
+  },
+  {
+    path: "/vendedores",
+    name: "vendedores",
+    component: VendedoresPage
   },
   {
     path: "/productos",
@@ -60,11 +66,15 @@ router.beforeEach((to) => {
     }
 
     const hasCliente = hasQueryKey(to.query.cliente);
+    const hasVendedor = hasQueryKey(to.query.vendedor);
     const hasProducto = hasQueryKey(to.query.producto);
     const hasRemito = hasQueryKey(to.query.remitoVenta);
 
     if (hasCliente) {
       return { name: "clientes", query: to.query };
+    }
+    if (hasVendedor) {
+      return { name: "vendedores", query: to.query };
     }
     if (hasProducto) {
       return { name: "productos", query: to.query };

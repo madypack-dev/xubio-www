@@ -5,5 +5,6 @@ export const queryKeys = {
   comprobantes: () => ["comprobantes"] as const,
   comprobanteById: (id: string) => ["comprobantes", "by-id", id] as const,
   clienteById: (id: string) => ["clientes", "by-id", id] as const,
+  vendedorById: (id: string) => ["vendedores", "by-id", id] as const,
   productoById: (id: string) => ["productos", "by-id", id] as const
 };

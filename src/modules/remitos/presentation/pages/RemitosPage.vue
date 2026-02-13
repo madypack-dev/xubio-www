@@ -117,7 +117,18 @@
                     </a>
                     <span v-else>-</span>
                   </td>
-                  <td>{{ remito.vendedorId ?? "-" }}</td>
+                  <td>
+                    <a
+                      v-if="remito.vendedorId"
+                      class="fitba-inline-link"
+                      :href="buildVendedorLink(remito.vendedorId)"
+                      :aria-label="buildGoToVendedorLabel(remito.vendedorId)"
+                      @click.prevent="goToVendedor(remito.vendedorId)"
+                    >
+                      {{ remito.vendedorId }}
+                    </a>
+                    <span v-else>-</span>
+                  </td>
                   <td class="fitba-cell-num text-center">{{ remito.comisionVendedor ?? "-" }}</td>
                   <td class="text-center">{{ remito.depositoId ?? "-" }}</td>
                   <td class="text-center">{{ remito.circuitoContableId ?? "-" }}</td>
@@ -352,6 +363,13 @@ function buildGoToClienteLabel(clienteId: string | null) {
   return `Abrir cliente ${clienteId}`;
 }
 
+function buildGoToVendedorLabel(vendedorId: string | null) {
+  if (!vendedorId) {
+    return "Abrir vendedor";
+  }
+  return `Abrir vendedor ${vendedorId}`;
+}
+
 function buildGoToProductoLabel(productoId: string | null) {
   if (!productoId) {
     return "Abrir producto";
@@ -375,6 +393,16 @@ function buildClienteLink(clienteId: string | null) {
     query: {
       ...route.query,
       cliente: clienteId ?? undefined
+    }
+  }).href;
+}
+
+function buildVendedorLink(vendedorId: string | null) {
+  return router.resolve({
+    name: "vendedores",
+    query: {
+      ...route.query,
+      vendedor: vendedorId ?? undefined
     }
   }).href;
 }
@@ -485,6 +513,25 @@ async function goToCliente(clienteId: string | null) {
     });
   } catch (error) {
     console.error("[MVP] Error al navegar a cliente", { clienteId, error });
+  }
+}
+
+async function goToVendedor(vendedorId: string | null) {
+  if (!vendedorId) {
+    console.warn("[MVP] Se intento navegar a vendedor sin vendedorId.");
+    return;
+  }
+
+  try {
+    await router.push({
+      name: "vendedores",
+      query: {
+        ...route.query,
+        vendedor: vendedorId
+      }
+    });
+  } catch (error) {
+    console.error("[MVP] Error al navegar a vendedor", { vendedorId, error });
   }
 }
 

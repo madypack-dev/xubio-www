@@ -3,6 +3,7 @@ import type { ComprobanteVenta } from "@/modules/comprobantes/domain";
 import type { ListaPrecio } from "@/modules/listas-precio/domain";
 import type { Producto } from "@/modules/productos/domain";
 import type { Remito } from "@/modules/remitos/domain";
+import type { Vendedor } from "@/modules/vendedores/domain";
 
 export const MOCK_REMITOS: Remito[] = [
   {
@@ -155,6 +156,41 @@ export const MOCK_CLIENTES: Record<string, Cliente> = {
     },
     responsabilidadOrganizacionItem: [],
     cuitUpper: "30-70987654-3"
+  }
+};
+
+export const MOCK_VENDEDORES: Record<string, Vendedor> = {
+  "4811": {
+    vendedorId: "4811",
+    nombre: "Juan",
+    apellido: "Perez",
+    email: "juan.perez@example.com",
+    telefono: "+54 11 4444-1111",
+    direccion: "Av. Libertador 101",
+    raw: {
+      vendedor_id: "4811",
+      nombre: "Juan",
+      apellido: "Perez",
+      email: "juan.perez@example.com",
+      telefono: "+54 11 4444-1111",
+      direccion: "Av. Libertador 101"
+    }
+  },
+  "4812": {
+    vendedorId: "4812",
+    nombre: "Maria",
+    apellido: "Gomez",
+    email: "maria.gomez@example.com",
+    telefono: "+54 221 555-2222",
+    direccion: "Calle 8 123",
+    raw: {
+      vendedor_id: "4812",
+      nombre: "Maria",
+      apellido: "Gomez",
+      email: "maria.gomez@example.com",
+      telefono: "+54 221 555-2222",
+      direccion: "Calle 8 123"
+    }
   }
 };
 
