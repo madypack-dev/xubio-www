@@ -41,7 +41,13 @@ Scripts disponibles en Vue:
 - `npm run test:run`
 - `npm run test:coverage`
 
-Variables utiles para Vue (`frontend-vue/.env`):
+Variables de entorno Vue (opcionales):
+
+- No hace falta `.env` para correr el proyecto.
+- Los defaults estan hardcodeados en `frontend-vue/src/shared/config/runtimeConfig.ts` y `frontend-vue/vite.config.ts`.
+- Si necesitas override, crea `frontend-vue/.env.local` con las claves que quieras cambiar.
+
+Claves disponibles:
 
 - `VITE_API_BASE_URL`: base URL real del backend.
 - `VITE_USE_MOCKS`: `true/false` para forzar modo mock.
@@ -49,6 +55,11 @@ Variables utiles para Vue (`frontend-vue/.env`):
 - `VITE_OBSERVABILITY_ENABLED`: `auto/true/false` para captura de errores y metricas.
 - `VITE_OBSERVABILITY_ENDPOINT`: endpoint HTTP opcional para recibir eventos de frontend.
 - `VITE_OBSERVABILITY_SAMPLE_RATE`: muestreo `0..1` para limitar volumen de eventos.
+
+Decisiones MVP vigentes:
+
+- Performance de tablas: paginacion cliente (sin server-side por ahora).
+- Observabilidad: backend local en `localhost:8000` con endpoint configurable por entorno.
 
 Nota CORS en desarrollo:
 
@@ -61,7 +72,6 @@ Nota produccion:
 
 - Si frontend y backend se sirven en el mismo origen (ej. `http://localhost:8000`), deja
   `VITE_API_BASE_URL` vacio para usar rutas relativas (`/API/...`).
-- El proyecto incluye `frontend-vue/.env.production` con esa configuracion por defecto.
 
 ## Ejecutar frontend legacy (actual)
 
@@ -118,4 +128,5 @@ export const API_ENDPOINTS = {
 - Backlog tecnico: `docs/todo.md`
 - ADR de arquitectura Vue: `docs/adr/ADR-001-frontend-vue3-ts-architecture.md`
 - Detalle tecnico actual: `docs/ARQUITECTURA.md`
+- Informe backend MVP (observabilidad): `docs/INFORME_BACKEND_MVP.md`
 - Guia operativa: `AGENTS.md`

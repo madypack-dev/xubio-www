@@ -61,12 +61,12 @@ Directriz activa (2026-02-13):
 - [x] Agregar observabilidad frontend.
   Resuelto (2026-02-13): captura de errores JS globales, metricas de carga/navegacion y timings HTTP con muestreo y endpoint configurable.
 
-## Dudas abiertas (post-hardening)
+## Decisiones cerradas (2026-02-13)
 
-- [ ] Definir backend de observabilidad destino.
-  Pregunta: ¿enviar eventos a endpoint propio (`VITE_OBSERVABILITY_ENDPOINT`) o solo consola/buffer en esta fase?
-- [ ] Confirmar estrategia objetivo para volumen extremo.
-  Pregunta: ¿mantener paginacion cliente actual o priorizar paginacion server-side en endpoints legacy?
+- [x] Backend de observabilidad destino definido.
+  Decision: enviar eventos a backend en `localhost:8000` via `VITE_OBSERVABILITY_ENDPOINT` (MVP: endpoint configurable por entorno).
+- [x] Estrategia de performance para volumen extremo definida.
+  Decision: mantener paginacion cliente actual en esta fase MVP; postergar paginacion server-side hasta requerimiento real.
 
 ## En proceso
 

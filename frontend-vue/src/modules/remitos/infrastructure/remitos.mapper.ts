@@ -14,13 +14,9 @@ import {
   toProductoId,
   toTransaccionId
 } from "@/shared/types/valueObjects";
+import { runtimeConfig } from "@/shared/config/runtimeConfig";
 
-const debugRemitos =
-  import.meta.env.DEV &&
-  (() => {
-    const raw = String(import.meta.env.VITE_DEBUG_REMITOS ?? "").trim().toLowerCase();
-    return raw === "true" || raw === "1";
-  })();
+const debugRemitos = runtimeConfig.debugRemitos;
 let missingObservacionLogCount = 0;
 
 function toRemitoItem(item: RemitoItemDto): RemitoItem {

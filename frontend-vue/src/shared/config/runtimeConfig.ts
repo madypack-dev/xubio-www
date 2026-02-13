@@ -1,27 +1,42 @@
-const apiBaseUrlRaw = import.meta.env.VITE_API_BASE_URL ?? "";
-const useMocksRaw = import.meta.env.VITE_USE_MOCKS ?? "";
-const fallbackToMocksOnErrorRaw =
-  import.meta.env.VITE_FALLBACK_TO_MOCKS_ON_ERROR ?? "";
-const verboseStartupLogsRaw = import.meta.env.VITE_VERBOSE_STARTUP_LOGS ?? "";
-const debugRemitosRaw = import.meta.env.VITE_DEBUG_REMITOS ?? "";
-const observabilityEnabledRaw = import.meta.env.VITE_OBSERVABILITY_ENABLED ?? "";
-const observabilityEndpointRaw = import.meta.env.VITE_OBSERVABILITY_ENDPOINT ?? "";
-const observabilitySampleRateRaw = import.meta.env.VITE_OBSERVABILITY_SAMPLE_RATE ?? "";
-const normalizedUseMocks = String(useMocksRaw).trim().toLowerCase();
-const normalizedFallbackToMocksOnError = String(fallbackToMocksOnErrorRaw)
-  .trim()
-  .toLowerCase();
-const normalizedApiBaseUrl = String(apiBaseUrlRaw).trim();
-const normalizedVerboseStartupLogs = String(verboseStartupLogsRaw)
-  .trim()
-  .toLowerCase();
-const normalizedDebugRemitos = String(debugRemitosRaw).trim().toLowerCase();
-const normalizedObservabilityEnabled = String(observabilityEnabledRaw)
-  .trim()
-  .toLowerCase();
-const normalizedObservabilityEndpoint = String(observabilityEndpointRaw).trim();
-const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(normalizedApiBaseUrl);
-const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
+const DEFAULT_RUNTIME_ENV = {
+  apiBaseUrl: "",
+  fallbackToMocksOnError: import.meta.env.DEV,
+  verboseStartupLogs: false,
+  debugRemitos: false,
+  observabilityEnabled: import.meta.env.PROD,
+  observabilityEndpoint: import.meta.env.DEV
+    ? "http://127.0.0.1:8000/observability/events"
+    : null,
+  observabilitySampleRate: 1
+} as const;
+
+function normalizeString(value: unknown) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value).trim();
+}
+
+function parseBoolean(value: unknown): boolean | null {
+  const normalized = normalizeString(value).toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  if (normalized === "true" || normalized === "1") {
+    return true;
+  }
+  if (normalized === "false" || normalized === "0") {
+    return false;
+  }
+  return null;
+}
+
+function parseOptionalString(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  return String(value).trim();
+}
 
 function isLoopbackHost(hostname: string) {
   const normalized = String(hostname).trim().toLowerCase();
@@ -70,11 +85,11 @@ function shouldUseRelativeApiBase(apiBaseUrl: string) {
 
 function parseObservabilitySampleRate(value: string) {
   if (!value) {
-    return 1;
+    return DEFAULT_RUNTIME_ENV.observabilitySampleRate;
   }
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
-    return 1;
+    return DEFAULT_RUNTIME_ENV.observabilitySampleRate;
   }
   if (parsed < 0) {
     return 0;
@@ -85,35 +100,61 @@ function parseObservabilitySampleRate(value: string) {
   return parsed;
 }
 
+function parseObservabilityEnabled(value: unknown) {
+  const normalized = normalizeString(value).toLowerCase();
+  if (!normalized || normalized === "auto") {
+    return DEFAULT_RUNTIME_ENV.observabilityEnabled;
+  }
+  const parsed = parseBoolean(normalized);
+  return parsed ?? DEFAULT_RUNTIME_ENV.observabilityEnabled;
+}
+
+const apiBaseUrlInput =
+  parseOptionalString(import.meta.env.VITE_API_BASE_URL) ??
+  DEFAULT_RUNTIME_ENV.apiBaseUrl;
+const normalizedApiBaseUrl = normalizeString(apiBaseUrlInput);
+const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(normalizedApiBaseUrl);
+const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
+
 const useRelativeApiBase = shouldUseRelativeApiBase(normalizedApiBaseUrl);
 const resolvedApiBaseUrl =
   useDevProxyForApi || useRelativeApiBase ? "" : normalizedApiBaseUrl;
+const useMocksDefault = import.meta.env.DEV && normalizedApiBaseUrl === "";
 const observabilitySampleRate = parseObservabilitySampleRate(
-  String(observabilitySampleRateRaw).trim()
+  normalizeString(import.meta.env.VITE_OBSERVABILITY_SAMPLE_RATE)
 );
-const observabilityEnabled =
-  normalizedObservabilityEnabled === "true" ||
-  normalizedObservabilityEnabled === "1" ||
-  ((normalizedObservabilityEnabled === "" || normalizedObservabilityEnabled === "auto") &&
-    import.meta.env.PROD);
+const useMocks = parseBoolean(import.meta.env.VITE_USE_MOCKS) ?? useMocksDefault;
+const fallbackToMocksOnError =
+  parseBoolean(import.meta.env.VITE_FALLBACK_TO_MOCKS_ON_ERROR) ??
+  DEFAULT_RUNTIME_ENV.fallbackToMocksOnError;
+const verboseStartupLogs =
+  import.meta.env.DEV &&
+  (parseBoolean(import.meta.env.VITE_VERBOSE_STARTUP_LOGS) ??
+    DEFAULT_RUNTIME_ENV.verboseStartupLogs);
+const debugRemitos =
+  import.meta.env.DEV &&
+  (parseBoolean(import.meta.env.VITE_DEBUG_REMITOS) ??
+    DEFAULT_RUNTIME_ENV.debugRemitos);
+const observabilityEnabled = parseObservabilityEnabled(
+  import.meta.env.VITE_OBSERVABILITY_ENABLED
+);
+const observabilityEndpointOverride = parseOptionalString(
+  import.meta.env.VITE_OBSERVABILITY_ENDPOINT
+);
+const observabilityEndpoint =
+  observabilityEndpointOverride === null
+    ? DEFAULT_RUNTIME_ENV.observabilityEndpoint
+    : observabilityEndpointOverride || null;
 
 export const runtimeConfig = {
   apiBaseUrl: resolvedApiBaseUrl,
   useDevProxyForApi,
   useRelativeApiBase,
-  verboseStartupLogs:
-    import.meta.env.DEV &&
-    (normalizedVerboseStartupLogs === "true" || normalizedVerboseStartupLogs === "1"),
-  debugRemitos:
-    import.meta.env.DEV &&
-    (normalizedDebugRemitos === "true" || normalizedDebugRemitos === "1"),
-  useMocks:
-    normalizedUseMocks === "true" ||
-    (import.meta.env.DEV && normalizedApiBaseUrl === ""),
-  fallbackToMocksOnError:
-    normalizedFallbackToMocksOnError === "true" ||
-    (normalizedFallbackToMocksOnError !== "false" && import.meta.env.DEV),
+  verboseStartupLogs,
+  debugRemitos,
+  useMocks,
+  fallbackToMocksOnError,
   observabilityEnabled,
-  observabilityEndpoint: normalizedObservabilityEndpoint || null,
+  observabilityEndpoint,
   observabilitySampleRate
 };
