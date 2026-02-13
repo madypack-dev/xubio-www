@@ -71,7 +71,6 @@
                   <th scope="col">depositoId</th>
                   <th scope="col">circuitoContableId</th>
                   <th scope="col">items</th>
-                  <th scope="col">acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -81,31 +80,31 @@
                   :class="{ 'table-primary': isSelectedRemito(remito) }"
                 >
                   <td>
-                    <button
+                    <a
                       v-if="remito.transaccionId"
-                      type="button"
-                      class="btn btn-link btn-sm fitba-link-button p-0"
+                      class="fitba-inline-link"
+                      :href="buildRemitoLink(remito.transaccionId)"
                       :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
-                      :aria-pressed="isSelectedRemito(remito)"
-                      @click="selectRemito(remito.transaccionId)"
+                      :aria-current="isSelectedRemito(remito) ? 'true' : undefined"
+                      @click.prevent="selectRemito(remito.transaccionId)"
                     >
                       {{ remito.transaccionId }}
-                    </button>
+                    </a>
                     <span v-else>-</span>
                   </td>
                   <td class="remitos-numero-remito-col">{{ remito.numeroRemito || "-" }}</td>
                   <td class="remitos-fecha-col">{{ formatDateDdMmYyyy(remito.fecha) }}</td>
                   <td>{{ remito.observacion || "-" }}</td>
                   <td>
-                    <button
+                    <a
                       v-if="remito.clienteId"
-                      type="button"
-                      class="btn btn-link btn-sm fitba-link-button p-0"
+                      class="fitba-inline-link"
+                      :href="buildClienteLink(remito.clienteId)"
                       :aria-label="buildGoToClienteLabel(remito.clienteId)"
-                      @click="goToCliente(remito.clienteId)"
+                      @click.prevent="goToCliente(remito.clienteId)"
                     >
                       {{ remito.clienteId }}
-                    </button>
+                    </a>
                     <span v-else>-</span>
                   </td>
                   <td>{{ remito.vendedorId ?? "-" }}</td>
@@ -113,28 +112,6 @@
                   <td>{{ remito.depositoId ?? "-" }}</td>
                   <td>{{ remito.circuitoContableId ?? "-" }}</td>
                   <td>{{ remito.items.length }}</td>
-                  <td>
-                    <div class="d-flex gap-1">
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        :disabled="!remito.transaccionId"
-                        :aria-label="buildSelectRemitoLabel(remito.transaccionId)"
-                        @click="selectRemito(remito.transaccionId)"
-                      >
-                        Ver items
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-outline-success"
-                        :disabled="!remito.clienteId"
-                        :aria-label="buildGoToClienteLabel(remito.clienteId)"
-                        @click="goToCliente(remito.clienteId)"
-                      >
-                        Cliente
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               </tbody>
             </table>
@@ -171,7 +148,6 @@
                 <th scope="col">descripcion</th>
                 <th scope="col">cantidad</th>
                 <th scope="col">precio</th>
-                <th scope="col">acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -179,21 +155,21 @@
                 <td>{{ item.transaccionCVItemId ?? "-" }}</td>
                 <td>{{ item.transaccionId ?? "-" }}</td>
                 <td>{{ item.productoID ?? "-" }}</td>
-                <td>{{ item.productoid ?? "-" }}</td>
+                <td>
+                  <a
+                    v-if="item.productoId"
+                    class="fitba-inline-link"
+                    :href="buildProductoLink(item.productoId)"
+                    :aria-label="buildGoToProductoLabel(item.productoId)"
+                    @click.prevent="goToProducto(item.productoId)"
+                  >
+                    {{ item.productoid ?? item.productoId }}
+                  </a>
+                  <span v-else>{{ item.productoid ?? "-" }}</span>
+                </td>
                 <td>{{ item.descripcion || "-" }}</td>
                 <td>{{ item.cantidad ?? "-" }}</td>
                 <td>{{ item.precio ?? "-" }}</td>
-                <td>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-success"
-                    :disabled="!item.productoId"
-                    :aria-label="buildGoToProductoLabel(item.productoId)"
-                    @click="goToProducto(item.productoId)"
-                  >
-                    Producto
-                  </button>
-                </td>
               </tr>
             </tbody>
           </table>
@@ -207,6 +183,7 @@
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useRemitosQuery } from "../../application";
+import { createRemitosHttpRepository } from "../../infrastructure";
 import type { Remito, RemitoItem } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
@@ -218,7 +195,8 @@ import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 
 const route = useRoute();
 const router = useRouter();
-const remitosQuery = useRemitosQuery();
+const remitosRepository = createRemitosHttpRepository(runtimeConfig.apiBaseUrl);
+const remitosQuery = useRemitosQuery(remitosRepository);
 const selectedRemitoId = ref<string | null>(readQueryValue(route.query.remitoVenta));
 
 watch(
@@ -321,13 +299,6 @@ function isSelectedRemito(remito: Remito) {
   return String(remito.transaccionId ?? "") === selectedRemitoId.value;
 }
 
-function buildSelectRemitoLabel(transaccionId: string | null) {
-  if (!transaccionId) {
-    return "Ver items del remito";
-  }
-  return `Ver items del remito ${transaccionId}`;
-}
-
 function buildSelectRemitoIdLabel(transaccionId: string | null) {
   if (!transaccionId) {
     return "Seleccionar remito";
@@ -347,6 +318,36 @@ function buildGoToProductoLabel(productoId: string | null) {
     return "Abrir producto";
   }
   return `Abrir producto ${productoId}`;
+}
+
+function buildRemitoLink(transaccionId: string | null) {
+  return router.resolve({
+    name: "remitos",
+    query: {
+      ...route.query,
+      remitoVenta: transaccionId ?? undefined
+    }
+  }).href;
+}
+
+function buildClienteLink(clienteId: string | null) {
+  return router.resolve({
+    name: "clientes",
+    query: {
+      ...route.query,
+      cliente: clienteId ?? undefined
+    }
+  }).href;
+}
+
+function buildProductoLink(productoId: string | null) {
+  return router.resolve({
+    name: "productos",
+    query: {
+      ...route.query,
+      producto: productoId ?? undefined
+    }
+  }).href;
 }
 
 function pad2(value: number) {

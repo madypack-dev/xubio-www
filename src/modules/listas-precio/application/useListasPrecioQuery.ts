@@ -1,19 +1,16 @@
 import { useQuery } from "@tanstack/vue-query";
-import { createListasPrecioHttpRepository } from "../infrastructure";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import type { ListasPrecioRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 
-const listasPrecioHttpRepository = createListasPrecioHttpRepository(
-  runtimeConfig.apiBaseUrl
-);
-
-export function useListasPrecioQuery() {
+export function useListasPrecioQuery(
+  listasPrecioRepository: ListasPrecioRepository
+) {
   return useQuery({
     queryKey: queryKeys.listasPrecio(),
     queryFn: async () => {
       try {
-        return await listasPrecioHttpRepository.list();
+        return await listasPrecioRepository.list();
       } catch (error) {
         logApiError(
           "Error al cargar listas de precio desde backend",

@@ -1,15 +1,13 @@
 import { useQuery } from "@tanstack/vue-query";
 import { computed, toValue, type MaybeRefOrGetter } from "vue";
-import { createProductosHttpRepository } from "../infrastructure";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import type { ProductosRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toProductoId } from "@/shared/types/valueObjects";
 
-const productosHttpRepository = createProductosHttpRepository(runtimeConfig.apiBaseUrl);
-
 export function useProductoByIdQuery(
-  productoId: MaybeRefOrGetter<string | null>
+  productoId: MaybeRefOrGetter<string | null>,
+  productosRepository: ProductosRepository
 ) {
   const resolvedId = computed(() => {
     return toProductoId(toValue(productoId));
@@ -24,7 +22,7 @@ export function useProductoByIdQuery(
         return null;
       }
       try {
-        return await productosHttpRepository.getById(resolvedId.value);
+        return await productosRepository.getById(resolvedId.value);
       } catch (error) {
         logApiError("Error al cargar producto desde backend", error, "error");
         throw error;

@@ -77,6 +77,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useListasPrecioQuery } from "../../application";
+import { createListasPrecioHttpRepository } from "../../infrastructure";
+import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
@@ -84,7 +86,8 @@ import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 
-const listasPrecioQuery = useListasPrecioQuery();
+const listasPrecioRepository = createListasPrecioHttpRepository(runtimeConfig.apiBaseUrl);
+const listasPrecioQuery = useListasPrecioQuery(listasPrecioRepository);
 
 const listasPrecio = computed(() => listasPrecioQuery.data.value ?? []);
 

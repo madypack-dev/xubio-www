@@ -92,17 +92,20 @@
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useProductoByIdQuery } from "../../application";
+import { createProductosHttpRepository } from "../../infrastructure";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
+import { runtimeConfig } from "@/shared/config/runtimeConfig";
 
 const route = useRoute();
 const router = useRouter();
 const productoIdInput = ref("");
 const submittedProductoId = ref<string | null>(readQueryValue(route.query.producto));
-const productoQuery = useProductoByIdQuery(submittedProductoId);
+const productosRepository = createProductosHttpRepository(runtimeConfig.apiBaseUrl);
+const productoQuery = useProductoByIdQuery(submittedProductoId, productosRepository);
 
 watch(
   () => route.query.producto,

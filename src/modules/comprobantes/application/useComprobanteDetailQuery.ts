@@ -1,17 +1,13 @@
 import { useQuery } from "@tanstack/vue-query";
 import { computed, toValue, type MaybeRefOrGetter } from "vue";
-import { createComprobantesHttpRepository } from "../infrastructure";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import type { ComprobantesRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toTransaccionId } from "@/shared/types/valueObjects";
 
-const comprobantesHttpRepository = createComprobantesHttpRepository(
-  runtimeConfig.apiBaseUrl
-);
-
 export function useComprobanteDetailQuery(
-  comprobanteVentaId: MaybeRefOrGetter<string | null>
+  comprobanteVentaId: MaybeRefOrGetter<string | null>,
+  comprobantesRepository: ComprobantesRepository
 ) {
   const resolvedId = computed(() => {
     return toTransaccionId(toValue(comprobanteVentaId));
@@ -28,7 +24,7 @@ export function useComprobanteDetailQuery(
         return null;
       }
       try {
-        return await comprobantesHttpRepository.getById(resolvedId.value);
+        return await comprobantesRepository.getById(resolvedId.value);
       } catch (error) {
         logApiError(
           "Error al cargar detalle de comprobante desde backend",

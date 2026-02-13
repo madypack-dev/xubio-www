@@ -173,14 +173,15 @@ body {
   color: #f5fff4;
 }
 
-.btn-link.fitba-link-button {
-  font-size: inherit;
-  font-weight: 600;
+.fitba-inline-link {
   color: var(--fitba-accent-strong);
+  font-weight: 600;
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
-.btn-link.fitba-link-button:hover {
+.fitba-inline-link:hover {
   color: #143f1c;
 }
 

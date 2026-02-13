@@ -59,7 +59,6 @@
                   <th scope="col">fecha</th>
                   <th scope="col">cliente</th>
                   <th scope="col">importeTotal</th>
-                  <th scope="col">accion</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,22 +66,22 @@
                   v-for="comprobante in paginatedComprobantes"
                   :key="comprobante.comprobanteVentaId ?? comprobante.nombre"
                 >
-                  <td>{{ comprobante.comprobanteVentaId ?? "-" }}</td>
+                  <td>
+                    <a
+                      v-if="comprobante.comprobanteVentaId"
+                      class="fitba-inline-link"
+                      :href="buildComprobanteLink(comprobante.comprobanteVentaId)"
+                      :aria-label="buildDetailLabel(comprobante.comprobanteVentaId)"
+                      @click.prevent="selectComprobanteById(comprobante.comprobanteVentaId)"
+                    >
+                      {{ comprobante.comprobanteVentaId }}
+                    </a>
+                    <span v-else>-</span>
+                  </td>
                   <td>{{ comprobante.nombre || "-" }}</td>
                   <td>{{ comprobante.fecha ?? "-" }}</td>
                   <td>{{ comprobante.clienteNombre || "-" }}</td>
                   <td>{{ comprobante.importeTotal ?? "-" }}</td>
-                  <td>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-primary"
-                      :disabled="!comprobante.comprobanteVentaId"
-                      :aria-label="buildDetailLabel(comprobante.comprobanteVentaId)"
-                      @click="selectComprobanteById(comprobante.comprobanteVentaId)"
-                    >
-                      Ver detalle
-                    </button>
-                  </td>
                 </tr>
               </tbody>
             </table>
@@ -166,8 +165,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useComprobanteDetailQuery, useComprobantesQuery } from "../../application";
+import { createComprobantesHttpRepository } from "../../infrastructure";
+import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
@@ -176,9 +178,24 @@ import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 
-const comprobantesQuery = useComprobantesQuery();
-const selectedComprobanteId = ref<string | null>(null);
-const detailQuery = useComprobanteDetailQuery(selectedComprobanteId);
+const route = useRoute();
+const router = useRouter();
+const comprobantesRepository = createComprobantesHttpRepository(runtimeConfig.apiBaseUrl);
+const comprobantesQuery = useComprobantesQuery(comprobantesRepository);
+const selectedComprobanteId = ref<string | null>(
+  readQueryValue(route.query.comprobanteVenta)
+);
+const detailQuery = useComprobanteDetailQuery(
+  selectedComprobanteId,
+  comprobantesRepository
+);
+
+watch(
+  () => route.query.comprobanteVenta,
+  (value) => {
+    selectedComprobanteId.value = readQueryValue(value);
+  }
+);
 
 const comprobantes = computed(() => comprobantesQuery.data.value ?? []);
 const comprobanteDetail = computed(() => detailQuery.data.value ?? null);
@@ -214,6 +231,25 @@ function buildDetailLabel(comprobanteVentaId: string | null) {
   return `Ver detalle de comprobante ${comprobanteVentaId}`;
 }
 
+function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) {
+    return null;
+  }
+  const normalized = String(raw).trim();
+  return normalized ? normalized : null;
+}
+
+function buildComprobanteLink(comprobanteVentaId: string | null) {
+  return router.resolve({
+    name: "comprobantes",
+    query: {
+      ...route.query,
+      comprobanteVenta: comprobanteVentaId ?? undefined
+    }
+  }).href;
+}
+
 async function reloadComprobantes() {
   try {
     await comprobantesQuery.refetch();
@@ -222,13 +258,19 @@ async function reloadComprobantes() {
   }
 }
 
-function selectComprobanteById(comprobanteVentaId: string | null) {
+async function selectComprobanteById(comprobanteVentaId: string | null) {
   try {
     if (!comprobanteVentaId) {
       console.warn("[MVP] Se intento abrir detalle sin comprobanteVentaId.");
       return;
     }
     selectedComprobanteId.value = comprobanteVentaId;
+    await router.replace({
+      query: {
+        ...route.query,
+        comprobanteVenta: comprobanteVentaId
+      }
+    });
   } catch (error) {
     console.error("[MVP] Error al seleccionar comprobante", {
       comprobanteVentaId,
@@ -237,9 +279,15 @@ function selectComprobanteById(comprobanteVentaId: string | null) {
   }
 }
 
-function clearSelection() {
+async function clearSelection() {
   try {
     selectedComprobanteId.value = null;
+    await router.replace({
+      query: {
+        ...route.query,
+        comprobanteVenta: undefined
+      }
+    });
   } catch (error) {
     console.error("[MVP] Error al limpiar seleccion de comprobante", error);
   }

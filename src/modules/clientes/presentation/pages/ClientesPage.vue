@@ -96,17 +96,20 @@
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useClienteByIdQuery } from "../../application";
+import { createClientesHttpRepository } from "../../infrastructure";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
+import { runtimeConfig } from "@/shared/config/runtimeConfig";
 
 const route = useRoute();
 const router = useRouter();
 const clienteIdInput = ref("");
 const submittedClienteId = ref<string | null>(readQueryValue(route.query.cliente));
-const clienteQuery = useClienteByIdQuery(submittedClienteId);
+const clientesRepository = createClientesHttpRepository(runtimeConfig.apiBaseUrl);
+const clienteQuery = useClienteByIdQuery(submittedClienteId, clientesRepository);
 
 watch(
   () => route.query.cliente,

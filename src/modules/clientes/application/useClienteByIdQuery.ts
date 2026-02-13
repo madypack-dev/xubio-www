@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/vue-query";
 import { computed, toValue, type MaybeRefOrGetter } from "vue";
-import { createClientesHttpRepository } from "../infrastructure";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import type { ClientesRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toClienteId } from "@/shared/types/valueObjects";
 
-const clientesHttpRepository = createClientesHttpRepository(runtimeConfig.apiBaseUrl);
-
-export function useClienteByIdQuery(clienteId: MaybeRefOrGetter<string | null>) {
+export function useClienteByIdQuery(
+  clienteId: MaybeRefOrGetter<string | null>,
+  clientesRepository: ClientesRepository
+) {
   const resolvedId = computed(() => {
     return toClienteId(toValue(clienteId));
   });
@@ -22,7 +22,7 @@ export function useClienteByIdQuery(clienteId: MaybeRefOrGetter<string | null>) 
         return null;
       }
       try {
-        return await clientesHttpRepository.getById(resolvedId.value);
+        return await clientesRepository.getById(resolvedId.value);
       } catch (error) {
         logApiError("Error al cargar cliente desde backend", error, "error");
         throw error;
