@@ -1,0 +1,225 @@
+export class HttpClientError extends Error {
+  readonly status: number;
+  readonly url: string;
+  readonly bodyText: string;
+
+  constructor({
+    status,
+    url,
+    message,
+    bodyText
+  }: {
+    status: number;
+    url: string;
+    message: string;
+    bodyText: string;
+  }) {
+    super(message);
+    this.name = "HttpClientError";
+    this.status = status;
+    this.url = url;
+    this.bodyText = bodyText;
+  }
+}
+
+export class HttpTimeoutError extends Error {
+  readonly timeoutMs: number;
+  readonly url: string;
+
+  constructor({ timeoutMs, url }: { timeoutMs: number; url: string }) {
+    super(`Timeout de ${timeoutMs}ms en ${url}`);
+    this.name = "HttpTimeoutError";
+    this.timeoutMs = timeoutMs;
+    this.url = url;
+  }
+}
+
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+type ParseMode = "json" | "text" | "raw";
+
+type RequestOptions<TBody> = {
+  method?: HttpMethod;
+  headers?: HeadersInit;
+  body?: TBody;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  parseAs?: ParseMode;
+};
+
+function isAbortError(error: unknown): error is DOMException {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeHeaders(headers?: HeadersInit) {
+  return new Headers(headers ?? {});
+}
+
+function serializeBody<TBody>(body: TBody, headers: Headers) {
+  if (body === undefined || body === null) {
+    return undefined;
+  }
+
+  if (
+    typeof body === "string" ||
+    body instanceof Blob ||
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof ArrayBuffer
+  ) {
+    return body;
+  }
+
+  if (isObject(body) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  return JSON.stringify(body);
+}
+
+function mergeSignals(primary: AbortSignal, secondary?: AbortSignal) {
+  if (!secondary) {
+    return primary;
+  }
+
+  const mergedController = new AbortController();
+
+  const abortMergedSignal = () => {
+    mergedController.abort();
+  };
+
+  primary.addEventListener("abort", abortMergedSignal, { once: true });
+  secondary.addEventListener("abort", abortMergedSignal, { once: true });
+
+  return mergedController.signal;
+}
+
+async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
+  if (parseAs === "raw") {
+    return response as TResponse;
+  }
+
+  if (response.status === 204) {
+    return null as TResponse;
+  }
+
+  if (parseAs === "text") {
+    return (await response.text()) as TResponse;
+  }
+
+  const bodyText = await response.text();
+  if (!bodyText.trim()) {
+    return null as TResponse;
+  }
+
+  try {
+    return JSON.parse(bodyText) as TResponse;
+  } catch (_error) {
+    const contentType = response.headers.get("content-type") ?? "";
+    const looksLikeHtml =
+      contentType.includes("text/html") ||
+      bodyText.trim().toLowerCase().startsWith("<!doctype html") ||
+      bodyText.trim().startsWith("<html");
+
+    const message = looksLikeHtml
+      ? `Se esperaba JSON y se recibio HTML en ${response.url || "<unknown>"}. Revisa VITE_API_BASE_URL o activa mocks.`
+      : `JSON invalido recibido desde ${response.url || "<unknown>"}.`;
+
+    throw new HttpClientError({
+      status: response.status,
+      url: response.url || "<unknown>",
+      bodyText,
+      message
+    });
+  }
+}
+
+async function readErrorBody(response: Response) {
+  try {
+    return await response.text();
+  } catch (_error) {
+    return "";
+  }
+}
+
+async function request<TResponse, TBody = unknown>(
+  url: string,
+  options: RequestOptions<TBody> = {}
+): Promise<TResponse> {
+  const {
+    method = "GET",
+    headers: inputHeaders,
+    body,
+    signal,
+    timeoutMs = 15_000,
+    parseAs = "json"
+  } = options;
+
+  const timeoutController = new AbortController();
+  const headers = normalizeHeaders(inputHeaders);
+  const serializedBody = serializeBody(body, headers);
+  const requestSignal = mergeSignals(timeoutController.signal, signal);
+  const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: serializedBody,
+      signal: requestSignal
+    });
+
+    if (!response.ok) {
+      const bodyText = await readErrorBody(response);
+      throw new HttpClientError({
+        status: response.status,
+        url,
+        bodyText,
+        message: bodyText || `HTTP ${response.status}`
+      });
+    }
+
+    return await parseBody<TResponse>(response, parseAs);
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new HttpTimeoutError({ timeoutMs, url });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export const httpClient = {
+  get<TResponse>(url: string, options?: Omit<RequestOptions<never>, "method">) {
+    return request<TResponse>(url, { ...options, method: "GET" });
+  },
+  post<TResponse, TBody = unknown>(
+    url: string,
+    body: TBody,
+    options?: Omit<RequestOptions<TBody>, "method" | "body">
+  ) {
+    return request<TResponse, TBody>(url, { ...options, method: "POST", body });
+  },
+  put<TResponse, TBody = unknown>(
+    url: string,
+    body: TBody,
+    options?: Omit<RequestOptions<TBody>, "method" | "body">
+  ) {
+    return request<TResponse, TBody>(url, { ...options, method: "PUT", body });
+  },
+  patch<TResponse, TBody = unknown>(
+    url: string,
+    body: TBody,
+    options?: Omit<RequestOptions<TBody>, "method" | "body">
+  ) {
+    return request<TResponse, TBody>(url, { ...options, method: "PATCH", body });
+  },
+  delete<TResponse>(url: string, options?: Omit<RequestOptions<never>, "method">) {
+    return request<TResponse>(url, { ...options, method: "DELETE" });
+  }
+};

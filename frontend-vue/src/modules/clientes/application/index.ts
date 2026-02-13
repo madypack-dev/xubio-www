@@ -1,0 +1,1 @@
+export { useClienteByIdQuery } from "./useClienteByIdQuery";

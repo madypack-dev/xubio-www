@@ -1,0 +1,157 @@
+<template>
+  <section class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Cliente por ID (MVP)</h2>
+
+      <form class="row g-2 mb-3" @submit.prevent="submitSearch">
+        <div class="col-12 col-md-4">
+          <input
+            v-model="clienteIdInput"
+            type="text"
+            class="form-control"
+            placeholder="clienteId"
+          />
+        </div>
+        <div class="col-12 col-md-auto d-flex gap-2">
+          <button type="submit" class="btn btn-success">Buscar</button>
+          <button type="button" class="btn btn-outline-secondary" @click="clearSearch">
+            Limpiar
+          </button>
+        </div>
+      </form>
+
+      <AsyncEmptyMessage
+        v-if="!submittedClienteId"
+        message="Ingresa un ID para buscar un cliente."
+      />
+
+      <AsyncLoadingMessage
+        v-else-if="clienteQuery.isLoading.value"
+        message="Cargando cliente..."
+      />
+
+      <AsyncErrorMessage v-else-if="errorMessage" :message="errorMessage" />
+
+      <AsyncNotFoundMessage
+        v-else-if="!cliente"
+        message="No se encontro cliente para el ID indicado."
+      />
+
+      <div v-else class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            <tr>
+              <th scope="row">clienteId</th>
+              <td>{{ cliente.clienteId ?? "-" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">nombre</th>
+              <td>{{ cliente.nombre || "-" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">razonSocial</th>
+              <td>{{ cliente.razonSocial || "-" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">cuit</th>
+              <td>{{ cliente.cuit || "-" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">email</th>
+              <td>{{ cliente.email || "-" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">telefono</th>
+              <td>{{ cliente.telefono || "-" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">direccion</th>
+              <td>{{ cliente.direccion || "-" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
+import { useClienteByIdQuery } from "../../application";
+import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
+import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
+import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
+import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
+import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
+
+const route = useRoute();
+const router = useRouter();
+const clienteIdInput = ref("");
+const submittedClienteId = ref<string | null>(readQueryValue(route.query.cliente));
+const clienteQuery = useClienteByIdQuery(submittedClienteId);
+
+watch(
+  () => route.query.cliente,
+  (value) => {
+    const normalized = readQueryValue(value);
+    submittedClienteId.value = normalized;
+    clienteIdInput.value = normalized ?? "";
+  },
+  { immediate: true }
+);
+
+const cliente = computed(() => clienteQuery.data.value ?? null);
+const errorMessage = computed(() => {
+  const error = clienteQuery.error.value;
+  if (!error) {
+    return null;
+  }
+  return resolveErrorMessage(error, "Error inesperado al cargar cliente.");
+});
+
+function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) {
+    return null;
+  }
+  const normalized = String(raw).trim();
+  return normalized ? normalized : null;
+}
+
+async function submitSearch() {
+  const normalized = clienteIdInput.value.trim();
+  if (!normalized) {
+    console.warn("[MVP] Busqueda de cliente vacia.");
+    submittedClienteId.value = null;
+    return;
+  }
+
+  try {
+    submittedClienteId.value = normalized;
+    await router.replace({
+      query: {
+        ...route.query,
+        cliente: normalized
+      }
+    });
+  } catch (error) {
+    console.error("[MVP] Error al buscar cliente", { clienteId: normalized, error });
+  }
+}
+
+async function clearSearch() {
+  try {
+    clienteIdInput.value = "";
+    submittedClienteId.value = null;
+    await router.replace({
+      query: {
+        ...route.query,
+        cliente: undefined
+      }
+    });
+  } catch (error) {
+    console.error("[MVP] Error al limpiar busqueda de cliente", error);
+  }
+}
+</script>

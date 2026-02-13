@@ -1,0 +1,1 @@
+export { useRemitosQuery } from "./useRemitosQuery";

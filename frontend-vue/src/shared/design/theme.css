@@ -1,0 +1,30 @@
+:root {
+  --fitba-font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  --fitba-bg: #f4f6f4;
+  --fitba-panel: #ffffff;
+  --fitba-ink: #102114;
+  --fitba-accent: #0f5132;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background-color: var(--fitba-bg);
+  color: var(--fitba-ink);
+  font-family: var(--fitba-font-mono);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.nav-link {
+  border: 1px solid #bdd8c4;
+  color: #0f5132;
+}
+
+.nav-link.active {
+  background-color: #0f5132 !important;
+  border-color: #0f5132 !important;
+  color: #f6fff9 !important;
+}
