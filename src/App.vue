@@ -21,7 +21,7 @@
               <span>Recargar</span>
             </span>
             <span class="fitba-command-item">
-              <kbd class="fitba-key">F12</kbd>
+              <kbd class="fitba-key">Back / Alt+Left</kbd>
               <span>Volver</span>
             </span>
             <span class="fitba-command-item">

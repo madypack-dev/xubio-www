@@ -23,7 +23,7 @@ function normalizeProxyTarget(input: string) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const defaultApiBaseUrl =
-    mode === "development"
+    mode !== "production"
       ? DEFAULT_VITE_ENV.devApiBaseUrl
       : DEFAULT_VITE_ENV.apiBaseUrl;
   const apiBaseUrl = String(env.VITE_API_BASE_URL ?? defaultApiBaseUrl).trim();

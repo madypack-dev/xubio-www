@@ -312,7 +312,7 @@ useAs400Shortcuts({
   },
   onF3: clearSelectedRemito,
   onF5: reloadRemitos,
-  onF12: () => router.back()
+  onBack: () => router.back()
 });
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {

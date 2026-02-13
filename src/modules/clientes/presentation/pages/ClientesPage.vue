@@ -140,7 +140,7 @@ useAs400Shortcuts({
   onF2: () => clienteInputRef.value?.focus(),
   onF3: clearSearch,
   onF5: reloadCliente,
-  onF12: () => router.back()
+  onBack: () => router.back()
 });
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {

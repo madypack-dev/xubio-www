@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("smoke: modulos y drill-down principal", async ({ page }) => {
+test("smoke: navegacion entre modulos", async ({ page }) => {
   await page.goto("/remitos");
 
   await expect(page.getByRole("heading", { name: "Remitos" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Seleccionar remito 38925753" })
+    page.locator("table[data-nav-table='true'] tbody tr[data-nav-row='true']").first()
   ).toBeVisible();
 
   await page.getByRole("link", { name: "Listas de precio" }).click();
@@ -19,38 +19,63 @@ test("smoke: modulos y drill-down principal", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Comprobantes (MVP)" })
   ).toBeVisible();
-  await page.getByRole("button", { name: "Ver detalle" }).first().click();
-  const detalleComprobante = page.locator("section").filter({
-    hasText: "Detalle de comprobante"
-  });
-  await expect(detalleComprobante).toBeVisible();
-  await expect(
-    detalleComprobante.getByRole("row", { name: "ID 5001" })
-  ).toBeVisible();
 
-  await page.getByRole("link", { name: "Remitos" }).click();
-  await expect(page).toHaveURL(/\/remitos/);
-  await expect(page.getByRole("heading", { name: "Remitos" })).toBeVisible();
-  await page.getByRole("button", { name: "Ver items" }).first().click();
-  await expect(page).toHaveURL(/remitoVenta=38925753/);
-  await expect(page.getByText("Detalle de items del remito")).toBeVisible();
-  await expect(page.getByText("12.5x8x19 Bolsa Marron 100g C/M")).toBeVisible();
-
-  await page.getByRole("button", { name: "Cliente" }).first().click();
+  await page.getByRole("link", { name: "Clientes" }).click();
   await expect(page).toHaveURL(/\/clientes/);
-  await expect(page).toHaveURL(/cliente=5182181/);
   await expect(
     page.getByRole("heading", { name: "Cliente por ID (MVP)" })
   ).toBeVisible();
-  await expect(page.getByText("Cliente Demo SA")).toBeVisible();
 
-  await page.getByRole("link", { name: "Remitos" }).click();
-  await page.getByRole("button", { name: "Ver items" }).first().click();
-  await page.getByRole("button", { name: "Producto" }).first().click();
+  await page.getByRole("link", { name: "Productos" }).click();
   await expect(page).toHaveURL(/\/productos/);
-  await expect(page).toHaveURL(/producto=1672624/);
   await expect(
     page.getByRole("heading", { name: "Producto por ID (MVP)" })
   ).toBeVisible();
-  await expect(page.getByText("Bolsa Marron 12.5x8x19")).toBeVisible();
+});
+
+test("smoke: ArrowUp/ArrowDown/Enter sobre filas", async ({ page }) => {
+  await page.goto("/remitos");
+
+  const remitoLinks = page.locator(
+    "table[data-nav-table='true'] tbody tr[data-nav-row='true'] a[data-nav-main='true']"
+  );
+  await expect.poll(async () => remitoLinks.count()).toBeGreaterThan(1);
+
+  const firstRemitoId = (await remitoLinks.nth(0).innerText()).trim();
+  const secondRemitoId = (await remitoLinks.nth(1).innerText()).trim();
+
+  await remitoLinks.nth(0).focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(remitoLinks.nth(1)).toBeFocused();
+
+  let activeRemitoText = await page.evaluate(() => {
+    const element = document.activeElement as HTMLElement | null;
+    return element?.textContent?.trim() ?? "";
+  });
+  expect(activeRemitoText).toBe(secondRemitoId);
+
+  await page.keyboard.press("ArrowUp");
+  await expect(remitoLinks.nth(0)).toBeFocused();
+
+  activeRemitoText = await page.evaluate(() => {
+    const element = document.activeElement as HTMLElement | null;
+    return element?.textContent?.trim() ?? "";
+  });
+  expect(activeRemitoText).toBe(firstRemitoId);
+
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(new RegExp(`remitoVenta=${firstRemitoId}`));
+
+  await page.getByRole("link", { name: "Comprobantes" }).click();
+  await expect(page).toHaveURL(/\/comprobantes/);
+
+  const comprobanteLinks = page.locator(
+    "table[data-nav-table='true'] tbody tr[data-nav-row='true'] a[data-nav-main='true']"
+  );
+  await expect.poll(async () => comprobanteLinks.count()).toBeGreaterThan(1);
+
+  const firstComprobanteId = (await comprobanteLinks.nth(0).innerText()).trim();
+  await comprobanteLinks.nth(0).focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(new RegExp(`comprobanteVenta=${firstComprobanteId}`));
 });

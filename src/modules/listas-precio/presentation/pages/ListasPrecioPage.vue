@@ -115,7 +115,7 @@ const errorMessage = computed(() => {
 useAs400Shortcuts({
   onF2: () => reloadButtonRef.value?.focus(),
   onF5: reloadListasPrecio,
-  onF12: () => router.back()
+  onBack: () => router.back()
 });
 
 function formatBoolean(value: boolean | null) {

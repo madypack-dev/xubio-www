@@ -250,7 +250,7 @@ useAs400Shortcuts({
   },
   onF3: clearSelection,
   onF5: reloadComprobantes,
-  onF12: () => router.back()
+  onBack: () => router.back()
 });
 
 function buildDetailLabel(comprobanteVentaId: string | null) {

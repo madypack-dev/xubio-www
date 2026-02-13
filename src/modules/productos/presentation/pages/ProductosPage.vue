@@ -136,7 +136,7 @@ useAs400Shortcuts({
   onF2: () => productoInputRef.value?.focus(),
   onF3: clearSearch,
   onF5: reloadProducto,
-  onF12: () => router.back()
+  onBack: () => router.back()
 });
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {

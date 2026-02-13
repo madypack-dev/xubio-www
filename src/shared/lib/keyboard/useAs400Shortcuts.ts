@@ -4,15 +4,26 @@ export type As400Shortcuts = {
   onF2?: () => void | Promise<void>;
   onF3?: () => void | Promise<void>;
   onF5?: () => void | Promise<void>;
-  onF12?: () => void | Promise<void>;
+  onBack?: () => void | Promise<void>;
 };
 
 const SHORTCUT_HANDLER_BY_KEY: Record<string, keyof As400Shortcuts> = {
   F2: "onF2",
   F3: "onF3",
   F5: "onF5",
-  F12: "onF12"
+  Backspace: "onBack",
+  BrowserBack: "onBack"
 };
+
+function isAltArrowBackShortcut(event: KeyboardEvent) {
+  return (
+    event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.shiftKey &&
+    event.key === "ArrowLeft"
+  );
+}
 
 function isKeyFromEditableElement(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -35,16 +46,22 @@ export function useAs400Shortcuts(
     if (event.defaultPrevented || event.repeat) {
       return;
     }
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+    const isAltBackShortcut = isAltArrowBackShortcut(event);
+    if (!isAltBackShortcut && (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
       return;
     }
 
-    const shortcutName = SHORTCUT_HANDLER_BY_KEY[event.key];
+    const shortcutName = isAltBackShortcut ? "onBack" : SHORTCUT_HANDLER_BY_KEY[event.key];
     if (!shortcutName) {
       return;
     }
 
-    if (options?.disableWhenEditing && isKeyFromEditableElement(event.target)) {
+    const isEditingTarget = isKeyFromEditableElement(event.target);
+    if (shortcutName === "onBack" && isEditingTarget) {
+      return;
+    }
+
+    if (options?.disableWhenEditing && isEditingTarget) {
       return;
     }
 
