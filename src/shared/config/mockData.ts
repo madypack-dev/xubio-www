@@ -57,64 +57,104 @@ export const MOCK_CLIENTES: Record<string, Cliente> = {
   "5182181": {
     clienteId: "5182181",
     nombre: "Cliente Demo SA",
+    primerApellido: "",
+    segundoApellido: "",
+    primerNombre: "",
+    otrosNombres: "",
     razonSocial: "Cliente Demo Sociedad Anonima",
+    nombreComercial: "Cliente Demo",
     identificacionTributaria: {
       ID: "80",
       id: "80",
       nombre: "CUIT",
       codigo: "CUIT"
     },
+    digitoVerificacion: "8",
     categoriaFiscal: {
       ID: "1",
       id: "1",
       nombre: "Responsable Inscripto",
       codigo: "RI"
     },
-    cuit: "30-71234567-8",
-    cuitUpper: "30-71234567-8",
-    responsabilidadOrganizacionItem: [],
-    esClienteExtranjero: false,
-    esProveedor: false,
+    provincia: {
+      provinciaId: "2",
+      codigo: "B",
+      nombre: "Buenos Aires",
+      pais: "Argentina"
+    },
     direccion: "Av. Siempreviva 123",
     email: "cliente.demo@example.com",
     telefono: "+54 11 4000-0000",
-    provincia: { nombre: "Buenos Aires" },
-    pais: { ID: "AR", id: "AR", nombre: "Argentina", codigo: "AR" },
+    codigoPostal: "1000",
     cuentaVenta: null,
     cuentaCompra: null,
+    pais: { ID: "AR", id: "AR", nombre: "Argentina", codigo: "AR" },
+    localidad: { ID: "CABA", id: "CABA", nombre: "CABA", codigo: "CABA" },
     usrCode: "CLI-5182181",
-    descripcion: "Cliente de prueba para MVP"
+    listaPrecioVenta: { ID: "1", id: "1", nombre: "Lista Minorista", codigo: "LP1" },
+    descripcion: "Cliente de prueba para MVP",
+    esClienteExtranjero: false,
+    esProveedor: false,
+    cuit: "30-71234567-8",
+    tipoDeOrganizacion: {
+      ID: "EMP",
+      id: "EMP",
+      nombre: "Empresa",
+      codigo: "EMP"
+    },
+    responsabilidadOrganizacionItem: [],
+    cuitUpper: "30-71234567-8"
   },
   "5182182": {
     clienteId: "5182182",
     nombre: "Distribuidora Norte SRL",
+    primerApellido: "",
+    segundoApellido: "",
+    primerNombre: "",
+    otrosNombres: "",
     razonSocial: "Distribuidora Norte SRL",
+    nombreComercial: "Distribuidora Norte",
     identificacionTributaria: {
       ID: "80",
       id: "80",
       nombre: "CUIT",
       codigo: "CUIT"
     },
+    digitoVerificacion: "3",
     categoriaFiscal: {
       ID: "1",
       id: "1",
       nombre: "Responsable Inscripto",
       codigo: "RI"
     },
-    cuit: "30-70987654-3",
-    cuitUpper: "30-70987654-3",
-    responsabilidadOrganizacionItem: [],
-    esClienteExtranjero: false,
-    esProveedor: false,
+    provincia: {
+      provinciaId: "2",
+      codigo: "B",
+      nombre: "Buenos Aires",
+      pais: "Argentina"
+    },
     direccion: "Calle 50 1400",
     email: "norte@example.com",
     telefono: "+54 221 500-1000",
-    provincia: { nombre: "Buenos Aires" },
-    pais: { ID: "AR", id: "AR", nombre: "Argentina", codigo: "AR" },
+    codigoPostal: "1900",
     cuentaVenta: null,
     cuentaCompra: null,
+    pais: { ID: "AR", id: "AR", nombre: "Argentina", codigo: "AR" },
+    localidad: { ID: "LP", id: "LP", nombre: "La Plata", codigo: "LP" },
     usrCode: "CLI-5182182",
-    descripcion: "Cliente de prueba para MVP"
+    listaPrecioVenta: { ID: "2", id: "2", nombre: "Lista Mayorista", codigo: "LP2" },
+    descripcion: "Cliente de prueba para MVP",
+    esClienteExtranjero: false,
+    esProveedor: false,
+    cuit: "30-70987654-3",
+    tipoDeOrganizacion: {
+      ID: "EMP",
+      id: "EMP",
+      nombre: "Empresa",
+      codigo: "EMP"
+    },
+    responsabilidadOrganizacionItem: [],
+    cuitUpper: "30-70987654-3"
   }
 };
 

@@ -69,10 +69,10 @@
                   <th scope="col">observacion</th>
                   <th scope="col">clienteId</th>
                   <th scope="col">vendedorId</th>
-                  <th scope="col">comisionVendedor</th>
-                  <th scope="col">depositoId</th>
-                  <th scope="col">circuitoContableId</th>
-                  <th scope="col">items</th>
+                  <th scope="col" class="text-center">comisionVendedor</th>
+                  <th scope="col" class="text-center">depositoId</th>
+                  <th scope="col" class="text-center">circuitoContableId</th>
+                  <th scope="col" class="text-center">items</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,10 +118,10 @@
                     <span v-else>-</span>
                   </td>
                   <td>{{ remito.vendedorId ?? "-" }}</td>
-                  <td class="fitba-cell-num">{{ remito.comisionVendedor ?? "-" }}</td>
-                  <td>{{ remito.depositoId ?? "-" }}</td>
-                  <td>{{ remito.circuitoContableId ?? "-" }}</td>
-                  <td class="fitba-cell-num">{{ remito.items.length }}</td>
+                  <td class="fitba-cell-num text-center">{{ remito.comisionVendedor ?? "-" }}</td>
+                  <td class="text-center">{{ remito.depositoId ?? "-" }}</td>
+                  <td class="text-center">{{ remito.circuitoContableId ?? "-" }}</td>
+                  <td class="fitba-cell-num text-center">{{ remito.items.length }}</td>
                 </tr>
               </tbody>
             </table>

@@ -9,26 +9,43 @@ export type SimpleCatalog = {
   codigo: string;
 };
 
+export type ProvinciaCatalog = {
+  provinciaId: string | null;
+  codigo: string;
+  nombre: string;
+  pais: string;
+};
+
 export type Cliente = {
   clienteId: ClienteId | null;
   nombre: string;
+  primerApellido: string;
+  segundoApellido: string;
+  primerNombre: string;
+  otrosNombres: string;
   razonSocial: string;
+  nombreComercial: string;
   identificacionTributaria: SimpleCatalog | null;
+  digitoVerificacion: string;
   categoriaFiscal: SimpleCatalog | null;
-  cuit: string;
-  cuitUpper: string;
-  responsabilidadOrganizacionItem: unknown[];
-  esClienteExtranjero: boolean | null;
-  esProveedor: boolean | null;
+  provincia: ProvinciaCatalog | null;
   direccion: string;
   email: string;
   telefono: string;
-  provincia: Record<string, unknown> | null;
-  pais: SimpleCatalog | null;
+  codigoPostal: string;
   cuentaVenta: SimpleCatalog | null;
   cuentaCompra: SimpleCatalog | null;
+  pais: SimpleCatalog | null;
+  localidad: SimpleCatalog | null;
   usrCode: string;
+  listaPrecioVenta: SimpleCatalog | null;
   descripcion: string;
+  esClienteExtranjero: boolean | null;
+  esProveedor: boolean | null;
+  cuit: string;
+  tipoDeOrganizacion: SimpleCatalog | null;
+  responsabilidadOrganizacionItem: SimpleCatalog[];
+  cuitUpper: string;
 };
 
 export interface ClientesRepository {

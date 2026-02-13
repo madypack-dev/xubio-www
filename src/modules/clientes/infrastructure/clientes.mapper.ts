@@ -1,4 +1,4 @@
-import type { Cliente, SimpleCatalog } from "../domain";
+import type { Cliente, ProvinciaCatalog, SimpleCatalog } from "../domain";
 import type { ClienteDto } from "./clientes.schemas";
 import {
   asBooleanOrNull,
@@ -22,31 +22,78 @@ function toSimpleCatalog(value: unknown): SimpleCatalog | null {
   };
 }
 
+function toProvinciaCatalog(value: unknown): ProvinciaCatalog | null {
+  const item = asRecord(value);
+  if (!item) {
+    return null;
+  }
+
+  return {
+    provinciaId: pickFirstDefined(
+      asStringOrNull(item.provincia_id),
+      asStringOrNull(item.provinciaId),
+      asStringOrNull(item.id),
+      asStringOrNull(item.ID)
+    ),
+    codigo: asStringOrNull(item.codigo) ?? "",
+    nombre: asStringOrNull(item.nombre) ?? "",
+    pais: asStringOrNull(item.pais) ?? ""
+  };
+}
+
+function toSimpleCatalogArray(value: unknown): SimpleCatalog[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => toSimpleCatalog(item))
+    .filter((item): item is SimpleCatalog => item !== null);
+}
+
 export function toClienteDomain(dto: ClienteDto): Cliente {
   return {
     clienteId: toClienteId(
       pickFirstDefined(asStringOrNull(dto.cliente_id), asStringOrNull(dto.clienteId))
     ),
     nombre: asStringOrNull(dto.nombre) ?? "",
+    primerApellido: asStringOrNull(dto.primerApellido) ?? "",
+    segundoApellido: asStringOrNull(dto.segundoApellido) ?? "",
+    primerNombre: asStringOrNull(dto.primerNombre) ?? "",
+    otrosNombres: asStringOrNull(dto.otrosNombres) ?? "",
     razonSocial: asStringOrNull(dto.razonSocial) ?? "",
+    nombreComercial: asStringOrNull(dto.nombreComercial) ?? "",
     identificacionTributaria: toSimpleCatalog(dto.identificacionTributaria),
+    digitoVerificacion: asStringOrNull(dto.digitoVerificacion) ?? "",
     categoriaFiscal: toSimpleCatalog(dto.categoriaFiscal),
-    cuit: asStringOrNull(dto.cuit) ?? "",
-    cuitUpper: asStringOrNull(dto.CUIT) ?? "",
-    responsabilidadOrganizacionItem: Array.isArray(dto.responsabilidadOrganizacionItem)
-      ? dto.responsabilidadOrganizacionItem
-      : [],
-    esClienteExtranjero: asBooleanOrNull(dto.esclienteextranjero),
-    esProveedor: asBooleanOrNull(dto.esProveedor),
+    provincia: toProvinciaCatalog(dto.provincia),
     direccion: asStringOrNull(dto.direccion) ?? "",
     email: asStringOrNull(dto.email) ?? "",
     telefono: asStringOrNull(dto.telefono) ?? "",
-    provincia: asRecord(dto.provincia),
+    codigoPostal: asStringOrNull(dto.codigoPostal) ?? "",
+    cuentaVenta: toSimpleCatalog(
+      pickFirstDefined(dto.cuentaVenta_id, dto.cuentaVentaId)
+    ),
+    cuentaCompra: toSimpleCatalog(
+      pickFirstDefined(dto.cuentaCompra_id, dto.cuentaCompraId)
+    ),
     pais: toSimpleCatalog(dto.pais),
-    cuentaVenta: toSimpleCatalog(dto.cuentaVenta_id),
-    cuentaCompra: toSimpleCatalog(dto.cuentaCompra_id),
+    localidad: toSimpleCatalog(dto.localidad),
     usrCode:
       pickFirstDefined(asStringOrNull(dto.usrCode), asStringOrNull(dto.usrcode)) ?? "",
-    descripcion: asStringOrNull(dto.descripcion) ?? ""
+    listaPrecioVenta: toSimpleCatalog(dto.listaPrecioVenta),
+    descripcion: asStringOrNull(dto.descripcion) ?? "",
+    esClienteExtranjero: asBooleanOrNull(
+      pickFirstDefined(dto.esclienteextranjero, dto.esClienteExtranjero)
+    ),
+    esProveedor: asBooleanOrNull(dto.esProveedor),
+    cuit: asStringOrNull(dto.cuit) ?? "",
+    tipoDeOrganizacion: toSimpleCatalog(
+      pickFirstDefined(dto.tipoDeOrganizacion, dto.tipoorganizacion)
+    ),
+    responsabilidadOrganizacionItem: toSimpleCatalogArray(
+      dto.responsabilidadOrganizacionItem
+    ),
+    cuitUpper: asStringOrNull(dto.CUIT) ?? "",
   };
 }
