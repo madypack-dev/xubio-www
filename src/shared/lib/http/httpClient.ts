@@ -100,6 +100,14 @@ function mergeSignals(primary: AbortSignal, secondary?: AbortSignal) {
   return mergedController.signal;
 }
 
+function previewText(text: string, maxLength = 220) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, maxLength)}...`;
+}
+
 async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
   if (parseAs === "raw") {
     return response as TResponse;
@@ -120,7 +128,7 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
 
   try {
     return JSON.parse(bodyText) as TResponse;
-  } catch (_error) {
+  } catch (error) {
     const contentType = response.headers.get("content-type") ?? "";
     const looksLikeHtml =
       contentType.includes("text/html") ||
@@ -128,8 +136,16 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
       bodyText.trim().startsWith("<html");
 
     const message = looksLikeHtml
-      ? `Se esperaba JSON y se recibio HTML en ${response.url || "<unknown>"}. Revisa VITE_API_BASE_URL o activa mocks.`
+      ? `Se esperaba JSON y se recibio HTML en ${response.url || "<unknown>"}. Revisa VITE_API_BASE_URL y el proxy /API.`
       : `JSON invalido recibido desde ${response.url || "<unknown>"}.`;
+    console.error("[MVP] Error parseando respuesta HTTP", {
+      url: response.url || "<unknown>",
+      status: response.status,
+      parseAs,
+      contentType,
+      bodyPreview: previewText(bodyText),
+      errorName: error instanceof Error ? error.name : "UnknownError"
+    });
 
     throw new HttpClientError({
       status: response.status,
@@ -211,6 +227,12 @@ async function request<TResponse, TBody = unknown>(
   } catch (error) {
     if (isAbortError(error)) {
       const timeoutError = new HttpTimeoutError({ timeoutMs, url });
+      console.error("[MVP] Timeout en request HTTP", {
+        method,
+        url,
+        timeoutMs,
+        durationMs: elapsedMs()
+      });
       trackHttpRequest({
         method,
         url,
@@ -220,6 +242,24 @@ async function request<TResponse, TBody = unknown>(
         errorName: timeoutError.name
       });
       throw timeoutError;
+    }
+    if (error instanceof HttpClientError) {
+      console.error("[MVP] Error HTTP en request", {
+        method,
+        url,
+        status: error.status,
+        message: error.message,
+        bodyPreview: previewText(error.bodyText),
+        durationMs: elapsedMs()
+      });
+    } else {
+      console.error("[MVP] Error de red/no controlado en request", {
+        method,
+        url,
+        durationMs: elapsedMs(),
+        errorName: error instanceof Error ? error.name : "UnknownError",
+        message: error instanceof Error ? error.message : String(error)
+      });
     }
     trackHttpRequest({
       method,

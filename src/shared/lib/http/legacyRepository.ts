@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { parseListItems, parseSinglePayload } from "@/shared/lib/acl/legacyPayload";
+import { logApiError } from "./httpErrorSummary";
 import { HttpClientError, httpClient } from "./httpClient";
 
 type EntityId = string | number;
@@ -30,9 +31,14 @@ export async function fetchLegacyList<TDto, TResult>({
   context: string;
   transform: (dtos: TDto[]) => TResult;
 }): Promise<TResult> {
-  const payload = await httpClient.get<unknown>(buildUrl(baseUrl, endpoint));
-  const dtos = parseListItems(schema, payload, context);
-  return transform(dtos);
+  try {
+    const payload = await httpClient.get<unknown>(buildUrl(baseUrl, endpoint));
+    const dtos = parseListItems(schema, payload, context);
+    return transform(dtos);
+  } catch (error) {
+    logApiError(`Fallo ${context} en fetchLegacyList`, error, "error");
+    throw error;
+  }
 }
 
 export async function fetchLegacyByIdOrNull<TDto, TResult>({
@@ -64,6 +70,7 @@ export async function fetchLegacyByIdOrNull<TDto, TResult>({
       logNotFound(notFound);
       return null;
     }
+    logApiError(`Fallo ${context} en fetchLegacyByIdOrNull`, error, "error");
     throw error;
   }
 }

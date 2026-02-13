@@ -1,6 +1,5 @@
 const DEFAULT_RUNTIME_ENV = {
   apiBaseUrl: "",
-  fallbackToMocksOnError: import.meta.env.DEV,
   verboseStartupLogs: false,
   debugRemitos: false,
   observabilityEnabled: import.meta.env.PROD,
@@ -109,6 +108,18 @@ function parseObservabilityEnabled(value: unknown) {
   return parsed ?? DEFAULT_RUNTIME_ENV.observabilityEnabled;
 }
 
+function warnIfLegacyMockFlagEnabled(
+  envName: "VITE_USE_MOCKS" | "VITE_FALLBACK_TO_MOCKS_ON_ERROR",
+  value: boolean | null
+) {
+  if (value !== true) {
+    return;
+  }
+  console.error(
+    `[MVP] ${envName}=true fue ignorado. El modo mock/fallback fue deshabilitado.`
+  );
+}
+
 const apiBaseUrlInput =
   parseOptionalString(import.meta.env.VITE_API_BASE_URL) ??
   DEFAULT_RUNTIME_ENV.apiBaseUrl;
@@ -119,14 +130,23 @@ const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
 const useRelativeApiBase = shouldUseRelativeApiBase(normalizedApiBaseUrl);
 const resolvedApiBaseUrl =
   useDevProxyForApi || useRelativeApiBase ? "" : normalizedApiBaseUrl;
-const useMocksDefault = import.meta.env.DEV && normalizedApiBaseUrl === "";
 const observabilitySampleRate = parseObservabilitySampleRate(
   normalizeString(import.meta.env.VITE_OBSERVABILITY_SAMPLE_RATE)
 );
-const useMocks = parseBoolean(import.meta.env.VITE_USE_MOCKS) ?? useMocksDefault;
-const fallbackToMocksOnError =
-  parseBoolean(import.meta.env.VITE_FALLBACK_TO_MOCKS_ON_ERROR) ??
-  DEFAULT_RUNTIME_ENV.fallbackToMocksOnError;
+const useMocksFromEnv = parseBoolean(import.meta.env.VITE_USE_MOCKS);
+const fallbackToMocksOnErrorFromEnv = parseBoolean(
+  import.meta.env.VITE_FALLBACK_TO_MOCKS_ON_ERROR
+);
+warnIfLegacyMockFlagEnabled("VITE_USE_MOCKS", useMocksFromEnv);
+warnIfLegacyMockFlagEnabled(
+  "VITE_FALLBACK_TO_MOCKS_ON_ERROR",
+  fallbackToMocksOnErrorFromEnv
+);
+if (import.meta.env.DEV && normalizedApiBaseUrl === "" && !useDevProxyForApi) {
+  console.warn(
+    "[MVP] VITE_API_BASE_URL esta vacio. Se usara base URL relativa y cualquier error vendra del backend real."
+  );
+}
 const verboseStartupLogs =
   import.meta.env.DEV &&
   (parseBoolean(import.meta.env.VITE_VERBOSE_STARTUP_LOGS) ??
@@ -152,8 +172,6 @@ export const runtimeConfig = {
   useRelativeApiBase,
   verboseStartupLogs,
   debugRemitos,
-  useMocks,
-  fallbackToMocksOnError,
   observabilityEnabled,
   observabilityEndpoint,
   observabilitySampleRate

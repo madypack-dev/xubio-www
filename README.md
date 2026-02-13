@@ -50,8 +50,6 @@ Variables de entorno Vue (opcionales):
 Claves disponibles:
 
 - `VITE_API_BASE_URL`: base URL real del backend.
-- `VITE_USE_MOCKS`: `true/false` para forzar modo mock.
-- `VITE_FALLBACK_TO_MOCKS_ON_ERROR`: `true/false` para usar mock si la API responde con error.
 - `VITE_OBSERVABILITY_ENABLED`: `auto/true/false` para captura de errores y metricas.
 - `VITE_OBSERVABILITY_ENDPOINT`: endpoint HTTP opcional para recibir eventos de frontend.
 - `VITE_OBSERVABILITY_SAMPLE_RATE`: muestreo `0..1` para limitar volumen de eventos.
@@ -64,10 +62,10 @@ Decisiones MVP vigentes:
 
 Nota CORS en desarrollo:
 
-- Si `VITE_API_BASE_URL` es absoluto (ej. `http://127.0.0.1:8000`) y `VITE_USE_MOCKS=false`,
+- Si `VITE_API_BASE_URL` es absoluto (ej. `http://127.0.0.1:8000`),
   el frontend usa proxy de Vite para `/API` y evita CORS.
 - Para desarrollo local se recomienda `127.0.0.1` en lugar de `localhost` para evitar problemas de proxy por IPv6 (`::1`).
-- Si queres usar mock local, deja `VITE_API_BASE_URL` vacio y `VITE_USE_MOCKS=true`.
+- El modo mock/fallback del frontend Vue esta deshabilitado.
 
 Nota produccion:
 

@@ -5,6 +5,7 @@ import {
   cloneMockData,
   fetchLegacyList
 } from "@/shared/lib/http/legacyRepository";
+import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { toRemitosDomain } from "./remitos.mapper";
 import { remitoDtoSchema } from "./remitos.schemas";
 
@@ -13,13 +14,18 @@ export function createRemitosHttpRepository(
 ): RemitosRepository {
   return {
     async list() {
-      return fetchLegacyList({
-        baseUrl,
-        endpoint: API_ENDPOINTS.remitos,
-        schema: remitoDtoSchema,
-        context: "remitos.list",
-        transform: toRemitosDomain
-      });
+      try {
+        return await fetchLegacyList({
+          baseUrl,
+          endpoint: API_ENDPOINTS.remitos,
+          schema: remitoDtoSchema,
+          context: "remitos.list",
+          transform: toRemitosDomain
+        });
+      } catch (error) {
+        logApiError("Fallo remitos.repository.list", error, "error");
+        throw error;
+      }
     }
   };
 }

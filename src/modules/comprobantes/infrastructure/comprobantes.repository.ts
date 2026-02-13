@@ -7,6 +7,7 @@ import {
   fetchLegacyList,
   getMockByIdOrNull
 } from "@/shared/lib/http/legacyRepository";
+import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { toComprobanteDomain, toComprobantesDomain } from "./comprobantes.mapper";
 import { comprobanteDtoSchema } from "./comprobantes.schemas";
 
@@ -15,27 +16,37 @@ export function createComprobantesHttpRepository(
 ): ComprobantesRepository {
   return {
     async list() {
-      return fetchLegacyList({
-        baseUrl,
-        endpoint: API_ENDPOINTS.comprobantesVenta,
-        schema: comprobanteDtoSchema,
-        context: "comprobantes.list",
-        transform: toComprobantesDomain
-      });
+      try {
+        return await fetchLegacyList({
+          baseUrl,
+          endpoint: API_ENDPOINTS.comprobantesVenta,
+          schema: comprobanteDtoSchema,
+          context: "comprobantes.list",
+          transform: toComprobantesDomain
+        });
+      } catch (error) {
+        logApiError("Fallo comprobantes.repository.list", error, "error");
+        throw error;
+      }
     },
     async getById(comprobanteVentaId) {
-      return fetchLegacyByIdOrNull({
-        baseUrl,
-        endpoint: API_ENDPOINTS.comprobantesVenta,
-        id: comprobanteVentaId,
-        schema: comprobanteDtoSchema,
-        context: "comprobantes.getById",
-        map: toComprobanteDomain,
-        notFound: {
-          message: "[MVP] Comprobante no encontrado",
-          meta: { comprobanteVentaId }
-        }
-      });
+      try {
+        return await fetchLegacyByIdOrNull({
+          baseUrl,
+          endpoint: API_ENDPOINTS.comprobantesVenta,
+          id: comprobanteVentaId,
+          schema: comprobanteDtoSchema,
+          context: "comprobantes.getById",
+          map: toComprobanteDomain,
+          notFound: {
+            message: "[MVP] Comprobante no encontrado",
+            meta: { comprobanteVentaId }
+          }
+        });
+      } catch (error) {
+        logApiError("Fallo comprobantes.repository.getById", error, "error");
+        throw error;
+      }
     }
   };
 }
