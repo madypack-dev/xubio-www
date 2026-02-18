@@ -41,18 +41,20 @@ Scripts disponibles en Vue:
 - `npm run test:run`
 - `npm run test:coverage`
 
-Variables de entorno Vue (opcionales):
+Variables de entorno Vue (política actualizada):
 
-- No hace falta `.env` para correr el proyecto.
-- Los defaults estan hardcodeados en `frontend-vue/src/shared/config/runtimeConfig.ts` y `frontend-vue/vite.config.ts`.
-- Si necesitas override, crea `frontend-vue/.env.local` con las claves que quieras cambiar.
+- No es obligatorio definir `.env` para levantar el proyecto: los defaults se mantienen en código.
+- Ruta de defaults: `frontend-vue/src/shared/config/runtimeConfig.ts` y `frontend-vue/vite.config.ts`.
+- Política: sólo se documenta y soporta `VITE_API_BASE_URL` como variable de entorno.
 
-Claves disponibles:
+Soporte actual:
 
-- `VITE_API_BASE_URL`: base URL real del backend.
-- `VITE_OBSERVABILITY_ENABLED`: `auto/true/false` para captura de errores y metricas.
-- `VITE_OBSERVABILITY_ENDPOINT`: endpoint HTTP opcional para recibir eventos de frontend.
-- `VITE_OBSERVABILITY_SAMPLE_RATE`: muestreo `0..1` para limitar volumen de eventos.
+- `VITE_API_BASE_URL`: base URL del backend. Única variable recomendada para sobrescribir por entorno (`.env.local`, `.env.production.local`).
+
+Nota operativa:
+
+- Las variables relacionadas con observabilidad y flags de depuración se gestionan desde `runtimeConfig.ts` como valores por defecto y NO se recomiendan como variables de entorno para evitar inconsistencias entre builds.
+- Si necesitás crear una excepción (por ejemplo, permitir `VITE_OBSERVABILITY_ENDPOINT` en un entorno de staging), pedirlo y lo documentamos explícitamente.
 
 Decisiones MVP vigentes:
 

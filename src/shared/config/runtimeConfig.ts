@@ -132,18 +132,9 @@ const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
 const useRelativeApiBase = shouldUseRelativeApiBase(normalizedApiBaseUrl);
 const resolvedApiBaseUrl =
   useDevProxyForApi || useRelativeApiBase ? "" : normalizedApiBaseUrl;
-const observabilitySampleRate = parseObservabilitySampleRate(
-  normalizeString(import.meta.env.VITE_OBSERVABILITY_SAMPLE_RATE)
-);
-const useMocksFromEnv = parseBoolean(import.meta.env.VITE_USE_MOCKS);
-const fallbackToMocksOnErrorFromEnv = parseBoolean(
-  import.meta.env.VITE_FALLBACK_TO_MOCKS_ON_ERROR
-);
-warnIfLegacyMockFlagEnabled("VITE_USE_MOCKS", useMocksFromEnv);
-warnIfLegacyMockFlagEnabled(
-  "VITE_FALLBACK_TO_MOCKS_ON_ERROR",
-  fallbackToMocksOnErrorFromEnv
-);
+// Observability and debug flags are controlled by defaults in this file.
+// We intentionally avoid reading additional VITE_ variables here; only
+// `VITE_API_BASE_URL` is kept as an override coming from the environment.
 if (import.meta.env.DEV && envApiBaseUrl === null) {
   console.info(
     `[MVP] VITE_API_BASE_URL no definido. Se usa default de desarrollo ${DEFAULT_RUNTIME_ENV.devApiBaseUrl}.`
@@ -154,24 +145,11 @@ if (import.meta.env.DEV && normalizedApiBaseUrl === "" && !useDevProxyForApi) {
     "[MVP] VITE_API_BASE_URL esta vacio. Se usara base URL relativa y cualquier error vendra del backend real."
   );
 }
-const verboseStartupLogs =
-  import.meta.env.DEV &&
-  (parseBoolean(import.meta.env.VITE_VERBOSE_STARTUP_LOGS) ??
-    DEFAULT_RUNTIME_ENV.verboseStartupLogs);
-const debugRemitos =
-  import.meta.env.DEV &&
-  (parseBoolean(import.meta.env.VITE_DEBUG_REMITOS) ??
-    DEFAULT_RUNTIME_ENV.debugRemitos);
-const observabilityEnabled = parseObservabilityEnabled(
-  import.meta.env.VITE_OBSERVABILITY_ENABLED
-);
-const observabilityEndpointOverride = parseOptionalString(
-  import.meta.env.VITE_OBSERVABILITY_ENDPOINT
-);
-const observabilityEndpoint =
-  observabilityEndpointOverride === null
-    ? DEFAULT_RUNTIME_ENV.observabilityEndpoint
-    : observabilityEndpointOverride || null;
+const verboseStartupLogs = import.meta.env.DEV && DEFAULT_RUNTIME_ENV.verboseStartupLogs;
+const debugRemitos = import.meta.env.DEV && DEFAULT_RUNTIME_ENV.debugRemitos;
+const observabilityEnabled = DEFAULT_RUNTIME_ENV.observabilityEnabled;
+const observabilityEndpoint = DEFAULT_RUNTIME_ENV.observabilityEndpoint;
+const observabilitySampleRate = DEFAULT_RUNTIME_ENV.observabilitySampleRate;
 
 export const runtimeConfig = {
   apiBaseUrl: resolvedApiBaseUrl,
