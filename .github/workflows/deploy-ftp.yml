@@ -26,12 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftps' }}
-      DEPLOY_PORT: ${{ inputs.deploy_port || '' }}
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -50,6 +47,28 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
         run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftps' }}
+      DEPLOY_PORT: ${{ inputs.deploy_port || '' }}
+
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
 
       - name: Debug validate deploy secrets and DNS
         id: preflight
@@ -198,7 +217,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ env.DEPLOY_PROTOCOL }}
           port: ${{ steps.preflight.outputs.deploy_port }}
-          local-dir: ./dist/
+          local-dir: dist/
           server-dir: public_html/xubio-www/
           dangerous-clean-slate: false
 
