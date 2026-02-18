@@ -87,6 +87,12 @@ jobs:
           fi
 
           raw_server="$FTP_SERVER"
+          raw_server="${raw_server//$'\r'/}"
+          raw_server="$(echo "$raw_server" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          raw_server="${raw_server#\"}"
+          raw_server="${raw_server%\"}"
+          raw_server="${raw_server#\'}"
+          raw_server="${raw_server%\'}"
           normalized_server="$raw_server"
           normalized_server="${normalized_server#ftp://}"
           normalized_server="${normalized_server#ftps://}"
@@ -107,6 +113,11 @@ jobs:
             exit 1
           fi
 
+          if [[ "$host_part" =~ [[:space:]] ]]; then
+            echo "ERROR: FTP_SERVER contiene espacios internos no válidos: '$host_part'" >&2
+            exit 1
+          fi
+
           if [ "$raw_server" != "$host_part" ]; then
             echo "WARN: FTP_SERVER tenía formato no recomendado ('$raw_server'). Se usará host normalizado: '$host_part'."
           fi
@@ -121,6 +132,20 @@ jobs:
               getent hosts "$host_part" | awk '{print "-> resolved: "$1" -> "$2}'
             else
               echo "ERROR: Hostname did not resolve via getent." >&2
+              echo "Debug: host length=${#host_part}, ascii-safe='$host_part'"
+              if command -v nslookup >/dev/null 2>&1; then
+                echo "Debug: nslookup output (first lines):"
+                nslookup "$host_part" | sed -n '1,10p' || true
+              else
+                echo "Debug: installing dnsutils for nslookup/dig..."
+                sudo apt-get update -y >/dev/null
+                sudo apt-get install -y dnsutils >/dev/null
+                nslookup "$host_part" | sed -n '1,10p' || true
+              fi
+              if command -v dig >/dev/null 2>&1; then
+                echo "Debug: dig A => $(dig +short A "$host_part" | tr '\n' ' ' || true)"
+                echo "Debug: dig AAAA => $(dig +short AAAA "$host_part" | tr '\n' ' ' || true)"
+              fi
               exit 1
             fi
           else
