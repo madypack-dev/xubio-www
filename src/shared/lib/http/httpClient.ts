@@ -278,10 +278,11 @@ async function parseBody<TResponse>(
     const looksLikeHtml = looksLikeHtmlResponse(contentType, bodyText);
     const likelyNgrokInterstitial =
       looksLikeHtml && /ngrok/i.test(bodyText.slice(0, 2500));
+    const shouldSuggestNgrokHeader = import.meta.env.DEV && likelyNgrokInterstitial;
 
     const message = looksLikeHtml
       ? `Se esperaba JSON y se recibio HTML en ${response.url || "<unknown>"}. Revisa VITE_API_BASE_URL y el proxy /API.${
-          likelyNgrokInterstitial
+          shouldSuggestNgrokHeader
             ? " Posible pagina de advertencia de ngrok: verifica el endpoint publicado y el header ngrok-skip-browser-warning."
             : ""
         }`

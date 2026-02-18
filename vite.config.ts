@@ -31,6 +31,8 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = isAbsoluteApiBaseUrl
     ? normalizeProxyTarget(apiBaseUrl)
     : "";
+  const buildOutDir = String(env.BUILD_OUT_DIR ?? "dist").trim() || "dist";
+  const isOutDirInsideWorkspace = !buildOutDir.startsWith("/");
 
   return {
     plugins: [vue()],
@@ -53,6 +55,10 @@ export default defineConfig(({ mode }) => {
             }
           }
         : undefined
+    },
+    build: {
+      outDir: buildOutDir,
+      emptyOutDir: isOutDirInsideWorkspace
     },
     test: {
       environment: "jsdom",
