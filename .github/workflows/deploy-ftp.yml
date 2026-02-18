@@ -26,7 +26,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  build_dist:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -46,7 +66,7 @@ jobs:
       - name: Build
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-        run: npm run build
+        run: npx vite build
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
@@ -56,7 +76,7 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: build
+    needs: [typecheck, build_dist]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
