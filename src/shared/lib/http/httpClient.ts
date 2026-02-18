@@ -104,21 +104,12 @@ function isNgrokUrl(url: string) {
   }
 }
 
-function isLocalDevOrigin() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const hostname = window.location.hostname.toLowerCase();
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
-}
-
 function applyRequestDiagnostics(url: string, headers: Headers, parseAs: ParseMode) {
   if (parseAs === "json" && !headers.has("Accept")) {
     headers.set("Accept", "application/json");
   }
 
-  if (isLocalDevOrigin() && isNgrokUrl(url) && !headers.has("ngrok-skip-browser-warning")) {
+  if (isNgrokUrl(url) && !headers.has("ngrok-skip-browser-warning")) {
     headers.set("ngrok-skip-browser-warning", "true");
   }
 }
