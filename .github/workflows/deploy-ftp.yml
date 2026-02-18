@@ -54,6 +54,7 @@ jobs:
         shell: bash
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_SERVER_IP: ${{ secrets.FTP_SERVER_IP }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           DEPLOY_PROTOCOL: ${{ env.DEPLOY_PROTOCOL }}
@@ -122,10 +123,9 @@ jobs:
             echo "WARN: FTP_SERVER tenía formato no recomendado ('$raw_server'). Se usará host normalizado: '$host_part'."
           fi
 
-          echo "ftp_server_host=$host_part" >> "$GITHUB_OUTPUT"
-
           echo "Deploy protocol: $protocol"
           echo "Target port: $target_port"
+          resolved_target="$host_part"
           echo "Resolving hostname: $host_part"
           if command -v getent >/dev/null 2>&1; then
             if getent hosts "$host_part" >/dev/null 2>&1; then
@@ -146,7 +146,12 @@ jobs:
                 echo "Debug: dig A => $(dig +short A "$host_part" | tr '\n' ' ' || true)"
                 echo "Debug: dig AAAA => $(dig +short AAAA "$host_part" | tr '\n' ' ' || true)"
               fi
-              exit 1
+              if [ -n "${FTP_SERVER_IP:-}" ]; then
+                echo "WARN: DNS falló para '$host_part'. Se usará FTP_SERVER_IP como fallback."
+                resolved_target="$FTP_SERVER_IP"
+              else
+                exit 1
+              fi
             fi
           else
             echo "getent not available, attempting nslookup (installing dnsutils)..."
@@ -156,20 +161,28 @@ jobs:
               nslookup "$host_part" | sed -n '1,5p'
             else
               echo "ERROR: Hostname did not resolve via nslookup." >&2
-              exit 1
+              if [ -n "${FTP_SERVER_IP:-}" ]; then
+                echo "WARN: DNS falló para '$host_part'. Se usará FTP_SERVER_IP como fallback."
+                resolved_target="$FTP_SERVER_IP"
+              else
+                exit 1
+              fi
             fi
           fi
+          echo "Resolved deploy target: $resolved_target"
           echo "Testing TCP reachability on target port..."
           if command -v nc >/dev/null 2>&1; then
-            if nc -z -w5 "$host_part" "$target_port" >/dev/null 2>&1; then
-              echo "Port $target_port is reachable on $host_part"
+            if nc -z -w5 "$resolved_target" "$target_port" >/dev/null 2>&1; then
+              echo "Port $target_port is reachable on $resolved_target"
             else
-              echo "ERROR: Port $target_port is NOT reachable on $host_part" >&2
+              echo "ERROR: Port $target_port is NOT reachable on $resolved_target" >&2
               exit 1
             fi
           else
             echo "nc not available; skipping port checks (install netcat if needed)."
           fi
+
+          echo "ftp_server_host=$resolved_target" >> "$GITHUB_OUTPUT"
 
       - name: Deploy dist via FTP
         if: ${{ env.DEPLOY_PROTOCOL == 'ftp' }}

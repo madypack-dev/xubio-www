@@ -24,6 +24,7 @@ Operativa para despliegue CI/CD (GitHub Actions):
 
 - Variables sensibles/secretos que sí deben configurarse en GitHub Secrets:
   - `FTP_SERVER` (host o IP del servidor FTP)
+  - `FTP_SERVER_IP` (opcional, fallback por IP si DNS del host falla en el runner)
   - `FTP_USERNAME`
   - `FTP_PASSWORD`
 
