@@ -4,35 +4,49 @@ export class HttpClientError extends Error {
   readonly status: number;
   readonly url: string;
   readonly bodyText: string;
+  readonly requestId: string | null;
 
   constructor({
     status,
     url,
     message,
-    bodyText
+    bodyText,
+    requestId = null
   }: {
     status: number;
     url: string;
     message: string;
     bodyText: string;
+    requestId?: string | null;
   }) {
     super(message);
     this.name = "HttpClientError";
     this.status = status;
     this.url = url;
     this.bodyText = bodyText;
+    this.requestId = requestId;
   }
 }
 
 export class HttpTimeoutError extends Error {
   readonly timeoutMs: number;
   readonly url: string;
+  readonly requestId: string | null;
 
-  constructor({ timeoutMs, url }: { timeoutMs: number; url: string }) {
+  constructor({
+    timeoutMs,
+    url,
+    requestId = null
+  }: {
+    timeoutMs: number;
+    url: string;
+    requestId?: string | null;
+  }) {
     super(`Timeout de ${timeoutMs}ms en ${url}`);
     this.name = "HttpTimeoutError";
     this.timeoutMs = timeoutMs;
     this.url = url;
+    this.requestId = requestId;
   }
 }
 
@@ -40,23 +54,27 @@ export class HttpNetworkError extends Error {
   readonly url: string;
   readonly likelyCors: boolean;
   readonly originalMessage: string;
+  readonly requestId: string | null;
 
   constructor({
     url,
     likelyCors,
     originalMessage,
-    message
+    message,
+    requestId = null
   }: {
     url: string;
     likelyCors: boolean;
     originalMessage: string;
     message: string;
+    requestId?: string | null;
   }) {
     super(message);
     this.name = "HttpNetworkError";
     this.url = url;
     this.likelyCors = likelyCors;
     this.originalMessage = originalMessage;
+    this.requestId = requestId;
   }
 }
 
@@ -110,6 +128,13 @@ function debugHttpLog(message: string, payload: Record<string, unknown>) {
   console.info(`[MVP][HTTP DEBUG] ${message}`, payload);
 }
 
+let requestSequence = 0;
+
+function nextRequestId() {
+  requestSequence += 1;
+  return `http-${Date.now()}-${requestSequence}`;
+}
+
 function isNgrokUrl(url: string) {
   try {
     const baseOrigin =
@@ -141,7 +166,7 @@ function isCrossOriginRequest(url: string) {
   }
 }
 
-function toHttpNetworkError(url: string, error: TypeError) {
+function toHttpNetworkError(url: string, error: TypeError, requestId: string) {
   const originalMessage = error.message || "Failed to fetch";
   const likelyCors = /failed to fetch/i.test(originalMessage) && isCrossOriginRequest(url);
 
@@ -153,7 +178,8 @@ function toHttpNetworkError(url: string, error: TypeError) {
     url,
     likelyCors,
     originalMessage,
-    message
+    message,
+    requestId
   });
 }
 
@@ -223,7 +249,11 @@ function looksLikeHtmlResponse(contentType: string, bodyText: string) {
   );
 }
 
-async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
+async function parseBody<TResponse>(
+  response: Response,
+  parseAs: ParseMode,
+  requestId: string
+) {
   if (parseAs === "raw") {
     return response as TResponse;
   }
@@ -257,6 +287,7 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
         }`
       : `JSON invalido recibido desde ${response.url || "<unknown>"}.`;
     console.error("[MVP] Error parseando respuesta HTTP", {
+      requestId,
       url: response.url || "<unknown>",
       status: response.status,
       parseAs,
@@ -270,7 +301,8 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
       status: response.status,
       url: response.url || "<unknown>",
       bodyText,
-      message
+      message,
+      requestId
     });
   }
 }
@@ -295,12 +327,14 @@ async function request<TResponse, TBody = unknown>(
     timeoutMs = 15_000,
     parseAs = "json"
   } = options;
+  const requestId = nextRequestId();
 
   const timeoutController = new AbortController();
   const headers = normalizeHeaders(inputHeaders);
   applyRequestDiagnostics(url, headers, parseAs);
   const serializedBody = serializeBody(body, headers);
   debugHttpLog("Request prepared", {
+    requestId,
     method,
     url,
     parseAs,
@@ -333,6 +367,7 @@ async function request<TResponse, TBody = unknown>(
     });
     responseStatus = response.status;
     debugHttpLog("Response received", {
+      requestId,
       method,
       url,
       responseUrl: response.url || "<unknown>",
@@ -353,6 +388,7 @@ async function request<TResponse, TBody = unknown>(
           ? `HTTP ${response.status} en ${responseUrl}: se recibio HTML en vez del payload esperado.`
           : bodyText || `HTTP ${response.status}`;
       debugHttpLog("Non-2xx response body", {
+        requestId,
         method,
         url,
         status: response.status,
@@ -364,11 +400,12 @@ async function request<TResponse, TBody = unknown>(
         status: response.status,
         url: responseUrl,
         bodyText,
-        message
+        message,
+        requestId
       });
     }
 
-    const payload = await parseBody<TResponse>(response, parseAs);
+    const payload = await parseBody<TResponse>(response, parseAs, requestId);
     trackHttpRequest({
       method,
       url,
@@ -379,6 +416,7 @@ async function request<TResponse, TBody = unknown>(
     return payload;
   } catch (error) {
     debugHttpLog("Request failed", {
+      requestId,
       method,
       url,
       durationMs: elapsedMs(),
@@ -386,8 +424,9 @@ async function request<TResponse, TBody = unknown>(
       errorMessage: error instanceof Error ? error.message : String(error)
     });
     if (isAbortError(error)) {
-      const timeoutError = new HttpTimeoutError({ timeoutMs, url });
+      const timeoutError = new HttpTimeoutError({ timeoutMs, url, requestId });
       console.error("[MVP] Timeout en request HTTP", {
+        requestId,
         method,
         url,
         timeoutMs,
@@ -407,6 +446,7 @@ async function request<TResponse, TBody = unknown>(
 
     if (error instanceof HttpClientError) {
       console.error("[MVP] Error HTTP en request", {
+        requestId,
         method,
         url,
         status: error.status,
@@ -415,9 +455,10 @@ async function request<TResponse, TBody = unknown>(
         durationMs: elapsedMs()
       });
     } else if (error instanceof TypeError) {
-      const networkError = toHttpNetworkError(url, error);
+      const networkError = toHttpNetworkError(url, error, requestId);
       handledError = networkError;
       console.warn("[MVP] Error de red tipado en request", {
+        requestId,
         method,
         url,
         durationMs: elapsedMs(),
@@ -428,6 +469,7 @@ async function request<TResponse, TBody = unknown>(
     } else if (error instanceof HttpNetworkError) {
       handledError = error;
       console.warn("[MVP] Error de red tipado en request", {
+        requestId,
         method,
         url,
         durationMs: elapsedMs(),
@@ -437,6 +479,7 @@ async function request<TResponse, TBody = unknown>(
       });
     } else {
       console.error("[MVP] Error de red/no controlado en request", {
+        requestId,
         method,
         url,
         durationMs: elapsedMs(),

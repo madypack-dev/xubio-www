@@ -18,6 +18,7 @@ export type HttpErrorDiagnosis = {
   url?: string;
   ngrokErrorCode?: string;
   likelyCors?: boolean;
+  requestId?: string | null;
 };
 
 function hasHtmlSignals(input: string) {
@@ -77,7 +78,8 @@ export function diagnoseHttpError(
         ),
         status: error.status,
         url: error.url,
-        ngrokErrorCode
+        ngrokErrorCode,
+        requestId: error.requestId
       };
     }
 
@@ -91,7 +93,8 @@ export function diagnoseHttpError(
           fallbackMessage
         ),
         status: error.status,
-        url: error.url
+        url: error.url,
+        requestId: error.requestId
       };
     }
 
@@ -104,7 +107,8 @@ export function diagnoseHttpError(
           fallbackMessage
         ),
         status: error.status,
-        url: error.url
+        url: error.url,
+        requestId: error.requestId
       };
     }
 
@@ -114,7 +118,8 @@ export function diagnoseHttpError(
         retryable: false,
         userMessage: withFallbackMessage(error.message, fallbackMessage),
         status: error.status,
-        url: error.url
+        url: error.url,
+        requestId: error.requestId
       };
     }
   }
@@ -129,7 +134,8 @@ export function diagnoseHttpError(
           fallbackMessage
         ),
         url: error.url,
-        likelyCors: true
+        likelyCors: true,
+        requestId: error.requestId
       };
     }
 
@@ -141,7 +147,8 @@ export function diagnoseHttpError(
         fallbackMessage
       ),
       url: error.url,
-      likelyCors: false
+      likelyCors: false,
+      requestId: error.requestId
     };
   }
 
@@ -184,6 +191,7 @@ export function buildHttpErrorLogContext(
     url: diagnosis.url ?? null,
     ngrokErrorCode: diagnosis.ngrokErrorCode ?? null,
     likelyCors: diagnosis.likelyCors ?? null,
+    requestId: diagnosis.requestId ?? null,
     userMessage: diagnosis.userMessage
   };
 }

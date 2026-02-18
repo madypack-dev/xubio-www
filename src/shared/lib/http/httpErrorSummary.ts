@@ -5,6 +5,7 @@ type ApiErrorSummary = {
   message: string;
   status?: number;
   url?: string;
+  requestId?: string | null;
 };
 
 export function summarizeApiError(error: unknown): ApiErrorSummary {
@@ -13,7 +14,8 @@ export function summarizeApiError(error: unknown): ApiErrorSummary {
       name: error.name,
       message: error.message,
       status: error.status,
-      url: error.url
+      url: error.url,
+      requestId: error.requestId
     };
   }
 
@@ -21,7 +23,8 @@ export function summarizeApiError(error: unknown): ApiErrorSummary {
     return {
       name: error.name,
       message: error.message,
-      url: error.url
+      url: error.url,
+      requestId: error.requestId
     };
   }
 
@@ -29,7 +32,8 @@ export function summarizeApiError(error: unknown): ApiErrorSummary {
     return {
       name: error.name,
       message: error.message,
-      url: error.url
+      url: error.url,
+      requestId: error.requestId
     };
   }
 
