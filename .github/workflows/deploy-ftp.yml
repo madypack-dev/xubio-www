@@ -77,21 +77,19 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-  deploy:
+  deploy_preflight:
     needs: [typecheck, build_dist]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     env:
       DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftps' }}
       DEPLOY_PORT: ${{ inputs.deploy_port || '' }}
+    outputs:
+      ftp_server_host: ${{ steps.preflight.outputs.ftp_server_host }}
+      deploy_port: ${{ steps.preflight.outputs.deploy_port }}
+      deploy_protocol: ${{ steps.preflight.outputs.deploy_protocol }}
 
     steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-dist
-          path: dist/
-
       - name: Debug validate deploy secrets and DNS
         id: preflight
         shell: bash
@@ -216,6 +214,7 @@ jobs:
           fi
           echo "Resolved deploy target: $resolved_target"
           echo "deploy_port=$target_port" >> "$GITHUB_OUTPUT"
+          echo "deploy_protocol=$protocol" >> "$GITHUB_OUTPUT"
           echo "Testing TCP reachability on target port..."
           if command -v nc >/dev/null 2>&1; then
             if nc -z -w5 "$resolved_target" "$target_port" >/dev/null 2>&1; then
@@ -230,26 +229,38 @@ jobs:
 
           echo "ftp_server_host=$resolved_target" >> "$GITHUB_OUTPUT"
 
+  deploy_publish:
+    needs: [deploy_preflight]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+
       - name: Deploy dist via FTP/FTPS
-        if: ${{ env.DEPLOY_PROTOCOL == 'ftp' || env.DEPLOY_PROTOCOL == 'ftps' || env.DEPLOY_PROTOCOL == 'ftps-legacy' }}
+        if: ${{ needs.deploy_preflight.outputs.deploy_protocol == 'ftp' || needs.deploy_preflight.outputs.deploy_protocol == 'ftps' || needs.deploy_preflight.outputs.deploy_protocol == 'ftps-legacy' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ steps.preflight.outputs.ftp_server_host }}
+          server: ${{ needs.deploy_preflight.outputs.ftp_server_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ${{ env.DEPLOY_PROTOCOL }}
-          port: ${{ steps.preflight.outputs.deploy_port }}
+          protocol: ${{ needs.deploy_preflight.outputs.deploy_protocol }}
+          port: ${{ needs.deploy_preflight.outputs.deploy_port }}
           local-dir: dist/
           server-dir: public_html/xubio-www/
           dangerous-clean-slate: false
 
       - name: Deploy dist via SFTP (SCP)
-        if: ${{ env.DEPLOY_PROTOCOL == 'sftp' }}
+        if: ${{ needs.deploy_preflight.outputs.deploy_protocol == 'sftp' }}
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ steps.preflight.outputs.ftp_server_host }}
+          host: ${{ needs.deploy_preflight.outputs.ftp_server_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ steps.preflight.outputs.deploy_port }}
+          port: ${{ needs.deploy_preflight.outputs.deploy_port }}
           source: "dist/*"
           target: "public_html/xubio-www/"
