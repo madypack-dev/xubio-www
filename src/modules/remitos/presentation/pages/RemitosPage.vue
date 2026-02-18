@@ -223,6 +223,7 @@ import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
+import { buildHttpErrorLogContext } from "@/shared/lib/http/httpErrorDiagnostics";
 
 const route = useRoute();
 const router = useRouter();
@@ -305,6 +306,10 @@ const errorMessage = computed(() => {
   if (!error) {
     return null;
   }
+  console.warn("[MVP] RemitosPage detecto error en query", {
+    ...buildHttpErrorLogContext(error, "Error inesperado al cargar remitos."),
+    hasData: Boolean(remitosQuery.data.value)
+  });
   return resolveErrorMessage(error, "Error inesperado al cargar remitos.");
 });
 
@@ -458,9 +463,14 @@ function formatDateDdMmYyyy(value: string | null): string {
 
 async function reloadRemitos() {
   try {
+    console.log("[MVP] Recarga manual de remitos iniciada");
     await remitosQuery.refetch();
+    console.log("[MVP] Recarga manual de remitos finalizada");
   } catch (error) {
-    console.error("[MVP] Error al recargar remitos", error);
+    console.error("[MVP] Error al recargar remitos", {
+      ...buildHttpErrorLogContext(error),
+      triggeredBy: "manual_reload"
+    });
   }
 }
 

@@ -43,6 +43,22 @@ describe("httpClient", () => {
     );
   });
 
+  it("surfaces ngrok tunnel errors with actionable message", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("<!doctype html><html><body>Ngrok Error</body></html>", {
+        status: 404,
+        headers: {
+          "Content-Type": "text/html",
+          "ngrok-error-code": "ERR_NGROK_3200"
+        }
+      })
+    ) as unknown as typeof fetch;
+
+    await expect(httpClient.get("https://demo.ngrok-free.dev/API/1.1/remitoVentaBean")).rejects.toThrow(
+      /tunel ngrok devolvio ERR_NGROK_3200/i
+    );
+  });
+
   it("throws HttpClientError when server returns html instead of json", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response("<!doctype html><html><body>Not JSON</body></html>", {

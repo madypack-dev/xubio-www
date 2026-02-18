@@ -170,6 +170,15 @@ function previewText(text: string, maxLength = 220) {
   return `${normalized.slice(0, maxLength)}...`;
 }
 
+function looksLikeHtmlResponse(contentType: string, bodyText: string) {
+  const trimmedBody = bodyText.trim().toLowerCase();
+  return (
+    contentType.includes("text/html") ||
+    trimmedBody.startsWith("<!doctype html") ||
+    trimmedBody.startsWith("<html")
+  );
+}
+
 async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
   if (parseAs === "raw") {
     return response as TResponse;
@@ -192,10 +201,7 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
     return JSON.parse(bodyText) as TResponse;
   } catch (error) {
     const contentType = response.headers.get("content-type") ?? "";
-    const looksLikeHtml =
-      contentType.includes("text/html") ||
-      bodyText.trim().toLowerCase().startsWith("<!doctype html") ||
-      bodyText.trim().startsWith("<html");
+    const looksLikeHtml = looksLikeHtmlResponse(contentType, bodyText);
     const likelyNgrokInterstitial =
       looksLikeHtml && /ngrok/i.test(bodyText.slice(0, 2500));
 
@@ -293,17 +299,28 @@ async function request<TResponse, TBody = unknown>(
 
     if (!response.ok) {
       const bodyText = await readErrorBody(response);
+      const contentType = response.headers.get("content-type") ?? "";
+      const ngrokErrorCode = response.headers.get("ngrok-error-code") ?? "";
+      const looksLikeHtml = looksLikeHtmlResponse(contentType, bodyText);
+      const responseUrl = response.url || url;
+      const message = ngrokErrorCode
+        ? `El tunel ngrok devolvio ${ngrokErrorCode} para ${responseUrl}. Verifica si la URL sigue activa y publica el backend correcto.`
+        : looksLikeHtml
+          ? `HTTP ${response.status} en ${responseUrl}: se recibio HTML en vez del payload esperado.`
+          : bodyText || `HTTP ${response.status}`;
       debugHttpLog("Non-2xx response body", {
         method,
         url,
         status: response.status,
+        contentType,
+        ngrokErrorCode: ngrokErrorCode || undefined,
         bodyPreview: previewText(bodyText)
       });
       throw new HttpClientError({
         status: response.status,
-        url,
+        url: responseUrl,
         bodyText,
-        message: bodyText || `HTTP ${response.status}`
+        message
       });
     }
 
