@@ -6,11 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       deploy_protocol:
-        description: "Protocol to use for deploy (ftp or sftp)"
+        description: "Protocol to use for deploy (ftps recommended, or ftp/sftp)"
         required: false
-        default: "ftp"
+        default: "ftps"
         type: choice
         options:
+          - ftps
+          - ftps-legacy
           - ftp
           - sftp
       deploy_port:
@@ -28,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftp' }}
+      DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftps' }}
       DEPLOY_PORT: ${{ inputs.deploy_port || '' }}
 
     steps:
@@ -62,14 +64,16 @@ jobs:
         run: |
           set -euo pipefail
           protocol="$(echo "${DEPLOY_PROTOCOL:-ftp}" | tr '[:upper:]' '[:lower:]')"
-          if [ "$protocol" != "ftp" ] && [ "$protocol" != "sftp" ]; then
-            echo "ERROR: DEPLOY_PROTOCOL debe ser 'ftp' o 'sftp'. Valor actual: '$protocol'" >&2
+          if [ "$protocol" != "ftp" ] && [ "$protocol" != "ftps" ] && [ "$protocol" != "ftps-legacy" ] && [ "$protocol" != "sftp" ]; then
+            echo "ERROR: DEPLOY_PROTOCOL debe ser 'ftp', 'ftps', 'ftps-legacy' o 'sftp'. Valor actual: '$protocol'" >&2
             exit 1
           fi
           if [ -n "${DEPLOY_PORT:-}" ]; then
             target_port="$DEPLOY_PORT"
           elif [ "$protocol" = "sftp" ]; then
             target_port="22"
+          elif [ "$protocol" = "ftps-legacy" ]; then
+            target_port="990"
           else
             target_port="21"
           fi
@@ -170,6 +174,7 @@ jobs:
             fi
           fi
           echo "Resolved deploy target: $resolved_target"
+          echo "deploy_port=$target_port" >> "$GITHUB_OUTPUT"
           echo "Testing TCP reachability on target port..."
           if command -v nc >/dev/null 2>&1; then
             if nc -z -w5 "$resolved_target" "$target_port" >/dev/null 2>&1; then
@@ -184,13 +189,15 @@ jobs:
 
           echo "ftp_server_host=$resolved_target" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy dist via FTP
-        if: ${{ env.DEPLOY_PROTOCOL == 'ftp' }}
+      - name: Deploy dist via FTP/FTPS
+        if: ${{ env.DEPLOY_PROTOCOL == 'ftp' || env.DEPLOY_PROTOCOL == 'ftps' || env.DEPLOY_PROTOCOL == 'ftps-legacy' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ steps.preflight.outputs.ftp_server_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ env.DEPLOY_PROTOCOL }}
+          port: ${{ steps.preflight.outputs.deploy_port }}
           local-dir: ./dist/
           server-dir: public_html/xubio-www/
           dangerous-clean-slate: false
@@ -202,6 +209,6 @@ jobs:
           host: ${{ steps.preflight.outputs.ftp_server_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ env.DEPLOY_PORT || '22' }}
+          port: ${{ steps.preflight.outputs.deploy_port }}
           source: "dist/*"
           target: "public_html/xubio-www/"
