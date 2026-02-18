@@ -1,4 +1,5 @@
 import { trackHttpRequest } from "@/shared/lib/observability/telemetry";
+import { resolveNgrokBypassHeader } from "@/shared/lib/http/ngrokBypassPolicy";
 
 export class HttpClientError extends Error {
   readonly status: number;
@@ -135,24 +136,6 @@ function nextRequestId() {
   return `http-${Date.now()}-${requestSequence}`;
 }
 
-function isNgrokUrl(url: string) {
-  try {
-    const baseOrigin =
-      typeof window !== "undefined" && window.location?.origin
-        ? window.location.origin
-        : "http://localhost";
-    const parsedUrl = new URL(url, baseOrigin);
-    const hostname = parsedUrl.hostname.toLowerCase();
-    return (
-      hostname.endsWith(".ngrok-free.dev") ||
-      hostname.endsWith(".ngrok.io") ||
-      hostname.endsWith(".ngrok.app")
-    );
-  } catch (_error) {
-    return false;
-  }
-}
-
 function isCrossOriginRequest(url: string) {
   if (typeof window === "undefined") {
     return false;
@@ -188,7 +171,14 @@ function applyRequestDiagnostics(url: string, headers: Headers, parseAs: ParseMo
     headers.set("Accept", "application/json");
   }
 
-  if (import.meta.env.DEV && isNgrokUrl(url) && !headers.has("ngrok-skip-browser-warning")) {
+  const shouldAttachNgrokBypassHeader = resolveNgrokBypassHeader({
+    url,
+    hasHeader: headers.has("ngrok-skip-browser-warning"),
+    isDevelopment: import.meta.env.DEV,
+    mode: "always"
+  });
+
+  if (shouldAttachNgrokBypassHeader) {
     headers.set("ngrok-skip-browser-warning", "true");
   }
 }
