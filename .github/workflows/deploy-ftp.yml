@@ -65,7 +65,9 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          # Production build uses same-origin /API to avoid browser CORS.
+          # Backend/proxy on xubio.madygraf.com must resolve /API/* server-side.
+          VITE_API_BASE_URL: ""
         run: npx vite build
 
       - name: Upload dist artifact
