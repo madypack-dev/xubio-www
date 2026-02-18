@@ -17,19 +17,7 @@ function normalizeString(value: unknown) {
   return String(value).trim();
 }
 
-function parseBoolean(value: unknown): boolean | null {
-  const normalized = normalizeString(value).toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-  if (normalized === "true" || normalized === "1") {
-    return true;
-  }
-  if (normalized === "false" || normalized === "0") {
-    return false;
-  }
-  return null;
-}
+// parseBoolean removed: debug/observability env parsing is no longer used.
 
 function parseOptionalString(value: unknown): string | null {
   if (value === undefined || value === null) {
@@ -83,43 +71,9 @@ function shouldUseRelativeApiBase(apiBaseUrl: string) {
   }
 }
 
-function parseObservabilitySampleRate(value: string) {
-  if (!value) {
-    return DEFAULT_RUNTIME_ENV.observabilitySampleRate;
-  }
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
-    return DEFAULT_RUNTIME_ENV.observabilitySampleRate;
-  }
-  if (parsed < 0) {
-    return 0;
-  }
-  if (parsed > 1) {
-    return 1;
-  }
-  return parsed;
-}
-
-function parseObservabilityEnabled(value: unknown) {
-  const normalized = normalizeString(value).toLowerCase();
-  if (!normalized || normalized === "auto") {
-    return DEFAULT_RUNTIME_ENV.observabilityEnabled;
-  }
-  const parsed = parseBoolean(normalized);
-  return parsed ?? DEFAULT_RUNTIME_ENV.observabilityEnabled;
-}
-
-function warnIfLegacyMockFlagEnabled(
-  envName: "VITE_USE_MOCKS" | "VITE_FALLBACK_TO_MOCKS_ON_ERROR",
-  value: boolean | null
-) {
-  if (value !== true) {
-    return;
-  }
-  console.error(
-    `[MVP] ${envName}=true fue ignorado. El modo mock/fallback fue deshabilitado.`
-  );
-}
+// Observability parsing and legacy mock warnings were removed because
+// observability and debug defaults are now provided directly from
+// `DEFAULT_RUNTIME_ENV` and are not driven by environment variables.
 
 const envApiBaseUrl = parseOptionalString(import.meta.env.VITE_API_BASE_URL);
 const apiBaseUrlInput =
