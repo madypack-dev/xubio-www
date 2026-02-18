@@ -109,7 +109,7 @@ function applyRequestDiagnostics(url: string, headers: Headers, parseAs: ParseMo
     headers.set("Accept", "application/json");
   }
 
-  if (isNgrokUrl(url) && !headers.has("ngrok-skip-browser-warning")) {
+  if (import.meta.env.DEV && isNgrokUrl(url) && !headers.has("ngrok-skip-browser-warning")) {
     headers.set("ngrok-skip-browser-warning", "true");
   }
 }
