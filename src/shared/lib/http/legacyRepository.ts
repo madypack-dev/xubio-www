@@ -11,7 +11,14 @@ type NotFoundLog = {
 };
 
 function buildUrl(baseUrl: string, endpoint: string) {
-  return `${baseUrl}${endpoint}`;
+  if (!baseUrl) {
+    return endpoint;
+  }
+
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/g, "");
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  return `${normalizedBaseUrl}${normalizedEndpoint}`;
 }
 
 function logNotFound({ message, meta }: NotFoundLog) {

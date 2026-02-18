@@ -37,6 +37,31 @@ describe("legacyRepository helpers", () => {
     expect(result).toEqual(["1", "2"]);
   });
 
+  it("normalizes trailing slash in baseUrl to avoid duplicated separators", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ items: [{ id: "1" }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        })
+      ) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+
+    await fetchLegacyList({
+      baseUrl: "https://api.example.com/",
+      endpoint: "/api/items",
+      schema: itemDtoSchema,
+      context: "items.list",
+      transform: (dtos) => dtos.map((dto) => dto.id)
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/items",
+      expect.any(Object)
+    );
+  });
+
   it("returns null on 404 for detail endpoints", async () => {
     globalThis.fetch = vi
       .fn()
