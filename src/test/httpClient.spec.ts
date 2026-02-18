@@ -73,4 +73,21 @@ describe("httpClient", () => {
     await vi.advanceTimersByTimeAsync(10);
     await assertion;
   });
+
+  it("injects ngrok bypass header automatically for ngrok URLs", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await httpClient.get("https://demo.ngrok-free.dev/API/1.1/remitoVentaBean");
+
+    const fetchInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const requestHeaders = new Headers(fetchInit?.headers);
+    expect(requestHeaders.get("ngrok-skip-browser-warning")).toBe("true");
+    expect(requestHeaders.get("accept")).toBe("application/json");
+  });
 });

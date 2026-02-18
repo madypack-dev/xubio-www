@@ -61,6 +61,34 @@ function normalizeHeaders(headers?: HeadersInit) {
   return new Headers(headers ?? {});
 }
 
+function isNgrokUrl(url: string) {
+  try {
+    const baseOrigin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "http://localhost";
+    const parsedUrl = new URL(url, baseOrigin);
+    const hostname = parsedUrl.hostname.toLowerCase();
+    return (
+      hostname.endsWith(".ngrok-free.dev") ||
+      hostname.endsWith(".ngrok.io") ||
+      hostname.endsWith(".ngrok.app")
+    );
+  } catch (_error) {
+    return false;
+  }
+}
+
+function applyRequestDiagnostics(url: string, headers: Headers, parseAs: ParseMode) {
+  if (parseAs === "json" && !headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
+
+  if (isNgrokUrl(url) && !headers.has("ngrok-skip-browser-warning")) {
+    headers.set("ngrok-skip-browser-warning", "true");
+  }
+}
+
 function serializeBody<TBody>(body: TBody, headers: Headers) {
   if (body === undefined || body === null) {
     return undefined;
@@ -134,9 +162,15 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
       contentType.includes("text/html") ||
       bodyText.trim().toLowerCase().startsWith("<!doctype html") ||
       bodyText.trim().startsWith("<html");
+    const likelyNgrokInterstitial =
+      looksLikeHtml && /ngrok/i.test(bodyText.slice(0, 2500));
 
     const message = looksLikeHtml
-      ? `Se esperaba JSON y se recibio HTML en ${response.url || "<unknown>"}. Revisa VITE_API_BASE_URL y el proxy /API.`
+      ? `Se esperaba JSON y se recibio HTML en ${response.url || "<unknown>"}. Revisa VITE_API_BASE_URL y el proxy /API.${
+          likelyNgrokInterstitial
+            ? " Posible pagina de advertencia de ngrok: verifica el endpoint publicado y el header ngrok-skip-browser-warning."
+            : ""
+        }`
       : `JSON invalido recibido desde ${response.url || "<unknown>"}.`;
     console.error("[MVP] Error parseando respuesta HTTP", {
       url: response.url || "<unknown>",
@@ -144,6 +178,7 @@ async function parseBody<TResponse>(response: Response, parseAs: ParseMode) {
       parseAs,
       contentType,
       bodyPreview: previewText(bodyText),
+      likelyNgrokInterstitial,
       errorName: error instanceof Error ? error.name : "UnknownError"
     });
 
@@ -179,6 +214,7 @@ async function request<TResponse, TBody = unknown>(
 
   const timeoutController = new AbortController();
   const headers = normalizeHeaders(inputHeaders);
+  applyRequestDiagnostics(url, headers, parseAs);
   const serializedBody = serializeBody(body, headers);
   const requestSignal = mergeSignals(timeoutController.signal, signal);
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
