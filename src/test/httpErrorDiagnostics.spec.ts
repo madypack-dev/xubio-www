@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { HttpClientError, HttpTimeoutError } from "@/shared/lib/http/httpClient";
+import {
+  HttpClientError,
+  HttpNetworkError,
+  HttpTimeoutError
+} from "@/shared/lib/http/httpClient";
 import { diagnoseHttpError } from "@/shared/lib/http/httpErrorDiagnostics";
 
 describe("httpErrorDiagnostics", () => {
@@ -42,5 +46,20 @@ describe("httpErrorDiagnostics", () => {
 
     expect(diagnosis.kind).toBe("html_instead_of_json");
     expect(diagnosis.retryable).toBe(false);
+  });
+
+  it("classifies likely CORS preflight failures as non-retryable", () => {
+    const diagnosis = diagnoseHttpError(
+      new HttpNetworkError({
+        url: "https://demo.ngrok-free.dev/API/1.1/remitoVentaBean",
+        likelyCors: true,
+        originalMessage: "Failed to fetch",
+        message: "No se pudo acceder a https://demo.ngrok-free.dev/API/1.1/remitoVentaBean. Posible bloqueo CORS/preflight desde el navegador."
+      })
+    );
+
+    expect(diagnosis.kind).toBe("cors_preflight");
+    expect(diagnosis.retryable).toBe(false);
+    expect(diagnosis.likelyCors).toBe(true);
   });
 });

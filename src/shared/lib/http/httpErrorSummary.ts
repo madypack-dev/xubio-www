@@ -1,4 +1,4 @@
-import { HttpClientError, HttpTimeoutError } from "./httpClient";
+import { HttpClientError, HttpNetworkError, HttpTimeoutError } from "./httpClient";
 
 type ApiErrorSummary = {
   name: string;
@@ -18,6 +18,14 @@ export function summarizeApiError(error: unknown): ApiErrorSummary {
   }
 
   if (error instanceof HttpTimeoutError) {
+    return {
+      name: error.name,
+      message: error.message,
+      url: error.url
+    };
+  }
+
+  if (error instanceof HttpNetworkError) {
     return {
       name: error.name,
       message: error.message,

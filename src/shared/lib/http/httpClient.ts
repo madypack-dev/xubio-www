@@ -36,6 +36,30 @@ export class HttpTimeoutError extends Error {
   }
 }
 
+export class HttpNetworkError extends Error {
+  readonly url: string;
+  readonly likelyCors: boolean;
+  readonly originalMessage: string;
+
+  constructor({
+    url,
+    likelyCors,
+    originalMessage,
+    message
+  }: {
+    url: string;
+    likelyCors: boolean;
+    originalMessage: string;
+    message: string;
+  }) {
+    super(message);
+    this.name = "HttpNetworkError";
+    this.url = url;
+    this.likelyCors = likelyCors;
+    this.originalMessage = originalMessage;
+  }
+}
+
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 type ParseMode = "json" | "text" | "raw";
@@ -102,6 +126,35 @@ function isNgrokUrl(url: string) {
   } catch (_error) {
     return false;
   }
+}
+
+function isCrossOriginRequest(url: string) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    return parsedUrl.origin !== window.location.origin;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function toHttpNetworkError(url: string, error: TypeError) {
+  const originalMessage = error.message || "Failed to fetch";
+  const likelyCors = /failed to fetch/i.test(originalMessage) && isCrossOriginRequest(url);
+
+  const message = likelyCors
+    ? `No se pudo acceder a ${url}. Posible bloqueo CORS/preflight desde el navegador.`
+    : `Error de red al acceder a ${url}: ${originalMessage}`;
+
+  return new HttpNetworkError({
+    url,
+    likelyCors,
+    originalMessage,
+    message
+  });
 }
 
 function applyRequestDiagnostics(url: string, headers: Headers, parseAs: ParseMode) {
@@ -350,6 +403,8 @@ async function request<TResponse, TBody = unknown>(
       });
       throw timeoutError;
     }
+    let handledError: unknown = error;
+
     if (error instanceof HttpClientError) {
       console.error("[MVP] Error HTTP en request", {
         method,
@@ -358,6 +413,27 @@ async function request<TResponse, TBody = unknown>(
         message: error.message,
         bodyPreview: previewText(error.bodyText),
         durationMs: elapsedMs()
+      });
+    } else if (error instanceof TypeError) {
+      const networkError = toHttpNetworkError(url, error);
+      handledError = networkError;
+      console.warn("[MVP] Error de red tipado en request", {
+        method,
+        url,
+        durationMs: elapsedMs(),
+        likelyCors: networkError.likelyCors,
+        originalMessage: networkError.originalMessage,
+        message: networkError.message
+      });
+    } else if (error instanceof HttpNetworkError) {
+      handledError = error;
+      console.warn("[MVP] Error de red tipado en request", {
+        method,
+        url,
+        durationMs: elapsedMs(),
+        likelyCors: error.likelyCors,
+        originalMessage: error.originalMessage,
+        message: error.message
       });
     } else {
       console.error("[MVP] Error de red/no controlado en request", {
@@ -374,9 +450,9 @@ async function request<TResponse, TBody = unknown>(
       durationMs: elapsedMs(),
       status: responseStatus,
       outcome: "error",
-      errorName: error instanceof Error ? error.name : "UnknownError"
+      errorName: handledError instanceof Error ? handledError.name : "UnknownError"
     });
-    throw error;
+    throw handledError;
   } finally {
     clearTimeout(timeoutId);
   }

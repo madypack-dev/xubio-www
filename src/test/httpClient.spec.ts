@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   HttpClientError,
+  HttpNetworkError,
   HttpTimeoutError,
   httpClient
 } from "@/shared/lib/http/httpClient";
@@ -88,6 +89,20 @@ describe("httpClient", () => {
     const assertion = expect(pendingRequest).rejects.toBeInstanceOf(HttpTimeoutError);
     await vi.advanceTimersByTimeAsync(10);
     await assertion;
+  });
+
+  it("maps failed fetch to HttpNetworkError with CORS hint on cross-origin URLs", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(new TypeError("Failed to fetch")) as unknown as typeof fetch;
+
+    await expect(
+      httpClient.get("https://demo.ngrok-free.dev/API/1.1/remitoVentaBean")
+    ).rejects.toBeInstanceOf(HttpNetworkError);
+
+    await expect(
+      httpClient.get("https://demo.ngrok-free.dev/API/1.1/remitoVentaBean")
+    ).rejects.toThrow(/Posible bloqueo CORS\/preflight/i);
   });
 
   it("injects ngrok bypass header automatically for ngrok URLs", async () => {

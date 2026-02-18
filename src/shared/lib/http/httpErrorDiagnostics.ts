@@ -1,4 +1,4 @@
-import { HttpClientError, HttpTimeoutError } from "./httpClient";
+import { HttpClientError, HttpNetworkError, HttpTimeoutError } from "./httpClient";
 
 export type HttpErrorKind =
   | "ngrok_tunnel"
@@ -6,6 +6,7 @@ export type HttpErrorKind =
   | "timeout"
   | "http_4xx"
   | "http_5xx"
+  | "cors_preflight"
   | "network"
   | "unknown";
 
@@ -16,6 +17,7 @@ export type HttpErrorDiagnosis = {
   status?: number;
   url?: string;
   ngrokErrorCode?: string;
+  likelyCors?: boolean;
 };
 
 function hasHtmlSignals(input: string) {
@@ -117,6 +119,32 @@ export function diagnoseHttpError(
     }
   }
 
+  if (error instanceof HttpNetworkError) {
+    if (error.likelyCors) {
+      return {
+        kind: "cors_preflight",
+        retryable: false,
+        userMessage: withFallbackMessage(
+          "El navegador bloqueo la request por CORS/preflight. Revisa configuracion CORS del backend/ngrok para este origen.",
+          fallbackMessage
+        ),
+        url: error.url,
+        likelyCors: true
+      };
+    }
+
+    return {
+      kind: "network",
+      retryable: true,
+      userMessage: withFallbackMessage(
+        "No se pudo conectar con el backend. Revisa red, CORS o disponibilidad del servicio.",
+        fallbackMessage
+      ),
+      url: error.url,
+      likelyCors: false
+    };
+  }
+
   if (error instanceof TypeError) {
     return {
       kind: "network",
@@ -155,6 +183,7 @@ export function buildHttpErrorLogContext(
     status: diagnosis.status ?? null,
     url: diagnosis.url ?? null,
     ngrokErrorCode: diagnosis.ngrokErrorCode ?? null,
+    likelyCors: diagnosis.likelyCors ?? null,
     userMessage: diagnosis.userMessage
   };
 }
