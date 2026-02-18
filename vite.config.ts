@@ -45,7 +45,11 @@ export default defineConfig(({ mode }) => {
             "/API": {
               target: proxyTarget,
               changeOrigin: true,
-              secure: false
+              secure: false,
+              headers: {
+                "ngrok-skip-browser-warning": "true",
+                accept: "application/json"
+              }
             }
           }
         : undefined
