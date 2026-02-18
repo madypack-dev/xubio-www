@@ -4,6 +4,20 @@ on:
   push:
     branches: ["main", "master"]
   workflow_dispatch:
+    inputs:
+      deploy_protocol:
+        description: "Protocol to use for deploy (ftp or sftp)"
+        required: false
+        default: "ftp"
+        type: choice
+        options:
+          - ftp
+          - sftp
+      deploy_port:
+        description: "Optional port override (default: 21 for ftp, 22 for sftp)"
+        required: false
+        default: ""
+        type: string
 
 concurrency:
   group: deploy-ftp-${{ github.ref }}
@@ -13,6 +27,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftp' }}
+      DEPLOY_PORT: ${{ inputs.deploy_port || '' }}
 
     steps:
       - name: Checkout
@@ -28,12 +45,80 @@ jobs:
         run: npm ci
 
       - name: Build
-        # Inject VITE_API_BASE_URL from Repository Variables (Settings > Variables)
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
         run: npm run build
 
+      - name: Debug validate deploy secrets and DNS
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          DEPLOY_PROTOCOL: ${{ env.DEPLOY_PROTOCOL }}
+          DEPLOY_PORT: ${{ env.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          protocol="$(echo "${DEPLOY_PROTOCOL:-ftp}" | tr '[:upper:]' '[:lower:]')"
+          if [ "$protocol" != "ftp" ] && [ "$protocol" != "sftp" ]; then
+            echo "ERROR: DEPLOY_PROTOCOL debe ser 'ftp' o 'sftp'. Valor actual: '$protocol'" >&2
+            exit 1
+          fi
+          if [ -n "${DEPLOY_PORT:-}" ]; then
+            target_port="$DEPLOY_PORT"
+          elif [ "$protocol" = "sftp" ]; then
+            target_port="22"
+          else
+            target_port="21"
+          fi
+          echo "Validating deploy secrets presence..."
+          if [ -z "${FTP_SERVER:-}" ]; then
+            echo "ERROR: FTP_SERVER is empty or not set in repository secrets." >&2
+            exit 1
+          fi
+          if [ -z "${FTP_USERNAME:-}" ]; then
+            echo "ERROR: FTP_USERNAME is empty or not set in repository secrets." >&2
+            exit 1
+          fi
+          if [ -z "${FTP_PASSWORD:-}" ]; then
+            echo "ERROR: FTP_PASSWORD is empty or not set in repository secrets." >&2
+            exit 1
+          fi
+          echo "Deploy protocol: $protocol"
+          echo "Target port: $target_port"
+          echo "Resolving hostname: $FTP_SERVER"
+          if command -v getent >/dev/null 2>&1; then
+            if getent hosts "$FTP_SERVER" >/dev/null 2>&1; then
+              getent hosts "$FTP_SERVER" | awk '{print "-> resolved: "$1" -> "$2}'
+            else
+              echo "ERROR: Hostname did not resolve via getent." >&2
+              exit 1
+            fi
+          else
+            echo "getent not available, attempting nslookup (installing dnsutils)..."
+            sudo apt-get update -y >/dev/null
+            sudo apt-get install -y dnsutils >/dev/null
+            if nslookup "$FTP_SERVER" >/dev/null 2>&1; then
+              nslookup "$FTP_SERVER" | sed -n '1,5p'
+            else
+              echo "ERROR: Hostname did not resolve via nslookup." >&2
+              exit 1
+            fi
+          fi
+          echo "Testing TCP reachability on target port..."
+          if command -v nc >/dev/null 2>&1; then
+            if nc -z -w5 "$FTP_SERVER" "$target_port" >/dev/null 2>&1; then
+              echo "Port $target_port is reachable on $FTP_SERVER"
+            else
+              echo "ERROR: Port $target_port is NOT reachable on $FTP_SERVER" >&2
+              exit 1
+            fi
+          else
+            echo "nc not available; skipping port checks (install netcat if needed)."
+          fi
+
       - name: Deploy dist via FTP
+        if: ${{ env.DEPLOY_PROTOCOL == 'ftp' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -42,3 +127,14 @@ jobs:
           local-dir: ./dist/
           server-dir: public_html/xubio-www/
           dangerous-clean-slate: false
+
+      - name: Deploy dist via SFTP (SCP)
+        if: ${{ env.DEPLOY_PROTOCOL == 'sftp' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ env.DEPLOY_PORT || '22' }}
+          source: "dist/*"
+          target: "public_html/xubio-www/"

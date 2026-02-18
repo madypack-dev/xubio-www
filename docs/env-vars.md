@@ -27,7 +27,20 @@ Operativa para despliegue CI/CD (GitHub Actions):
   - `FTP_USERNAME`
   - `FTP_PASSWORD`
 
+- Variables de repositorio (Settings > Secrets and variables > Actions > Variables):
+  - `VITE_API_BASE_URL` (URL del backend para el build).
+
+- Inputs de `workflow_dispatch` (al lanzar deploy manual):
+  - `deploy_protocol` (opcional, `ftp` por defecto; usar `sftp` si tu hosting no expone puerto 21).
+  - `deploy_port` (opcional; si no se define, usa `21` para `ftp` y `22` para `sftp`).
+
 - El workflow de deploy usa estas secrets y sube `./dist/` a `public_html/xubio-www/`.
+
+Selección de protocolo en deploy:
+
+- `DEPLOY_PROTOCOL=ftp`: despliega con `SamKirkland/FTP-Deploy-Action`.
+- `DEPLOY_PROTOCOL=sftp`: despliega con `appleboy/scp-action` por puerto SSH.
+- El workflow ejecuta una validación previa (presence de secrets, resolución DNS y reachability del puerto objetivo) para fallar temprano con mensajes claros.
 
 Notas adicionales:
 
