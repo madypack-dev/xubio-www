@@ -61,6 +61,31 @@ function normalizeHeaders(headers?: HeadersInit) {
   return new Headers(headers ?? {});
 }
 
+function isHttpDebugEnabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const globalFlag = (window as unknown as { __MVP_DEBUG_HTTP__?: boolean }).__MVP_DEBUG_HTTP__;
+  if (globalFlag === true) {
+    return true;
+  }
+
+  try {
+    const localFlag = window.localStorage.getItem("MVP_DEBUG_HTTP");
+    return localFlag === "1" || localFlag === "true";
+  } catch (_error) {
+    return false;
+  }
+}
+
+function debugHttpLog(message: string, payload: Record<string, unknown>) {
+  if (!isHttpDebugEnabled()) {
+    return;
+  }
+  console.info(`[MVP][HTTP DEBUG] ${message}`, payload);
+}
+
 function isNgrokUrl(url: string) {
   try {
     const baseOrigin =
@@ -225,6 +250,14 @@ async function request<TResponse, TBody = unknown>(
   const headers = normalizeHeaders(inputHeaders);
   applyRequestDiagnostics(url, headers, parseAs);
   const serializedBody = serializeBody(body, headers);
+  debugHttpLog("Request prepared", {
+    method,
+    url,
+    parseAs,
+    timeoutMs,
+    headers: Object.fromEntries(headers.entries()),
+    bodyPreview: typeof serializedBody === "string" ? previewText(serializedBody) : "<non-string-body>"
+  });
   const requestSignal = mergeSignals(timeoutController.signal, signal);
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
   const startedAt =
@@ -249,9 +282,23 @@ async function request<TResponse, TBody = unknown>(
       signal: requestSignal
     });
     responseStatus = response.status;
+    debugHttpLog("Response received", {
+      method,
+      url,
+      responseUrl: response.url || "<unknown>",
+      status: response.status,
+      ok: response.ok,
+      contentType: response.headers.get("content-type")
+    });
 
     if (!response.ok) {
       const bodyText = await readErrorBody(response);
+      debugHttpLog("Non-2xx response body", {
+        method,
+        url,
+        status: response.status,
+        bodyPreview: previewText(bodyText)
+      });
       throw new HttpClientError({
         status: response.status,
         url,
@@ -270,6 +317,13 @@ async function request<TResponse, TBody = unknown>(
     });
     return payload;
   } catch (error) {
+    debugHttpLog("Request failed", {
+      method,
+      url,
+      durationMs: elapsedMs(),
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorMessage: error instanceof Error ? error.message : String(error)
+    });
     if (isAbortError(error)) {
       const timeoutError = new HttpTimeoutError({ timeoutMs, url });
       console.error("[MVP] Timeout en request HTTP", {
