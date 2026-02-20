@@ -244,11 +244,53 @@ jobs:
           name: web-dist
           path: dist/
 
+      - name: Resolve server host for publish
+        id: resolve_server
+        shell: bash
+        env:
+          PREFLIGHT_RESOLVED_HOST: ${{ needs.deploy_preflight.outputs.resolved_host }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${PREFLIGHT_RESOLVED_HOST:-}" ]; then
+            echo "Using resolved host from preflight: $PREFLIGHT_RESOLVED_HOST"
+            echo "ftp_server_host=$PREFLIGHT_RESOLVED_HOST" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "WARN: preflight resolved_host is empty; falling back to FTP_SERVER normalization."
+          raw_server="$FTP_SERVER"
+          raw_server="${raw_server//$'\r'/}"
+          raw_server="$(echo "$raw_server" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          raw_server="${raw_server#\"}"
+          raw_server="${raw_server%\"}"
+          raw_server="${raw_server#\'}"
+          raw_server="${raw_server%\'}"
+          normalized_server="$raw_server"
+          normalized_server="${normalized_server#ftp://}"
+          normalized_server="${normalized_server#ftps://}"
+          normalized_server="${normalized_server#sftp://}"
+          normalized_server="${normalized_server#http://}"
+          normalized_server="${normalized_server#https://}"
+          normalized_server="${normalized_server%%/*}"
+          if [[ "$normalized_server" == \[*\]* ]]; then
+            host_part="${normalized_server#\[}"
+            host_part="${host_part%%\]*}"
+          else
+            host_part="${normalized_server%%:*}"
+          fi
+          if [ -z "$host_part" ]; then
+            echo "ERROR: No se pudo resolver host para deploy. PREFLIGHT_RESOLVED_HOST vacío y FTP_SERVER inválido." >&2
+            exit 1
+          fi
+          echo "ftp_server_host=$host_part" >> "$GITHUB_OUTPUT"
+
       - name: Deploy dist via FTP/FTPS
         if: ${{ needs.deploy_preflight.outputs.deploy_protocol == 'ftp' || needs.deploy_preflight.outputs.deploy_protocol == 'ftps' || needs.deploy_preflight.outputs.deploy_protocol == 'ftps-legacy' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ needs.deploy_preflight.outputs.resolved_host }}
+          server: ${{ steps.resolve_server.outputs.ftp_server_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ needs.deploy_preflight.outputs.deploy_protocol }}
@@ -261,7 +303,7 @@ jobs:
         if: ${{ needs.deploy_preflight.outputs.deploy_protocol == 'sftp' }}
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ needs.deploy_preflight.outputs.resolved_host }}
+          host: ${{ steps.resolve_server.outputs.ftp_server_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ needs.deploy_preflight.outputs.deploy_port }}
