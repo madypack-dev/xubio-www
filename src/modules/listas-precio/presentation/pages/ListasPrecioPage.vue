@@ -79,8 +79,6 @@
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useListasPrecioQuery } from "../../application";
-import { createListasPrecioHttpRepository } from "../../infrastructure";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
@@ -88,10 +86,13 @@ import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
+import { createLogger } from "@/shared/lib/observability/logger";
+import { useListasPrecioDependencies } from "../listasPrecioDependencies";
 
 const router = useRouter();
+const logger = createLogger("MVP ListasPrecioPage");
 const reloadButtonRef = ref<HTMLButtonElement | null>(null);
-const listasPrecioRepository = createListasPrecioHttpRepository(runtimeConfig.apiBaseUrl);
+const { listasPrecioRepository } = useListasPrecioDependencies();
 const listasPrecioQuery = useListasPrecioQuery(listasPrecioRepository);
 
 const listasPrecio = computed(() => listasPrecioQuery.data.value ?? []);
@@ -129,7 +130,7 @@ async function reloadListasPrecio() {
   try {
     await listasPrecioQuery.refetch();
   } catch (error) {
-    console.error("[MVP] Error al recargar listas de precio", error);
+    logger.error("Error al recargar listas de precio", { error });
   }
 }
 </script>

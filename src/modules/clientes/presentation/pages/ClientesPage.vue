@@ -76,7 +76,6 @@
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useClienteByIdQuery } from "../../application";
-import { createClientesHttpRepository } from "../../infrastructure";
 import type { Cliente, ProvinciaCatalog, SimpleCatalog } from "../../domain";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
@@ -84,7 +83,8 @@ import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import { createLogger } from "@/shared/lib/observability/logger";
+import { useClientesDependencies } from "../clientesDependencies";
 
 type ClienteDetailRow = {
   key: string;
@@ -93,10 +93,11 @@ type ClienteDetailRow = {
 
 const route = useRoute();
 const router = useRouter();
+const logger = createLogger("MVP ClientesPage");
+const { clientesRepository } = useClientesDependencies();
 const clienteInputRef = ref<HTMLInputElement | null>(null);
 const clienteIdInput = ref("");
 const submittedClienteId = ref<string | null>(readQueryValue(route.query.cliente));
-const clientesRepository = createClientesHttpRepository(runtimeConfig.apiBaseUrl);
 const clienteQuery = useClienteByIdQuery(submittedClienteId, clientesRepository);
 
 watch(
@@ -260,7 +261,7 @@ function formatCatalogList(values: Cliente["responsabilidadOrganizacionItem"]): 
 async function submitSearch() {
   const normalized = clienteIdInput.value.trim();
   if (!normalized) {
-    console.warn("[MVP] Busqueda de cliente vacia.");
+    logger.warn("Busqueda de cliente vacia.");
     submittedClienteId.value = null;
     return;
   }
@@ -274,7 +275,7 @@ async function submitSearch() {
       }
     });
   } catch (error) {
-    console.error("[MVP] Error al buscar cliente", { clienteId: normalized, error });
+    logger.error("Error al buscar cliente", { clienteId: normalized, error });
   }
 }
 
@@ -289,7 +290,7 @@ async function clearSearch() {
       }
     });
   } catch (error) {
-    console.error("[MVP] Error al limpiar busqueda de cliente", error);
+    logger.error("Error al limpiar busqueda de cliente", { error });
   }
 }
 
@@ -302,7 +303,7 @@ async function reloadCliente() {
   try {
     await clienteQuery.refetch();
   } catch (error) {
-    console.error("[MVP] Error al recargar cliente", error);
+    logger.error("Error al recargar cliente", { error });
   }
 }
 </script>

@@ -10,6 +10,7 @@ Se documentan aquí los cambios relacionados con la simplificación de variables
 - Ajustar `npm run build` para compilar directo en `/var/www/html/xubio-www` (Apache).
 - Documentar workaround de permisos (`EACCES`) para builds locales a Apache.
 - Generar informe para backend sobre bloqueo CORS en build local con Apache (`docs/backend-cors-informe.md`).
+- Añadir smoke checks post-deploy en CI (`/` y `/remitos`) usando variable opcional `PUBLIC_BASE_URL`.
 
 Próximos pasos:
 

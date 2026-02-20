@@ -4,6 +4,9 @@ import type { ClientesRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toClienteId } from "@/shared/types/valueObjects";
+import { createLogger } from "@/shared/lib/observability/logger";
+
+const logger = createLogger("MVP useClienteByIdQuery");
 
 export function useClienteByIdQuery(
   clienteId: MaybeRefOrGetter<string | null>,
@@ -18,7 +21,7 @@ export function useClienteByIdQuery(
     enabled: computed(() => resolvedId.value !== null),
     queryFn: async () => {
       if (!resolvedId.value) {
-        console.warn("[MVP] Se intento cargar cliente sin ID.");
+        logger.warn("Se intento cargar cliente sin ID.");
         return null;
       }
       try {

@@ -4,6 +4,9 @@ import type { ComprobantesRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toTransaccionId } from "@/shared/types/valueObjects";
+import { createLogger } from "@/shared/lib/observability/logger";
+
+const logger = createLogger("MVP useComprobanteDetailQuery");
 
 export function useComprobanteDetailQuery(
   comprobanteVentaId: MaybeRefOrGetter<string | null>,
@@ -20,7 +23,7 @@ export function useComprobanteDetailQuery(
     enabled: computed(() => resolvedId.value !== null),
     queryFn: async () => {
       if (!resolvedId.value) {
-        console.warn("[MVP] Se intento cargar detalle sin comprobante seleccionado.");
+        logger.warn("Se intento cargar detalle sin comprobante seleccionado.");
         return null;
       }
       try {

@@ -4,6 +4,9 @@ import type { ProductosRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toProductoId } from "@/shared/types/valueObjects";
+import { createLogger } from "@/shared/lib/observability/logger";
+
+const logger = createLogger("MVP useProductoByIdQuery");
 
 export function useProductoByIdQuery(
   productoId: MaybeRefOrGetter<string | null>,
@@ -18,7 +21,7 @@ export function useProductoByIdQuery(
     enabled: computed(() => resolvedId.value !== null),
     queryFn: async () => {
       if (!resolvedId.value) {
-        console.warn("[MVP] Se intento cargar producto sin ID.");
+        logger.warn("Se intento cargar producto sin ID.");
         return null;
       }
       try {

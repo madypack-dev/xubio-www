@@ -6,6 +6,9 @@ import ListasPrecioPage from "@/modules/listas-precio/presentation/pages/ListasP
 import ProductosPage from "@/modules/productos/presentation/pages/ProductosPage.vue";
 import RemitosPage from "@/modules/remitos/presentation/pages/RemitosPage.vue";
 import VendedoresPage from "@/modules/vendedores/presentation/pages/VendedoresPage.vue";
+import { createLogger } from "@/shared/lib/observability/logger";
+
+const logger = createLogger("MVP AppRouter");
 
 const routes: RouteRecordRaw[] = [
   {
@@ -89,7 +92,7 @@ router.beforeEach((to) => {
 
     return { name: "remitos", query: to.query };
   } catch (error) {
-    console.error("[MVP] Error en guard de router legacy query", error);
+    logger.error("Error en guard de router legacy query", { error });
     return true;
   }
 });

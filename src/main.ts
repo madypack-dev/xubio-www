@@ -12,6 +12,22 @@ import {
   comprobantesDependenciesKey,
   createDefaultComprobantesDependencies
 } from "./modules/comprobantes/presentation/comprobantesDependencies";
+import {
+  clientesDependenciesKey,
+  createDefaultClientesDependencies
+} from "./modules/clientes/presentation/clientesDependencies";
+import {
+  createDefaultProductosDependencies,
+  productosDependenciesKey
+} from "./modules/productos/presentation/productosDependencies";
+import {
+  createDefaultVendedoresDependencies,
+  vendedoresDependenciesKey
+} from "./modules/vendedores/presentation/vendedoresDependencies";
+import {
+  createDefaultListasPrecioDependencies,
+  listasPrecioDependenciesKey
+} from "./modules/listas-precio/presentation/listasPrecioDependencies";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./shared/design/theme.css";
 
@@ -37,6 +53,10 @@ const app = createApp(App);
 installAppPlugins(app);
 app.provide(remitosDependenciesKey, createDefaultRemitosDependencies());
 app.provide(comprobantesDependenciesKey, createDefaultComprobantesDependencies());
+app.provide(clientesDependenciesKey, createDefaultClientesDependencies());
+app.provide(productosDependenciesKey, createDefaultProductosDependencies());
+app.provide(vendedoresDependenciesKey, createDefaultVendedoresDependencies());
+app.provide(listasPrecioDependenciesKey, createDefaultListasPrecioDependencies());
 app.use(router);
 installObservability(router);
 app.mount("#app");

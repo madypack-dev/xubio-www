@@ -4,6 +4,9 @@ import type { VendedoresRepository } from "../domain";
 import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { asStringOrNull } from "@/shared/lib/acl/legacyPayload";
+import { createLogger } from "@/shared/lib/observability/logger";
+
+const logger = createLogger("MVP useVendedorByIdQuery");
 
 export function useVendedorByIdQuery(
   vendedorId: MaybeRefOrGetter<string | null>,
@@ -18,7 +21,7 @@ export function useVendedorByIdQuery(
     enabled: computed(() => resolvedId.value !== null),
     queryFn: async () => {
       if (!resolvedId.value) {
-        console.warn("[MVP] Se intento cargar vendedor sin ID.");
+        logger.warn("Se intento cargar vendedor sin ID.");
         return null;
       }
 

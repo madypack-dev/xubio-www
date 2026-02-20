@@ -30,12 +30,14 @@ Operativa para despliegue CI/CD (GitHub Actions):
 
 - Variables de repositorio (Settings > Secrets and variables > Actions > Variables):
   - `VITE_API_BASE_URL` (URL del backend para el build).
+  - `PUBLIC_BASE_URL` (opcional, URL pública del frontend para smoke checks post-deploy; ejemplo: `https://xubio.madygraf.com`).
 
 - Inputs de `workflow_dispatch` (al lanzar deploy manual):
   - `deploy_protocol` (opcional, `ftps` por defecto; opciones: `ftps`, `ftps-legacy`, `ftp`, `sftp`).
   - `deploy_port` (opcional; si no se define, usa `21` para `ftp/ftps`, `990` para `ftps-legacy` y `22` para `sftp`).
 
 - El workflow de deploy usa estas secrets y sube `./dist/` a `public_html/xubio-www/`.
+- Si `PUBLIC_BASE_URL` está definido, el workflow ejecuta smoke checks de `GET /` y `GET /remitos` al finalizar publish.
 
 Selección de protocolo en deploy:
 

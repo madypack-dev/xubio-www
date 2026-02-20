@@ -76,7 +76,6 @@
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
 import { useVendedorByIdQuery } from "../../application";
-import { createVendedoresHttpRepository } from "../../infrastructure";
 import type { Vendedor } from "../../domain";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
@@ -84,7 +83,8 @@ import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import { createLogger } from "@/shared/lib/observability/logger";
+import { useVendedoresDependencies } from "../vendedoresDependencies";
 
 type VendedorDetailRow = {
   key: string;
@@ -93,10 +93,11 @@ type VendedorDetailRow = {
 
 const route = useRoute();
 const router = useRouter();
+const logger = createLogger("MVP VendedoresPage");
+const { vendedoresRepository } = useVendedoresDependencies();
 const vendedorInputRef = ref<HTMLInputElement | null>(null);
 const vendedorIdInput = ref("");
 const submittedVendedorId = ref<string | null>(readQueryValue(route.query.vendedor));
-const vendedoresRepository = createVendedoresHttpRepository(runtimeConfig.apiBaseUrl);
 const vendedorQuery = useVendedorByIdQuery(submittedVendedorId, vendedoresRepository);
 
 watch(
@@ -206,7 +207,7 @@ function formatUnknown(value: unknown): string {
 async function submitSearch() {
   const normalized = vendedorIdInput.value.trim();
   if (!normalized) {
-    console.warn("[MVP] Busqueda de vendedor vacia.");
+    logger.warn("Busqueda de vendedor vacia.");
     submittedVendedorId.value = null;
     return;
   }
@@ -220,7 +221,7 @@ async function submitSearch() {
       }
     });
   } catch (error) {
-    console.error("[MVP] Error al buscar vendedor", { vendedorId: normalized, error });
+    logger.error("Error al buscar vendedor", { vendedorId: normalized, error });
   }
 }
 
@@ -235,7 +236,7 @@ async function clearSearch() {
       }
     });
   } catch (error) {
-    console.error("[MVP] Error al limpiar busqueda de vendedor", error);
+    logger.error("Error al limpiar busqueda de vendedor", { error });
   }
 }
 
@@ -248,7 +249,7 @@ async function reloadVendedor() {
   try {
     await vendedorQuery.refetch();
   } catch (error) {
-    console.error("[MVP] Error al recargar vendedor", error);
+    logger.error("Error al recargar vendedor", { error });
   }
 }
 </script>

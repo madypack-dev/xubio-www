@@ -322,3 +322,20 @@ jobs:
           port: ${{ needs.deploy_preflight.outputs.deploy_port }}
           source: "dist/*,dist/.htaccess"
           target: "public_html/xubio-www/"
+
+      - name: Smoke check public routes
+        shell: bash
+        env:
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLIC_BASE_URL:-}" ]; then
+            echo "PUBLIC_BASE_URL no definido. Se omite smoke check HTTP."
+            exit 0
+          fi
+          base="${PUBLIC_BASE_URL%/}"
+          echo "Smoke check: $base/"
+          curl -fsSIL "$base/" >/dev/null
+          echo "Smoke check: $base/remitos"
+          curl -fsSIL "$base/remitos" >/dev/null
+          echo "Smoke check OK para rutas / y /remitos"
