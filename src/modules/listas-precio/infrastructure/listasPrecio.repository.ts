@@ -5,7 +5,6 @@ import {
   cloneMockData,
   fetchLegacyList
 } from "@/shared/lib/http/legacyRepository";
-import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { toListaPrecioDomain } from "./listasPrecio.mapper";
 import { listaPrecioDtoSchema } from "./listasPrecio.schemas";
 
@@ -14,18 +13,13 @@ export function createListasPrecioHttpRepository(
 ): ListasPrecioRepository {
   return {
     async list() {
-      try {
-        return await fetchLegacyList({
-          baseUrl,
-          endpoint: API_ENDPOINTS.listaPrecios,
-          schema: listaPrecioDtoSchema,
-          context: "listasPrecio.list",
-          transform: (dtos) => dtos.map(toListaPrecioDomain)
-        });
-      } catch (error) {
-        logApiError("Fallo listasPrecio.repository.list", error, "error");
-        throw error;
-      }
+      return fetchLegacyList({
+        baseUrl,
+        endpoint: API_ENDPOINTS.listaPrecios,
+        schema: listaPrecioDtoSchema,
+        context: "listasPrecio.list",
+        transform: (dtos) => dtos.map(toListaPrecioDomain)
+      });
     }
   };
 }

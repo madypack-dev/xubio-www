@@ -1,23 +1,15 @@
 <template>
   <div class="d-flex flex-column gap-3">
-    <section class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
+    <section v-if="!selectedRemito" class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
       <div class="card-body">
         <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Remitos</h2>
           <div class="fitba-toolbar-actions d-flex gap-2">
             <button
               type="button"
-              class="btn btn-sm btn-outline-secondary"
-              aria-label="Limpiar remito seleccionado"
-              ref="clearButtonRef"
-              @click="clearSelectedRemito"
-            >
-              Limpiar
-            </button>
-            <button
-              type="button"
               class="btn btn-sm btn-outline-success"
               aria-label="Recargar listado de remitos"
+              ref="reloadButtonRef"
               @click="reloadRemitos"
             >
               Recargar
@@ -41,6 +33,7 @@
           <DataPaginationControls
             v-if="remitosPagination.isActive.value"
             entity-label="remitos"
+            :show-page-size-selector="false"
             :page="remitosPagination.page.value"
             :page-size="remitosPagination.pageSize.value"
             :page-size-options="remitosPagination.pageSizeOptions"
@@ -52,9 +45,56 @@
             @update:page-size="remitosPagination.setPageSize"
           />
 
-          <div class="table-responsive fitba-table-responsive fitba-table-responsive--wide">
+          <div class="d-md-none">
+            <div
+              v-for="remito in paginatedVisibleRemitos"
+              :key="`${rowKey(remito)}-card`"
+              class="card mb-2 remito-mobile-card"
+              :class="{ 'border-primary': isSelectedRemito(remito) }"
+            >
+              <div class="card-body py-2 px-3">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                  <a
+                    v-if="remito.transaccionId"
+                    class="fitba-inline-link fw-semibold"
+                    :href="buildRemitoLink(remito.transaccionId)"
+                    :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
+                    @click.prevent="selectRemito(remito.transaccionId)"
+                  >
+                    {{ remito.transaccionId }}
+                  </a>
+                  <span v-else class="fw-semibold">-</span>
+                  <span class="small text-body-secondary">
+                    {{ formatDateDdMmYyyy(remito.fecha) }}
+                  </span>
+                </div>
+                <div class="small mb-1">
+                  <span class="text-body-secondary">Cliente:</span>
+                  <a
+                    v-if="remito.clienteId"
+                    class="fitba-inline-link"
+                    :href="buildClienteLink(remito.clienteId)"
+                    :aria-label="buildGoToClienteLabel(remito.clienteId)"
+                    @click.prevent="goToCliente(remito.clienteId)"
+                  >
+                    {{ remito.clienteId }}
+                  </a>
+                  <span v-else>-</span>
+                </div>
+                <div class="small text-body-secondary remito-mobile-observacion">
+                  {{ remito.observacion || "-" }}
+                </div>
+                <div class="small mt-1">
+                  <span class="text-body-secondary">Items:</span>
+                  <span class="fw-semibold">{{ remito.items.length }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive fitba-table-responsive fitba-table-responsive--wide d-none d-md-block">
             <table
-              class="table table-sm table-striped table-hover align-middle fitba-table-grid"
+              class="table table-sm table-hover align-middle fitba-table-grid fitba-table-sticky fitba-table-readable"
               data-nav-table="true"
               aria-label="Tabla de remitos de venta"
             >
@@ -68,10 +108,10 @@
                   <th scope="col" class="remitos-fecha-col">fecha</th>
                   <th scope="col">observacion</th>
                   <th scope="col">clienteId</th>
-                  <th scope="col">vendedorId</th>
-                  <th scope="col" class="text-center">comisionVendedor</th>
-                  <th scope="col" class="text-center">depositoId</th>
-                  <th scope="col" class="text-center">circuitoContableId</th>
+                  <th scope="col" class="d-none d-lg-table-cell">vendedorId</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">comisionVendedor</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">depositoId</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">circuitoContableId</th>
                   <th scope="col" class="text-center">items</th>
                 </tr>
               </thead>
@@ -97,8 +137,12 @@
                     </a>
                     <span v-else>-</span>
                   </td>
-                  <td class="remitos-numero-remito-col">{{ remito.numeroRemito || "-" }}</td>
-                  <td class="remitos-fecha-col">{{ formatDateDdMmYyyy(remito.fecha) }}</td>
+                  <td class="remitos-numero-remito-col">
+                    <div class="fw-semibold">{{ remito.numeroRemito || "-" }}</div>
+                  </td>
+                  <td class="remitos-fecha-col">
+                    {{ formatDateDdMmYyyy(remito.fecha) }}
+                  </td>
                   <td
                     class="fitba-cell-truncate fitba-cell-truncate--lg"
                     :title="remito.observacion || undefined"
@@ -117,7 +161,7 @@
                     </a>
                     <span v-else>-</span>
                   </td>
-                  <td>
+                  <td class="d-none d-lg-table-cell">
                     <a
                       v-if="remito.vendedorId"
                       class="fitba-inline-link"
@@ -129,9 +173,11 @@
                     </a>
                     <span v-else>-</span>
                   </td>
-                  <td class="fitba-cell-num text-center">{{ remito.comisionVendedor ?? "-" }}</td>
-                  <td class="text-center">{{ remito.depositoId ?? "-" }}</td>
-                  <td class="text-center">{{ remito.circuitoContableId ?? "-" }}</td>
+                  <td class="fitba-cell-num text-center d-none d-xl-table-cell">
+                    {{ remito.comisionVendedor ?? "-" }}
+                  </td>
+                  <td class="text-center d-none d-xl-table-cell">{{ remito.depositoId ?? "-" }}</td>
+                  <td class="text-center d-none d-xl-table-cell">{{ remito.circuitoContableId ?? "-" }}</td>
                   <td class="fitba-cell-num text-center">{{ remito.items.length }}</td>
                 </tr>
               </tbody>
@@ -141,51 +187,43 @@
       </div>
     </section>
 
-    <section class="card shadow-sm">
+    <section v-else class="card shadow-sm">
       <div class="card-body">
-        <h3 class="h6 mb-3">Detalle de items del remito</h3>
-
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h6 mb-0">Detalle de items del remito</h3>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            aria-label="Volver al listado de remitos"
+            @click="clearSelectedRemito"
+          >
+            Volver al listado
+          </button>
+        </div>
         <AsyncEmptyMessage
-          v-if="!selectedRemito"
-          message="Selecciona un remito para ver sus items."
-        />
-
-        <AsyncEmptyMessage
-          v-else-if="selectedRemito.items.length === 0"
+          v-if="selectedRemito.items.length === 0"
           message="El remito seleccionado no tiene items."
         />
 
         <div
           v-else
-          class="fitba-table-shell table-responsive fitba-table-responsive fitba-table-responsive--wide"
+          class="fitba-table-shell fitba-table-responsive fitba-table-responsive--wide"
         >
-          <table
-            class="table table-sm table-striped align-middle fitba-table-grid"
-            data-nav-table="true"
-            aria-label="Items del remito"
-          >
-            <caption class="visually-hidden">
-              Items del remito seleccionado con acceso directo al producto.
-            </caption>
-            <thead class="table-dark">
-              <tr>
-                <th scope="col">itemId</th>
-                <th scope="col">transaccionId</th>
-                <th scope="col">productoId</th>
-                <th scope="col">descripcion</th>
-                <th scope="col">cantidad</th>
-                <th scope="col">precio</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in selectedRemito.items" :key="itemRowKey(item)" data-nav-row="true" tabindex="-1">
-                <td>{{ item.transaccionCVItemId ?? "-" }}</td>
-                <td>{{ item.transaccionId ?? "-" }}</td>
-                <td>
+          <div class="d-md-none">
+            <div
+              v-for="item in selectedRemito.items"
+              :key="`${itemRowKey(item)}-card`"
+              class="card mb-2 remito-mobile-card"
+            >
+              <div class="card-body py-2 px-3">
+                <div class="d-flex justify-content-between gap-2 mb-1">
+                  <span class="fw-semibold">{{ item.transaccionCVItemId ?? "-" }}</span>
+                  <span class="small text-body-secondary">Cant: {{ item.cantidad ?? "-" }}</span>
+                </div>
+                <div class="small mb-1">
                   <a
                     v-if="item.productoId"
                     class="fitba-inline-link"
-                    data-nav-main="true"
                     :href="buildProductoLink(item.productoId)"
                     :aria-label="buildGoToProductoLabel(item.productoId)"
                     @click.prevent="goToProducto(item.productoId)"
@@ -193,13 +231,54 @@
                     {{ item.productoId }}
                   </a>
                   <span v-else>-</span>
-                </td>
-                <td>{{ item.descripcion || "-" }}</td>
-                <td class="fitba-cell-num">{{ item.cantidad ?? "-" }}</td>
-                <td class="fitba-cell-num">{{ item.precio ?? "-" }}</td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+                <div class="small text-body-secondary">{{ item.descripcion || "-" }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive d-none d-md-block">
+            <table
+              class="table table-sm align-middle fitba-table-grid fitba-table-sticky fitba-table-readable"
+              data-nav-table="true"
+              aria-label="Items del remito"
+            >
+              <caption class="visually-hidden">
+                Items del remito seleccionado con acceso directo al producto.
+              </caption>
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col">itemId</th>
+                  <th scope="col">transaccionId</th>
+                  <th scope="col">productoId</th>
+                  <th scope="col">descripcion</th>
+                  <th scope="col">cantidad</th>
+                  <th scope="col">precio</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in selectedRemito.items" :key="itemRowKey(item)" data-nav-row="true" tabindex="-1">
+                  <td>{{ item.transaccionCVItemId ?? "-" }}</td>
+                  <td>{{ item.transaccionId ?? "-" }}</td>
+                  <td>
+                    <a
+                      v-if="item.productoId"
+                      class="fitba-inline-link"
+                      data-nav-main="true"
+                      :href="buildProductoLink(item.productoId)"
+                      :aria-label="buildGoToProductoLabel(item.productoId)"
+                      @click.prevent="goToProducto(item.productoId)"
+                    >
+                      {{ item.productoId }}
+                    </a>
+                    <span v-else>-</span>
+                  </td>
+                  <td>{{ item.descripcion || "-" }}</td>
+                  <td class="fitba-cell-num">{{ item.cantidad ?? "-" }}</td>
+                  <td class="fitba-cell-num">{{ item.precio ?? "-" }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -207,7 +286,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRemitosQuery } from "../useRemitosQuery";
 import type { Remito } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
@@ -249,7 +328,7 @@ const {
   goToVendedor,
   goToProducto
 } = useRemitosNavigation(logger);
-const clearButtonRef = ref<HTMLButtonElement | null>(null);
+const reloadButtonRef = ref<HTMLButtonElement | null>(null);
 
 watch(
   () => [selectedRemitoId.value, remitosQuery.data.value] as const,
@@ -305,27 +384,54 @@ const visibleRemitos = computed(() => {
   return remitos.value;
 });
 
+const dynamicPageSizeOptions = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40];
+
 const remitosPagination = usePaginatedRows(visibleRemitos, {
-  threshold: 120,
-  defaultPageSize: 100,
-  pageSizeOptions: [50, 100, 250, 500]
+  threshold: 8,
+  defaultPageSize: 12,
+  pageSizeOptions: dynamicPageSizeOptions
 });
 
 const paginatedVisibleRemitos = computed(() => remitosPagination.rows.value);
+
+function resolveDynamicRowsPerPage() {
+  if (typeof window === "undefined") {
+    return 12;
+  }
+  const viewportHeight = window.innerHeight;
+  const mobile = window.innerWidth < 768;
+  const reservedHeight = mobile ? 360 : 320;
+  const rowHeight = mobile ? 128 : 44;
+  const estimated = Math.max(8, Math.floor((viewportHeight - reservedHeight) / rowHeight));
+  return dynamicPageSizeOptions.reduce((closest, candidate) => {
+    const closestDiff = Math.abs(closest - estimated);
+    const candidateDiff = Math.abs(candidate - estimated);
+    return candidateDiff < closestDiff ? candidate : closest;
+  }, dynamicPageSizeOptions[0]);
+}
+
+function syncDynamicPageSize() {
+  remitosPagination.setPageSize(resolveDynamicRowsPerPage());
+}
 
 const errorMessage = computed(() => {
   const error = remitosQuery.error.value;
   if (!error) {
     return null;
   }
-  logger.warn("RemitosPage detecto error en query", {
-    ...buildHttpErrorLogContext(error, "Error inesperado al cargar remitos."),
-    hasData: Boolean(remitosQuery.data.value)
-  });
   return resolveErrorMessage(error, "Error inesperado al cargar remitos.");
 });
 
 useTableRowNavigation();
+
+onMounted(() => {
+  syncDynamicPageSize();
+  window.addEventListener("resize", syncDynamicPageSize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", syncDynamicPageSize);
+});
 
 useAs400Shortcuts({
   onF2: () => {
@@ -336,7 +442,7 @@ useAs400Shortcuts({
       firstContextLink.focus();
       return;
     }
-    clearButtonRef.value?.focus();
+    reloadButtonRef.value?.focus();
   },
   onF3: clearSelectedRemito,
   onF5: reloadRemitos,
@@ -371,5 +477,36 @@ async function reloadRemitos() {
 .remitos-fecha-col {
   min-width: 120px;
   white-space: nowrap;
+}
+
+.fitba-table-sticky thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.fitba-table-readable td,
+.fitba-table-readable th {
+  vertical-align: middle;
+}
+
+.fitba-table-readable tbody tr {
+  background-color: transparent;
+}
+
+.fitba-table-readable tbody tr:hover {
+  background-color: rgba(25, 88, 37, 0.08);
+}
+
+.remito-mobile-card {
+  border-width: 1px;
+}
+
+.remito-mobile-observacion {
+  line-clamp: 2;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 </style>

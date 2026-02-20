@@ -10,7 +10,7 @@
     </p>
 
     <div class="fitba-pagination-controls d-flex flex-wrap align-items-center gap-2">
-      <div class="fitba-page-size-group d-flex align-items-center gap-1">
+      <div v-if="props.showPageSizeSelector" class="fitba-page-size-group d-flex align-items-center gap-1">
         <label class="small mb-0" :for="pageSizeId">Filas</label>
         <select
           :id="pageSizeId"
@@ -64,9 +64,11 @@ const props = withDefaults(
     pageStart: number;
     pageEnd: number;
     entityLabel?: string;
+    showPageSizeSelector?: boolean;
   }>(),
   {
-    entityLabel: "registros"
+    entityLabel: "registros",
+    showPageSizeSelector: true
   }
 );
 

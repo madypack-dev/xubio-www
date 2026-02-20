@@ -5,7 +5,6 @@ import {
   fetchLegacyByIdOrNull,
   getMockRecordByIdOrNull
 } from "@/shared/lib/http/legacyRepository";
-import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { toVendedorDomain } from "./vendedores.mapper";
 import { vendedorDtoSchema } from "./vendedores.schemas";
 
@@ -14,23 +13,18 @@ export function createVendedoresHttpRepository(
 ): VendedoresRepository {
   return {
     async getById(vendedorId) {
-      try {
-        return await fetchLegacyByIdOrNull({
-          baseUrl,
-          endpoint: API_ENDPOINTS.vendedores,
-          id: vendedorId,
-          schema: vendedorDtoSchema,
-          context: "vendedores.getById",
-          map: toVendedorDomain,
-          notFound: {
-            message: "[MVP] Vendedor no encontrado",
-            meta: { vendedorId }
-          }
-        });
-      } catch (error) {
-        logApiError("Fallo vendedores.repository.getById", error, "error");
-        throw error;
-      }
+      return fetchLegacyByIdOrNull({
+        baseUrl,
+        endpoint: API_ENDPOINTS.vendedores,
+        id: vendedorId,
+        schema: vendedorDtoSchema,
+        context: "vendedores.getById",
+        map: toVendedorDomain,
+        notFound: {
+          message: "[MVP] Vendedor no encontrado",
+          meta: { vendedorId }
+        }
+      });
     }
   };
 }

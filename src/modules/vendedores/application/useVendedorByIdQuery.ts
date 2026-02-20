@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/vue-query";
 import { computed, toValue, type MaybeRefOrGetter } from "vue";
 import type { VendedoresRepository } from "../domain";
-import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { asStringOrNull } from "@/shared/lib/acl/legacyPayload";
 import { createLogger } from "@/shared/lib/observability/logger";
@@ -25,12 +24,7 @@ export function useVendedorByIdQuery(
         return null;
       }
 
-      try {
-        return await vendedoresRepository.getById(resolvedId.value);
-      } catch (error) {
-        logApiError("Error al cargar vendedor desde backend", error, "error");
-        throw error;
-      }
+      return vendedoresRepository.getById(resolvedId.value);
     }
   });
 }

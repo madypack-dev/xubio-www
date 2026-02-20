@@ -49,6 +49,19 @@ function withFallbackMessage(message: string, fallbackMessage: string) {
   return normalized;
 }
 
+function unwrapErrorCause(error: unknown): unknown {
+  if (!error || typeof error !== "object") {
+    return error;
+  }
+
+  const maybeCause = (error as { cause?: unknown }).cause;
+  if (maybeCause === undefined) {
+    return error;
+  }
+
+  return maybeCause;
+}
+
 export function diagnoseHttpError(
   error: unknown,
   fallbackMessage = "Error inesperado al consultar el backend."
@@ -182,7 +195,7 @@ export function buildHttpErrorLogContext(
   error: unknown,
   fallbackMessage?: string
 ): Record<string, unknown> {
-  const diagnosis = diagnoseHttpError(error, fallbackMessage);
+  const diagnosis = diagnoseHttpError(unwrapErrorCause(error), fallbackMessage);
 
   return {
     kind: diagnosis.kind,

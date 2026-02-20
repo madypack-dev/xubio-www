@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/vue-query";
 import { computed, toValue, type MaybeRefOrGetter } from "vue";
 import type { ClientesRepository } from "../domain";
-import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { toClienteId } from "@/shared/types/valueObjects";
 import { createLogger } from "@/shared/lib/observability/logger";
@@ -24,12 +23,7 @@ export function useClienteByIdQuery(
         logger.warn("Se intento cargar cliente sin ID.");
         return null;
       }
-      try {
-        return await clientesRepository.getById(resolvedId.value);
-      } catch (error) {
-        logApiError("Error al cargar cliente desde backend", error, "error");
-        throw error;
-      }
+      return clientesRepository.getById(resolvedId.value);
     }
   });
 }

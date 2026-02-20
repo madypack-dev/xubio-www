@@ -5,7 +5,6 @@ import {
   fetchLegacyByIdOrNull,
   getMockRecordByIdOrNull
 } from "@/shared/lib/http/legacyRepository";
-import { logApiError } from "@/shared/lib/http/httpErrorSummary";
 import { toProductoDomain } from "./productos.mapper";
 import { productoDtoSchema } from "./productos.schemas";
 
@@ -14,23 +13,18 @@ export function createProductosHttpRepository(
 ): ProductosRepository {
   return {
     async getById(productoId) {
-      try {
-        return await fetchLegacyByIdOrNull({
-          baseUrl,
-          endpoint: API_ENDPOINTS.productos,
-          id: productoId,
-          schema: productoDtoSchema,
-          context: "productos.getById",
-          map: toProductoDomain,
-          notFound: {
-            message: "[MVP] Producto no encontrado",
-            meta: { productoId }
-          }
-        });
-      } catch (error) {
-        logApiError("Fallo productos.repository.getById", error, "error");
-        throw error;
-      }
+      return fetchLegacyByIdOrNull({
+        baseUrl,
+        endpoint: API_ENDPOINTS.productos,
+        id: productoId,
+        schema: productoDtoSchema,
+        context: "productos.getById",
+        map: toProductoDomain,
+        notFound: {
+          message: "[MVP] Producto no encontrado",
+          meta: { productoId }
+        }
+      });
     }
   };
 }
