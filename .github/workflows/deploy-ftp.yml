@@ -26,6 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Build block
   typecheck:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -47,6 +48,7 @@ jobs:
         run: npm run typecheck
 
   build_dist:
+    needs: [typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -76,8 +78,9 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+  # Deploy block
   deploy_preflight:
-    needs: [typecheck, build_dist]
+    needs: [typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -86,6 +89,7 @@ jobs:
     outputs:
       deploy_port: ${{ steps.preflight.outputs.deploy_port }}
       deploy_protocol: ${{ steps.preflight.outputs.deploy_protocol }}
+      resolved_host: ${{ steps.preflight.outputs.resolved_host }}
 
     steps:
       - name: Debug validate deploy secrets and DNS
@@ -213,6 +217,7 @@ jobs:
           echo "Resolved deploy target: $resolved_target"
           echo "deploy_port=$target_port" >> "$GITHUB_OUTPUT"
           echo "deploy_protocol=$protocol" >> "$GITHUB_OUTPUT"
+          echo "resolved_host=$resolved_target" >> "$GITHUB_OUTPUT"
           echo "Testing TCP reachability on target port..."
           if command -v nc >/dev/null 2>&1; then
             if nc -z -w5 "$resolved_target" "$target_port" >/dev/null 2>&1; then
@@ -228,7 +233,7 @@ jobs:
           echo "Resolved host computed for preflight checks."
 
   deploy_publish:
-    needs: [deploy_preflight]
+    needs: [build_dist, deploy_preflight]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -239,44 +244,11 @@ jobs:
           name: web-dist
           path: dist/
 
-      - name: Resolve server host for publish
-        id: resolve_server
-        shell: bash
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-        run: |
-          set -euo pipefail
-          raw_server="$FTP_SERVER"
-          raw_server="${raw_server//$'\r'/}"
-          raw_server="$(echo "$raw_server" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-          raw_server="${raw_server#\"}"
-          raw_server="${raw_server%\"}"
-          raw_server="${raw_server#\'}"
-          raw_server="${raw_server%\'}"
-          normalized_server="$raw_server"
-          normalized_server="${normalized_server#ftp://}"
-          normalized_server="${normalized_server#ftps://}"
-          normalized_server="${normalized_server#sftp://}"
-          normalized_server="${normalized_server#http://}"
-          normalized_server="${normalized_server#https://}"
-          normalized_server="${normalized_server%%/*}"
-          if [[ "$normalized_server" == \[*\]* ]]; then
-            host_part="${normalized_server#\[}"
-            host_part="${host_part%%\]*}"
-          else
-            host_part="${normalized_server%%:*}"
-          fi
-          if [ -z "$host_part" ]; then
-            echo "ERROR: FTP_SERVER no contiene host válido para publish" >&2
-            exit 1
-          fi
-          echo "ftp_server_host=$host_part" >> "$GITHUB_OUTPUT"
-
       - name: Deploy dist via FTP/FTPS
         if: ${{ needs.deploy_preflight.outputs.deploy_protocol == 'ftp' || needs.deploy_preflight.outputs.deploy_protocol == 'ftps' || needs.deploy_preflight.outputs.deploy_protocol == 'ftps-legacy' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ steps.resolve_server.outputs.ftp_server_host }}
+          server: ${{ needs.deploy_preflight.outputs.resolved_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ needs.deploy_preflight.outputs.deploy_protocol }}
@@ -289,7 +261,7 @@ jobs:
         if: ${{ needs.deploy_preflight.outputs.deploy_protocol == 'sftp' }}
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ steps.resolve_server.outputs.ftp_server_host }}
+          host: ${{ needs.deploy_preflight.outputs.resolved_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ needs.deploy_preflight.outputs.deploy_port }}
