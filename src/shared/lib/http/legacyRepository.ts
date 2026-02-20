@@ -39,54 +39,11 @@ export async function fetchLegacyList<TDto, TResult>({
   transform: (dtos: TDto[]) => TResult;
 }): Promise<TResult> {
   const requestUrl = buildUrl(baseUrl, endpoint);
-  console.log("[MVP] Iniciando fetchLegacyList", {
-    context,
-    url: requestUrl
-  });
 
   try {
     const payload = await httpClient.get<unknown>(requestUrl);
-    console.log("[MVP] Respuesta recibida en fetchLegacyList", {
-      context,
-      url: requestUrl,
-      payloadType: Array.isArray(payload) ? "array" : typeof payload
-    });
-
-    let dtos: TDto[];
-    try {
-      dtos = parseListItems(schema, payload, context);
-      console.log("[MVP] parseListItems OK", {
-        context,
-        url: requestUrl,
-        totalDtos: dtos.length
-      });
-    } catch (error) {
-      console.error("[MVP] Fallo parseListItems", {
-        context,
-        url: requestUrl,
-        errorName: error instanceof Error ? error.name : "UnknownError",
-        message: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    }
-
-    try {
-      const result = transform(dtos);
-      console.log("[MVP] transform OK en fetchLegacyList", {
-        context,
-        url: requestUrl,
-        totalDtos: dtos.length
-      });
-      return result;
-    } catch (error) {
-      console.error("[MVP] Fallo transform en fetchLegacyList", {
-        context,
-        url: requestUrl,
-        errorName: error instanceof Error ? error.name : "UnknownError",
-        message: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    }
+    const dtos = parseListItems(schema, payload, context);
+    return transform(dtos);
   } catch (error) {
     logApiError(`Fallo ${context} en fetchLegacyList`, error, "error");
     throw error;

@@ -4,6 +4,14 @@ import { installAppPlugins } from "./app/providers/installPlugins";
 import { installObservability } from "./app/providers/installObservability";
 import { router } from "./app/router";
 import { runtimeConfig } from "./shared/config/runtimeConfig";
+import {
+  createDefaultRemitosDependencies,
+  remitosDependenciesKey
+} from "./modules/remitos/presentation/remitosDependencies";
+import {
+  comprobantesDependenciesKey,
+  createDefaultComprobantesDependencies
+} from "./modules/comprobantes/presentation/comprobantesDependencies";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./shared/design/theme.css";
 
@@ -27,6 +35,8 @@ if (runtimeConfig.verboseStartupLogs) {
 const app = createApp(App);
 
 installAppPlugins(app);
+app.provide(remitosDependenciesKey, createDefaultRemitosDependencies());
+app.provide(comprobantesDependenciesKey, createDefaultComprobantesDependencies());
 app.use(router);
 installObservability(router);
 app.mount("#app");

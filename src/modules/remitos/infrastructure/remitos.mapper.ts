@@ -15,9 +15,11 @@ import {
   toTransaccionId
 } from "@/shared/types/valueObjects";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import { createLogger } from "@/shared/lib/observability/logger";
 
 const debugRemitos = runtimeConfig.debugRemitos;
 let missingObservacionLogCount = 0;
+const logger = createLogger("MVP RemitosMapper");
 
 function toRemitoItem(item: RemitoItemDto): RemitoItem {
   const producto = asRecord(item.producto);
@@ -35,8 +37,6 @@ function toRemitoItem(item: RemitoItemDto): RemitoItem {
   return {
     transaccionCVItemId: asStringOrNull(item.transaccionCVItemId),
     transaccionId: toTransaccionId(asStringOrNull(item.transaccionId)),
-    productoID,
-    productoid,
     productoId,
     descripcion: asStringOrNull(item.descripcion) ?? "",
     cantidad: asNumberOrNull(item.cantidad),
@@ -60,7 +60,7 @@ function mapRemito(dto: RemitoDto): Remito {
 
   if (debugRemitos && observacion === "" && missingObservacionLogCount < 5) {
     missingObservacionLogCount += 1;
-    console.info("[MVP][Remitos] Remito sin observacion tras map", {
+    logger.info("Remito sin observacion tras map", {
       transaccionId: asStringOrNull(dto.transaccionId),
       observacion: asStringOrNull(dto.observacion),
       observaciones: asStringOrNull(dto.observaciones),

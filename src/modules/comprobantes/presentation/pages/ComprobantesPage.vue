@@ -173,11 +173,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
+import { computed, ref } from "vue";
 import { useComprobanteDetailQuery, useComprobantesQuery } from "../../application";
-import { createComprobantesHttpRepository } from "../../infrastructure";
-import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
@@ -187,25 +184,25 @@ import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
+import { createLogger } from "@/shared/lib/observability/logger";
+import { useComprobantesDependencies } from "../comprobantesDependencies";
+import { useComprobantesNavigation } from "../useComprobantesNavigation";
 
-const route = useRoute();
-const router = useRouter();
-const comprobantesRepository = createComprobantesHttpRepository(runtimeConfig.apiBaseUrl);
+const logger = createLogger("MVP ComprobantesPage");
+const { comprobantesRepository } = useComprobantesDependencies();
 const comprobantesQuery = useComprobantesQuery(comprobantesRepository);
-const selectedComprobanteId = ref<string | null>(
-  readQueryValue(route.query.comprobanteVenta)
-);
+const {
+  router,
+  selectedComprobanteId,
+  buildComprobanteLink,
+  buildDetailLabel,
+  selectComprobanteById,
+  clearSelection
+} = useComprobantesNavigation(logger);
 const clearButtonRef = ref<HTMLButtonElement | null>(null);
 const detailQuery = useComprobanteDetailQuery(
   selectedComprobanteId,
   comprobantesRepository
-);
-
-watch(
-  () => route.query.comprobanteVenta,
-  (value) => {
-    selectedComprobanteId.value = readQueryValue(value);
-  }
 );
 
 const comprobantes = computed(() => comprobantesQuery.data.value ?? []);
@@ -253,72 +250,11 @@ useAs400Shortcuts({
   onBack: () => router.back()
 });
 
-function buildDetailLabel(comprobanteVentaId: string | null) {
-  if (!comprobanteVentaId) {
-    return "Ver detalle de comprobante";
-  }
-  return `Ver detalle de comprobante ${comprobanteVentaId}`;
-}
-
-function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw) {
-    return null;
-  }
-  const normalized = String(raw).trim();
-  return normalized ? normalized : null;
-}
-
-function buildComprobanteLink(comprobanteVentaId: string | null) {
-  return router.resolve({
-    name: "comprobantes",
-    query: {
-      ...route.query,
-      comprobanteVenta: comprobanteVentaId ?? undefined
-    }
-  }).href;
-}
-
 async function reloadComprobantes() {
   try {
     await comprobantesQuery.refetch();
   } catch (error) {
-    console.error("[MVP] Error al recargar comprobantes", error);
-  }
-}
-
-async function selectComprobanteById(comprobanteVentaId: string | null) {
-  try {
-    if (!comprobanteVentaId) {
-      console.warn("[MVP] Se intento abrir detalle sin comprobanteVentaId.");
-      return;
-    }
-    selectedComprobanteId.value = comprobanteVentaId;
-    await router.replace({
-      query: {
-        ...route.query,
-        comprobanteVenta: comprobanteVentaId
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al seleccionar comprobante", {
-      comprobanteVentaId,
-      error
-    });
-  }
-}
-
-async function clearSelection() {
-  try {
-    selectedComprobanteId.value = null;
-    await router.replace({
-      query: {
-        ...route.query,
-        comprobanteVenta: undefined
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al limpiar seleccion de comprobante", error);
+    logger.error("Error al recargar comprobantes", { error });
   }
 }
 </script>

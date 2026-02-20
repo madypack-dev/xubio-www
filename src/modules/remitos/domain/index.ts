@@ -18,8 +18,6 @@ export type VendedorId = string;
 export type RemitoItem = {
   transaccionCVItemId: string | null;
   transaccionId: TransaccionId | null;
-  productoID: ProductoId | null;
-  productoid: ProductoId | null;
   productoId: ProductoId | null;
   descripcion: string;
   cantidad: number | null;

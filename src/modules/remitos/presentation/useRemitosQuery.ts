@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/vue-query";
 import type { RemitosRepository } from "../domain";
 import { queryKeys } from "@/shared/lib/queryKeys";
-import { createLoadRemitosUseCase } from "./loadRemitosUseCase";
+import { createLoadRemitosUseCase } from "../application";
 
 export function useRemitosQuery(remitosRepository: RemitosRepository) {
   const loadRemitos = createLoadRemitosUseCase(remitosRepository);

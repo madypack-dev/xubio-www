@@ -277,17 +277,6 @@ async function parseBody<TResponse>(
             : ""
         }`
       : `JSON invalido recibido desde ${response.url || "<unknown>"}.`;
-    console.error("[MVP] Error parseando respuesta HTTP", {
-      requestId,
-      url: response.url || "<unknown>",
-      status: response.status,
-      parseAs,
-      contentType,
-      bodyPreview: previewText(bodyText),
-      likelyNgrokInterstitial,
-      errorName: error instanceof Error ? error.name : "UnknownError"
-    });
-
     throw new HttpClientError({
       status: response.status,
       url: response.url || "<unknown>",
@@ -416,13 +405,6 @@ async function request<TResponse, TBody = unknown>(
     });
     if (isAbortError(error)) {
       const timeoutError = new HttpTimeoutError({ timeoutMs, url, requestId });
-      console.error("[MVP] Timeout en request HTTP", {
-        requestId,
-        method,
-        url,
-        timeoutMs,
-        durationMs: elapsedMs()
-      });
       trackHttpRequest({
         method,
         url,
@@ -436,47 +418,12 @@ async function request<TResponse, TBody = unknown>(
     let handledError: unknown = error;
 
     if (error instanceof HttpClientError) {
-      console.error("[MVP] Error HTTP en request", {
-        requestId,
-        method,
-        url,
-        status: error.status,
-        message: error.message,
-        bodyPreview: previewText(error.bodyText),
-        durationMs: elapsedMs()
-      });
+      handledError = error;
     } else if (error instanceof TypeError) {
       const networkError = toHttpNetworkError(url, error, requestId);
       handledError = networkError;
-      console.warn("[MVP] Error de red tipado en request", {
-        requestId,
-        method,
-        url,
-        durationMs: elapsedMs(),
-        likelyCors: networkError.likelyCors,
-        originalMessage: networkError.originalMessage,
-        message: networkError.message
-      });
     } else if (error instanceof HttpNetworkError) {
       handledError = error;
-      console.warn("[MVP] Error de red tipado en request", {
-        requestId,
-        method,
-        url,
-        durationMs: elapsedMs(),
-        likelyCors: error.likelyCors,
-        originalMessage: error.originalMessage,
-        message: error.message
-      });
-    } else {
-      console.error("[MVP] Error de red/no controlado en request", {
-        requestId,
-        method,
-        url,
-        durationMs: elapsedMs(),
-        errorName: error instanceof Error ? error.name : "UnknownError",
-        message: error instanceof Error ? error.message : String(error)
-      });
     }
     trackHttpRequest({
       method,

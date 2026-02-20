@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createLoadRemitosUseCase } from "@/modules/remitos/application/loadRemitosUseCase";
+import { RemitosLoadError } from "@/modules/remitos/application/errors";
 import { HttpClientError } from "@/shared/lib/http/httpClient";
 
 describe("loadRemitosUseCase", () => {
@@ -18,7 +19,7 @@ describe("loadRemitosUseCase", () => {
     expect(result).toHaveLength(1);
   });
 
-  it("rethrows repository errors preserving diagnosis flow", async () => {
+  it("wraps repository errors as RemitosLoadError preserving cause", async () => {
     const repositoryError = new HttpClientError({
       status: 200,
       url: "https://demo.ngrok-free.dev/API/1.1/remitoVentaBean",
@@ -34,7 +35,11 @@ describe("loadRemitosUseCase", () => {
       repository as unknown as Parameters<typeof createLoadRemitosUseCase>[0]
     );
 
-    await expect(useCase()).rejects.toBe(repositoryError);
+    const execution = useCase();
+    await expect(execution).rejects.toBeInstanceOf(RemitosLoadError);
+    await expect(execution).rejects.toMatchObject({
+      cause: repositoryError
+    });
     expect(repository.list).toHaveBeenCalledTimes(1);
   });
 });

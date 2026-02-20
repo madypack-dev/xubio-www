@@ -171,8 +171,7 @@
               <tr>
                 <th scope="col">itemId</th>
                 <th scope="col">transaccionId</th>
-                <th scope="col">producto.ID</th>
-                <th scope="col">producto.id</th>
+                <th scope="col">productoId</th>
                 <th scope="col">descripcion</th>
                 <th scope="col">cantidad</th>
                 <th scope="col">precio</th>
@@ -182,7 +181,6 @@
               <tr v-for="item in selectedRemito.items" :key="itemRowKey(item)" data-nav-row="true" tabindex="-1">
                 <td>{{ item.transaccionCVItemId ?? "-" }}</td>
                 <td>{{ item.transaccionId ?? "-" }}</td>
-                <td>{{ item.productoID ?? "-" }}</td>
                 <td>
                   <a
                     v-if="item.productoId"
@@ -192,9 +190,9 @@
                     :aria-label="buildGoToProductoLabel(item.productoId)"
                     @click.prevent="goToProducto(item.productoId)"
                   >
-                    {{ item.productoid ?? item.productoId }}
+                    {{ item.productoId }}
                   </a>
-                  <span v-else>{{ item.productoid ?? "-" }}</span>
+                  <span v-else>-</span>
                 </td>
                 <td>{{ item.descripcion || "-" }}</td>
                 <td class="fitba-cell-num">{{ item.cantidad ?? "-" }}</td>
@@ -210,10 +208,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useRoute, useRouter, type LocationQueryValue } from "vue-router";
-import { useRemitosQuery } from "../../application";
-import { createRemitosHttpRepository } from "../../infrastructure";
-import type { Remito, RemitoItem } from "../../domain";
+import { useRemitosQuery } from "../useRemitosQuery";
+import type { Remito } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
@@ -224,20 +220,36 @@ import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 import { buildHttpErrorLogContext } from "@/shared/lib/http/httpErrorDiagnostics";
+import { useRemitosDependencies } from "../remitosDependencies";
+import { createLogger } from "@/shared/lib/observability/logger";
+import { useRemitosNavigation } from "../useRemitosNavigation";
+import {
+  buildGoToClienteLabel,
+  buildGoToProductoLabel,
+  buildGoToVendedorLabel,
+  buildSelectRemitoIdLabel,
+  formatDateDdMmYyyy,
+  itemRowKey,
+  rowKey
+} from "../remitosViewFormatters";
 
-const route = useRoute();
-const router = useRouter();
-const remitosRepository = createRemitosHttpRepository(runtimeConfig.apiBaseUrl);
+const logger = createLogger("MVP RemitosPage");
+const { remitosRepository } = useRemitosDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
-const selectedRemitoId = ref<string | null>(readQueryValue(route.query.remitoVenta));
+const {
+  router,
+  selectedRemitoId,
+  buildRemitoLink,
+  buildClienteLink,
+  buildVendedorLink,
+  buildProductoLink,
+  selectRemito,
+  clearSelectedRemito,
+  goToCliente,
+  goToVendedor,
+  goToProducto
+} = useRemitosNavigation(logger);
 const clearButtonRef = ref<HTMLButtonElement | null>(null);
-
-watch(
-  () => route.query.remitoVenta,
-  (value) => {
-    selectedRemitoId.value = readQueryValue(value);
-  }
-);
 
 watch(
   () => [selectedRemitoId.value, remitosQuery.data.value] as const,
@@ -250,7 +262,7 @@ watch(
       (remito) => String(remito.transaccionId ?? "") === remitoId
     );
     if (!exists) {
-      console.warn("[MVP] remitoVenta no existe en dataset actual", {
+      logger.warn("remitoVenta no existe en dataset actual", {
         remitoVenta: remitoId
       });
     }
@@ -272,7 +284,7 @@ watch(
       observacion: remito.observacion
     }));
 
-    console.info("[MVP][Remitos] Muestra de observaciones normalizadas", {
+    logger.info("Muestra de observaciones normalizadas", {
       total: remitosData.length,
       sample
     });
@@ -306,7 +318,7 @@ const errorMessage = computed(() => {
   if (!error) {
     return null;
   }
-  console.warn("[MVP] RemitosPage detecto error en query", {
+  logger.warn("RemitosPage detecto error en query", {
     ...buildHttpErrorLogContext(error, "Error inesperado al cargar remitos."),
     hasData: Boolean(remitosQuery.data.value)
   });
@@ -331,238 +343,23 @@ useAs400Shortcuts({
   onBack: () => router.back()
 });
 
-function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw) {
-    return null;
-  }
-  const normalized = String(raw).trim();
-  return normalized ? normalized : null;
-}
-
-function rowKey(remito: Remito) {
-  return String(remito.transaccionId ?? `${remito.numeroRemito}-${remito.fecha ?? ""}`);
-}
-
-function itemRowKey(item: RemitoItem) {
-  return String(
-    item.transaccionCVItemId ?? `${item.transaccionId ?? ""}-${item.productoId ?? ""}`
-  );
-}
-
 function isSelectedRemito(remito: Remito) {
   return String(remito.transaccionId ?? "") === selectedRemitoId.value;
 }
 
-function buildSelectRemitoIdLabel(transaccionId: string | null) {
-  if (!transaccionId) {
-    return "Seleccionar remito";
-  }
-  return `Seleccionar remito ${transaccionId}`;
-}
-
-function buildGoToClienteLabel(clienteId: string | null) {
-  if (!clienteId) {
-    return "Abrir cliente";
-  }
-  return `Abrir cliente ${clienteId}`;
-}
-
-function buildGoToVendedorLabel(vendedorId: string | null) {
-  if (!vendedorId) {
-    return "Abrir vendedor";
-  }
-  return `Abrir vendedor ${vendedorId}`;
-}
-
-function buildGoToProductoLabel(productoId: string | null) {
-  if (!productoId) {
-    return "Abrir producto";
-  }
-  return `Abrir producto ${productoId}`;
-}
-
-function buildRemitoLink(transaccionId: string | null) {
-  return router.resolve({
-    name: "remitos",
-    query: {
-      ...route.query,
-      remitoVenta: transaccionId ?? undefined
-    }
-  }).href;
-}
-
-function buildClienteLink(clienteId: string | null) {
-  return router.resolve({
-    name: "clientes",
-    query: {
-      ...route.query,
-      cliente: clienteId ?? undefined
-    }
-  }).href;
-}
-
-function buildVendedorLink(vendedorId: string | null) {
-  return router.resolve({
-    name: "vendedores",
-    query: {
-      ...route.query,
-      vendedor: vendedorId ?? undefined
-    }
-  }).href;
-}
-
-function buildProductoLink(productoId: string | null) {
-  return router.resolve({
-    name: "productos",
-    query: {
-      ...route.query,
-      producto: productoId ?? undefined
-    }
-  }).href;
-}
-
-function pad2(value: number) {
-  return String(value).padStart(2, "0");
-}
-
-function formatDateDdMmYyyy(value: string | null): string {
-  if (!value) {
-    return "-";
-  }
-
-  const normalized = String(value).trim();
-  if (!normalized) {
-    return "-";
-  }
-
-  const isoDateMatch = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/);
-  if (isoDateMatch) {
-    const year = Number(isoDateMatch[1]);
-    const month = Number(isoDateMatch[2]);
-    const day = Number(isoDateMatch[3]);
-    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-      return `${pad2(day)}/${pad2(month)}/${String(year)}`;
-    }
-  }
-
-  const slashDateMatch = normalized.match(
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/
-  );
-  if (slashDateMatch) {
-    const day = Number(slashDateMatch[1]);
-    const month = Number(slashDateMatch[2]);
-    const year = Number(slashDateMatch[3]);
-    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-      return `${pad2(day)}/${pad2(month)}/${String(year)}`;
-    }
-  }
-
-  return normalized;
-}
-
 async function reloadRemitos() {
   try {
-    console.log("[MVP] Recarga manual de remitos iniciada");
+    logger.info("Recarga manual de remitos iniciada");
     await remitosQuery.refetch();
-    console.log("[MVP] Recarga manual de remitos finalizada");
+    logger.info("Recarga manual de remitos finalizada");
   } catch (error) {
-    console.error("[MVP] Error al recargar remitos", {
+    logger.error("Error al recargar remitos", {
       ...buildHttpErrorLogContext(error),
       triggeredBy: "manual_reload"
     });
   }
 }
 
-async function selectRemito(transaccionId: string | null) {
-  if (!transaccionId) {
-    console.warn("[MVP] Se intento seleccionar remito sin transaccionId.");
-    return;
-  }
-
-  try {
-    selectedRemitoId.value = transaccionId;
-    await router.replace({
-      query: {
-        ...route.query,
-        remitoVenta: transaccionId
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al seleccionar remito", { transaccionId, error });
-  }
-}
-
-async function clearSelectedRemito() {
-  try {
-    selectedRemitoId.value = null;
-    await router.replace({
-      query: {
-        ...route.query,
-        remitoVenta: undefined
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al limpiar remito seleccionado", error);
-  }
-}
-
-async function goToCliente(clienteId: string | null) {
-  if (!clienteId) {
-    console.warn("[MVP] Se intento navegar a cliente sin clienteId.");
-    return;
-  }
-
-  try {
-    await router.push({
-      name: "clientes",
-      query: {
-        ...route.query,
-        cliente: clienteId
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al navegar a cliente", { clienteId, error });
-  }
-}
-
-async function goToVendedor(vendedorId: string | null) {
-  if (!vendedorId) {
-    console.warn("[MVP] Se intento navegar a vendedor sin vendedorId.");
-    return;
-  }
-
-  try {
-    await router.push({
-      name: "vendedores",
-      query: {
-        ...route.query,
-        vendedor: vendedorId
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al navegar a vendedor", { vendedorId, error });
-  }
-}
-
-async function goToProducto(productoId: string | null) {
-  if (!productoId) {
-    console.warn("[MVP] Se intento navegar a producto sin productoId.");
-    return;
-  }
-
-  try {
-    await router.push({
-      name: "productos",
-      query: {
-        ...route.query,
-        producto: productoId
-      }
-    });
-  } catch (error) {
-    console.error("[MVP] Error al navegar a producto", { productoId, error });
-  }
-}
 </script>
 
 <style scoped>

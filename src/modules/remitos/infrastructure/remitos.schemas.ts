@@ -1,37 +1,38 @@
 import { z } from "zod";
 
 const unknownRecordSchema = z.record(z.string(), z.unknown());
+const legacyScalarSchema = z.union([z.string(), z.number(), z.null()]);
 
 export const remitoItemDtoSchema = z
   .object({
-    transaccionCVItemId: z.unknown().optional(),
-    transaccionId: z.unknown().optional(),
-    productoId: z.unknown().optional(),
-    productoid: z.unknown().optional(),
+    transaccionCVItemId: legacyScalarSchema.optional(),
+    transaccionId: legacyScalarSchema.optional(),
+    productoId: legacyScalarSchema.optional(),
+    productoid: legacyScalarSchema.optional(),
     producto: unknownRecordSchema.optional(),
-    descripcion: z.unknown().optional(),
-    cantidad: z.unknown().optional(),
-    precio: z.unknown().optional()
+    descripcion: legacyScalarSchema.optional(),
+    cantidad: legacyScalarSchema.optional(),
+    precio: legacyScalarSchema.optional()
   })
   .passthrough();
 
 export const remitoDtoSchema = z
   .object({
-    transaccionId: z.unknown().optional(),
-    numeroRemito: z.unknown().optional(),
-    fecha: z.unknown().optional(),
-    observacion: z.unknown().optional(),
-    observaciones: z.unknown().optional(),
-    clienteId: z.unknown().optional(),
-    cliente_id: z.unknown().optional(),
-    vendedorId: z.unknown().optional(),
-    vendedor_id: z.unknown().optional(),
-    comisionVendedor: z.unknown().optional(),
-    comision_vendedor: z.unknown().optional(),
-    depositoId: z.unknown().optional(),
-    depositoID: z.unknown().optional(),
-    circuitoContableId: z.unknown().optional(),
-    circuitoContableID: z.unknown().optional(),
+    transaccionId: legacyScalarSchema.optional(),
+    numeroRemito: legacyScalarSchema.optional(),
+    fecha: legacyScalarSchema.optional(),
+    observacion: legacyScalarSchema.optional(),
+    observaciones: legacyScalarSchema.optional(),
+    clienteId: legacyScalarSchema.optional(),
+    cliente_id: legacyScalarSchema.optional(),
+    vendedorId: legacyScalarSchema.optional(),
+    vendedor_id: legacyScalarSchema.optional(),
+    comisionVendedor: legacyScalarSchema.optional(),
+    comision_vendedor: legacyScalarSchema.optional(),
+    depositoId: legacyScalarSchema.optional(),
+    depositoID: legacyScalarSchema.optional(),
+    circuitoContableId: legacyScalarSchema.optional(),
+    circuitoContableID: legacyScalarSchema.optional(),
     encabezado: unknownRecordSchema.optional(),
     relaciones: unknownRecordSchema.optional(),
     transaccionProductoItem: z.array(remitoItemDtoSchema).optional()

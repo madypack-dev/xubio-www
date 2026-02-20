@@ -20,8 +20,6 @@ export const MOCK_REMITOS: Remito[] = [
       {
         transaccionCVItemId: "48344936",
         transaccionId: "38925753",
-        productoID: "1672624",
-        productoid: "1672624",
         productoId: "1672624",
         descripcion: "12.5x8x19 Bolsa Marron 100g C/M",
         cantidad: 4000,
@@ -43,8 +41,6 @@ export const MOCK_REMITOS: Remito[] = [
       {
         transaccionCVItemId: "48344937",
         transaccionId: "38925754",
-        productoID: "1672625",
-        productoid: "1672625",
         productoId: "1672625",
         descripcion: "15x10x25 Bolsa Marron 120g C/M",
         cantidad: 2500,
