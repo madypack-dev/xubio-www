@@ -130,3 +130,9 @@ Para agregar un nuevo modulo:
 1. Incorporar tests unitarios para mappers y `dateUtils`.
 2. Agregar smoke tests de navegacion basica.
 3. Definir contrato de API (OpenAPI o schemas JSON) para validar mappers.
+
+## 9. Build y salida de artefactos
+
+- El build de produccion del frontend (`npm run build`) esta configurado para escribir en `/var/www/html/xubio-www` (directorio servido por Apache).
+- En entornos locales, si el directorio no existe o no tiene permisos de escritura para el usuario actual, el build falla con `EACCES`.
+- La preparacion de permisos se documenta en `docs/env-vars.md`.

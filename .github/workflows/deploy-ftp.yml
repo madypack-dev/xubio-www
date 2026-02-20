@@ -244,6 +244,18 @@ jobs:
           name: web-dist
           path: dist/
 
+      - name: Validate dist payload for Apache SPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Dist files:"
+          ls -la dist
+          if [ ! -f "dist/.htaccess" ]; then
+            echo "ERROR: dist/.htaccess no existe. El deploy SPA en Apache puede fallar en rutas internas." >&2
+            exit 1
+          fi
+          echo "dist/.htaccess encontrado."
+
       - name: Resolve server host for publish
         id: resolve_server
         shell: bash
@@ -307,5 +319,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ needs.deploy_preflight.outputs.deploy_port }}
-          source: "dist/*"
+          source: "dist/*,dist/.htaccess"
           target: "public_html/xubio-www/"

@@ -18,6 +18,10 @@ const routes: RouteRecordRaw[] = [
     component: RemitosPage
   },
   {
+    path: "/remito",
+    redirect: { name: "remitos" }
+  },
+  {
     path: "/listas-precio",
     name: "listas-precio",
     component: ListasPrecioPage

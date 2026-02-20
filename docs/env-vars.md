@@ -49,3 +49,29 @@ Notas adicionales:
 
 - Si necesitás habilitar observabilidad en un entorno concreto lo ideal es crear una PR que añada un override explícito y documentado en `runtimeConfig.ts` o que reintroduzcamos una variable única `VITE_OBSERVABILITY_ENDPOINT` como excepción.
 - Para pruebas puntuales se puede instrumentar `runtimeConfig.ts` para leer variables opcionales, pero por ahora preferimos la simplicidad.
+
+## Build a Apache (`npm run build`)
+
+- El script `npm run build` compila directamente en `/var/www/html/xubio-www` (Apache).
+- Si al compilar aparece `EACCES: permission denied, mkdir '/var/www/html/xubio-www'`, el problema es de permisos del sistema, no de Vite.
+
+Preparación recomendada (una sola vez):
+
+```bash
+sudo mkdir -p /var/www/html/xubio-www
+sudo chown -R $USER:$USER /var/www/html/xubio-www
+```
+
+Luego:
+
+```bash
+npm run build
+```
+
+Alternativa (sin cambiar ownership):
+
+```bash
+sudo npm run build
+```
+
+Esta alternativa requiere privilegios elevados en cada ejecución.
