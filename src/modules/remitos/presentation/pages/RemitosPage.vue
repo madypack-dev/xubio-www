@@ -8,53 +8,24 @@
           <span class="fitba-statusbar-item">TOTAL: {{ remitos.length }}</span>
         </div>
 
-        <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 mb-0">Remitos</h2>
-          <div class="fitba-toolbar-actions d-flex gap-2">
-            <form class="d-flex align-items-center gap-1" @submit.prevent="applyClienteSearch">
-              <label for="remitos-cliente-search" class="visually-hidden">Buscar por clienteId</label>
-              <input
-                id="remitos-cliente-search"
-                v-model="clienteSearchInput"
-                type="text"
-                class="form-control form-control-sm remitos-search-input"
-                inputmode="text"
-                autocomplete="off"
-                placeholder="CLI_ID"
-                aria-label="Buscar remitos por clienteId"
-              />
-              <button
-                type="submit"
-                class="btn btn-sm btn-outline-secondary"
-                aria-label="Buscar por clienteId"
-                title="Buscar por clienteId"
-              >
-                🔎
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary"
-                aria-label="Pegar clienteId desde portapapeles"
-                title="Pegar clienteId"
-                @click="pasteClienteSearchFromClipboard"
-              >
-                📋
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary"
-                aria-label="Limpiar búsqueda por clienteId"
-                title="Limpiar búsqueda"
-                @click="clearClienteSearch"
-              >
-                Limpiar
-              </button>
-            </form>
-          </div>
+        <div class="fitba-toolbar mb-3">
+          <h2 class="h5 mb-2">Remitos</h2>
+          <EntityFilterBar
+            input-id="remitos-cliente-search"
+            help-id="remitos-search-help"
+            label="clienteId"
+            placeholder="CLI_ID"
+            input-aria-label="Buscar remitos por clienteId"
+            help-text="Filtra por clienteId (búsqueda parcial)."
+            :model-value="clienteSearchInput"
+            :error-message="clienteSearchErrorMessage"
+            :show-paste-button="true"
+            paste-aria-label="Pegar clienteId desde portapapeles"
+            paste-title="Pegar clienteId"
+            @update:model-value="onClienteSearchInput"
+            @paste="pasteClienteSearchFromClipboard"
+          />
         </div>
-        <p v-if="clienteSearchErrorMessage" class="fitba-async-message fitba-async-error mb-2" aria-live="polite">
-          {{ clienteSearchErrorMessage }}
-        </p>
 
         <AsyncLoadingMessage
           v-if="remitosQuery.isLoading.value"
@@ -365,6 +336,7 @@ import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
+import EntityFilterBar from "@/shared/ui/EntityFilterBar.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 import { buildHttpErrorLogContext } from "@/shared/lib/http/httpErrorDiagnostics";
 import { useRemitosDependencies } from "../remitosDependencies";
@@ -568,6 +540,10 @@ function isSelectedRemito(remito: Remito) {
   return String(remito.transaccionId ?? "") === selectedRemitoId.value;
 }
 
+function onClienteSearchInput(value: string) {
+  clienteSearchInput.value = value;
+}
+
 async function reloadRemitos() {
   try {
     logger.info("Recarga manual de remitos iniciada");
@@ -579,17 +555,6 @@ async function reloadRemitos() {
       triggeredBy: "manual_reload"
     });
   }
-}
-
-function applyClienteSearch() {
-  clienteSearchErrorMessage.value = "";
-  appliedClienteSearch.value = clienteSearchInput.value.trim();
-}
-
-function clearClienteSearch() {
-  clienteSearchInput.value = "";
-  appliedClienteSearch.value = "";
-  clienteSearchErrorMessage.value = "";
 }
 
 async function pasteClienteSearchFromClipboard() {
@@ -630,10 +595,6 @@ async function pasteClienteSearchFromClipboard() {
 .remitos-fecha-col {
   min-width: 120px;
   white-space: nowrap;
-}
-
-.remitos-search-input {
-  width: 10rem;
 }
 
 .fitba-table-sticky thead th {

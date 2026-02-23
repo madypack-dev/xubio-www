@@ -23,33 +23,19 @@
         </button>
       </div>
 
-      <form v-if="!selectedCliente" class="fitba-search-form row g-2 mb-3">
-        <div class="col-12 col-md-4">
-          <label class="form-label mb-1" for="cliente-id-input">nombre</label>
-          <input
-            id="cliente-id-input"
-            v-model="clienteIdInput"
-            ref="clienteInputRef"
-            type="text"
-            class="form-control"
-            name="clienteNombre"
-            inputmode="text"
-            autocomplete="off"
-            placeholder="nombre"
-            aria-describedby="cliente-search-help"
-          />
-          <small id="cliente-search-help" class="text-body-secondary">
-            Filtra por nombre de cliente (búsqueda parcial).
-          </small>
-        </div>
-      </form>
-      <p
-        v-if="!selectedCliente && clienteSearchErrorMessage"
-        class="fitba-async-message fitba-async-error mb-2"
-        aria-live="polite"
-      >
-        {{ clienteSearchErrorMessage }}
-      </p>
+      <div v-if="!selectedCliente" class="fitba-toolbar mb-3">
+        <EntityFilterBar
+          input-id="cliente-id-input"
+          help-id="cliente-search-help"
+          label="nombre"
+          placeholder="nombre"
+          input-aria-label="Filtrar clientes por nombre"
+          help-text="Filtra por nombre de cliente (búsqueda parcial)."
+          :model-value="clienteIdInput"
+          :error-message="clienteSearchErrorMessage"
+          @update:model-value="onClienteFilterInput"
+        />
+      </div>
 
       <AsyncLoadingMessage
         v-if="!selectedCliente && clientesQuery.isLoading.value"
@@ -218,6 +204,7 @@ import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncNotFoundMessage from "@/shared/ui/AsyncNotFoundMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
+import EntityFilterBar from "@/shared/ui/EntityFilterBar.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 import { createLogger } from "@/shared/lib/observability/logger";
 import { useClientesDependencies } from "../clientesDependencies";
@@ -367,6 +354,10 @@ function clearSelectedCliente() {
 
 function rowKey(cliente: Cliente) {
   return formatText(cliente.clienteId || cliente.cuit || cliente.email || cliente.nombre);
+}
+
+function onClienteFilterInput(value: string) {
+  clienteIdInput.value = value;
 }
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
