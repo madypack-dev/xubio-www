@@ -11,17 +11,50 @@
         <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Remitos</h2>
           <div class="fitba-toolbar-actions d-flex gap-2">
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-success"
-              aria-label="Recargar listado de remitos"
-              ref="reloadButtonRef"
-              @click="reloadRemitos"
-            >
-              Recargar
-            </button>
+            <form class="d-flex align-items-center gap-1" @submit.prevent="applyClienteSearch">
+              <label for="remitos-cliente-search" class="visually-hidden">Buscar por clienteId</label>
+              <input
+                id="remitos-cliente-search"
+                v-model="clienteSearchInput"
+                type="text"
+                class="form-control form-control-sm remitos-search-input"
+                inputmode="text"
+                autocomplete="off"
+                placeholder="CLI_ID"
+                aria-label="Buscar remitos por clienteId"
+              />
+              <button
+                type="submit"
+                class="btn btn-sm btn-outline-secondary"
+                aria-label="Buscar por clienteId"
+                title="Buscar por clienteId"
+              >
+                🔎
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                aria-label="Pegar clienteId desde portapapeles"
+                title="Pegar clienteId"
+                @click="pasteClienteSearchFromClipboard"
+              >
+                📋
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                aria-label="Limpiar búsqueda por clienteId"
+                title="Limpiar búsqueda"
+                @click="clearClienteSearch"
+              >
+                Limpiar
+              </button>
+            </form>
           </div>
         </div>
+        <p v-if="clienteSearchErrorMessage" class="fitba-async-message fitba-async-error mb-2" aria-live="polite">
+          {{ clienteSearchErrorMessage }}
+        </p>
 
         <AsyncLoadingMessage
           v-if="remitosQuery.isLoading.value"
@@ -322,6 +355,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useRemitosQuery } from "../useRemitosQuery";
 import type { Remito } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
@@ -348,6 +382,7 @@ import {
 } from "../remitosViewFormatters";
 
 const logger = createLogger("MVP RemitosPage");
+const route = useRoute();
 const { remitosRepository } = useRemitosDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
 const {
@@ -363,7 +398,9 @@ const {
   goToVendedor,
   goToProducto
 } = useRemitosNavigation(logger);
-const reloadButtonRef = ref<HTMLButtonElement | null>(null);
+const clienteSearchInput = ref("");
+const appliedClienteSearch = ref("");
+const clienteSearchErrorMessage = ref("");
 
 watch(
   () => [selectedRemitoId.value, remitosQuery.data.value] as const,
@@ -384,6 +421,58 @@ watch(
 );
 
 const remitos = computed(() => remitosQuery.data.value ?? []);
+const normalizedClienteSearch = computed(() => appliedClienteSearch.value.trim().toLowerCase());
+const filteredRemitos = computed(() => {
+  if (!normalizedClienteSearch.value) {
+    return remitos.value;
+  }
+  return remitos.value.filter((remito) =>
+    String(remito.clienteId ?? "").toLowerCase().includes(normalizedClienteSearch.value)
+  );
+});
+
+watch(
+  () => route.query.cliente,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (normalized === appliedClienteSearch.value && normalized === clienteSearchInput.value) {
+      return;
+    }
+    clienteSearchInput.value = normalized;
+    appliedClienteSearch.value = normalized;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => clienteSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    clienteSearchErrorMessage.value = "";
+    appliedClienteSearch.value = normalized;
+
+    const currentQueryCliente = String(
+      Array.isArray(route.query.cliente)
+        ? route.query.cliente[0] ?? ""
+        : route.query.cliente ?? ""
+    ).trim();
+
+    if (normalized === currentQueryCliente) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          cliente: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de cliente en URL", { error, normalized });
+    }
+  }
+);
 
 watch(
   () => remitos.value,
@@ -416,7 +505,7 @@ const visibleRemitos = computed(() => {
   if (selectedRemito.value) {
     return [selectedRemito.value];
   }
-  return remitos.value;
+  return filteredRemitos.value;
 });
 
 const dynamicPageSizeOptions = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40];
@@ -477,7 +566,8 @@ useAs400Shortcuts({
       firstContextLink.focus();
       return;
     }
-    reloadButtonRef.value?.focus();
+    const clienteInput = document.querySelector<HTMLInputElement>("#remitos-cliente-search");
+    clienteInput?.focus();
   },
   onF3: clearSelectedRemito,
   onF5: reloadRemitos,
@@ -501,6 +591,40 @@ async function reloadRemitos() {
   }
 }
 
+function applyClienteSearch() {
+  clienteSearchErrorMessage.value = "";
+  appliedClienteSearch.value = clienteSearchInput.value.trim();
+}
+
+function clearClienteSearch() {
+  clienteSearchInput.value = "";
+  appliedClienteSearch.value = "";
+  clienteSearchErrorMessage.value = "";
+}
+
+async function pasteClienteSearchFromClipboard() {
+  if (!navigator.clipboard?.readText) {
+    clienteSearchErrorMessage.value = "Tu navegador no permite leer portapapeles en este contexto.";
+    return;
+  }
+
+  try {
+    const clipboardRaw = await navigator.clipboard.readText();
+    const clipboardValue = String(clipboardRaw ?? "").trim();
+
+    if (!/^\d{3,15}$/.test(clipboardValue)) {
+      clienteSearchErrorMessage.value =
+        "Valor inválido en portapapeles: debe ser solo números, entre 3 y 15 dígitos.";
+      return;
+    }
+
+    clienteSearchInput.value = clipboardValue;
+    clienteSearchErrorMessage.value = "";
+  } catch (_error) {
+    clienteSearchErrorMessage.value = "No se pudo leer el portapapeles.";
+  }
+}
+
 </script>
 
 <style scoped>
@@ -516,6 +640,10 @@ async function reloadRemitos() {
 .remitos-fecha-col {
   min-width: 120px;
   white-space: nowrap;
+}
+
+.remitos-search-input {
+  width: 10rem;
 }
 
 .fitba-table-sticky thead th {
