@@ -3,70 +3,126 @@
     <div class="card-body">
       <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
         <span class="fitba-statusbar-item">MODULO: CLIENTES</span>
-        <span class="fitba-statusbar-item">VISTA: LISTADO</span>
-        <span class="fitba-statusbar-item">CLI_ID: {{ appliedClienteFilter || "-" }}</span>
+        <span class="fitba-statusbar-item">VISTA: {{ selectedCliente ? "DETALLE" : "LISTADO" }}</span>
+        <span class="fitba-statusbar-item">NOM: {{ appliedClienteFilter || "-" }}</span>
+        <span class="fitba-statusbar-item">CLI_ID: {{ selectedClienteId ?? "-" }}</span>
         <span class="fitba-statusbar-item">TOTAL: {{ filteredClientes.length }}</span>
       </div>
 
       <h2 class="h5 mb-3">Clientes (MVP)</h2>
 
-      <form class="fitba-search-form row g-2 mb-3" @submit.prevent="submitSearch">
+      <div v-if="selectedCliente" class="mb-3 d-flex justify-content-between align-items-center">
+        <p class="mb-0 small">Detalle de cliente seleccionado.</p>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          aria-label="Volver al listado de clientes"
+          @click="clearSelectedCliente"
+        >
+          Volver al listado
+        </button>
+      </div>
+
+      <form v-if="!selectedCliente" class="fitba-search-form row g-2 mb-3">
         <div class="col-12 col-md-4">
-          <label class="form-label mb-1" for="cliente-id-input">clienteId</label>
+          <label class="form-label mb-1" for="cliente-id-input">nombre</label>
           <input
             id="cliente-id-input"
             v-model="clienteIdInput"
             ref="clienteInputRef"
             type="text"
             class="form-control"
-            name="clienteId"
+            name="clienteNombre"
             inputmode="text"
             autocomplete="off"
-            placeholder="clienteId"
+            placeholder="nombre"
             aria-describedby="cliente-search-help"
           />
           <small id="cliente-search-help" class="text-body-secondary">
-            Filtra por identificador de cliente (búsqueda parcial).
+            Filtra por nombre de cliente (búsqueda parcial).
           </small>
         </div>
-        <div class="fitba-form-actions col-12 col-md-auto d-flex gap-2 align-items-end">
-          <button type="submit" class="btn btn-success" aria-label="Buscar cliente">
-            Buscar
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            aria-label="Pegar clienteId desde portapapeles"
-            title="Pegar clienteId"
-            @click="pasteClienteIdFromClipboard"
-          >
-            📋
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            aria-label="Limpiar busqueda de cliente"
-            @click="clearSearch"
-          >
-            Limpiar
-          </button>
-        </div>
       </form>
-      <p v-if="clienteSearchErrorMessage" class="fitba-async-message fitba-async-error mb-2" aria-live="polite">
+      <p
+        v-if="!selectedCliente && clienteSearchErrorMessage"
+        class="fitba-async-message fitba-async-error mb-2"
+        aria-live="polite"
+      >
         {{ clienteSearchErrorMessage }}
       </p>
 
       <AsyncLoadingMessage
-        v-if="clientesQuery.isLoading.value"
+        v-if="!selectedCliente && clientesQuery.isLoading.value"
         message="Cargando clientes..."
       />
 
-      <AsyncErrorMessage v-else-if="errorMessage" :message="errorMessage" />
+      <AsyncErrorMessage v-else-if="!selectedCliente && errorMessage" :message="errorMessage" />
 
       <AsyncNotFoundMessage
-        v-else-if="filteredClientes.length === 0"
+        v-else-if="!selectedCliente && filteredClientes.length === 0"
         message="No se encontraron clientes para el filtro indicado."
       />
+
+      <div
+        v-if="selectedCliente"
+        class="fitba-table-shell table-responsive fitba-table-responsive fitba-table-responsive--detail"
+      >
+        <table class="table table-sm align-middle fitba-table-grid" aria-label="Detalle de cliente">
+          <caption class="visually-hidden">Detalle del cliente seleccionado.</caption>
+          <tbody>
+            <tr>
+              <th scope="row" class="fitba-detail-key">CLI_ID</th>
+              <td>
+                <div class="cliente-id-with-copy">
+                  <span class="fitba-key-link">{{ formatText(selectedCliente.clienteId) }}</span>
+                  <button
+                    v-if="canCopyClienteId(selectedCliente.clienteId)"
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    aria-label="Copiar CLI_ID"
+                    title="Copiar CLI_ID"
+                    @click="copyClienteId(selectedCliente.clienteId)"
+                  >
+                    📋
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">NOMBRE</th>
+              <td>{{ formatText(selectedCliente.nombre) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">RAZON_SOCIAL</th>
+              <td>{{ formatText(selectedCliente.razonSocial) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">EMAIL</th>
+              <td>{{ formatText(selectedCliente.email) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">TELEFONO</th>
+              <td>{{ formatText(selectedCliente.telefono) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">CUIT</th>
+              <td>{{ formatText(selectedCliente.cuit || selectedCliente.cuitUpper) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">LOCALIDAD</th>
+              <td>{{ formatCatalog(selectedCliente.localidad) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">PROVINCIA</th>
+              <td>{{ formatProvincia(selectedCliente.provincia) }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="fitba-detail-key">PAIS</th>
+              <td>{{ formatCatalog(selectedCliente.pais) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div
         v-else
@@ -87,7 +143,7 @@
         />
 
         <table class="table table-sm table-hover align-middle fitba-table-grid" aria-label="Listado de clientes">
-          <caption class="visually-hidden">Listado de clientes con filtro por clienteId.</caption>
+          <caption class="visually-hidden">Listado de clientes con filtro por nombre.</caption>
           <thead class="table-dark">
             <tr>
               <th scope="col">CLI_ID</th>
@@ -106,8 +162,36 @@
               v-for="cliente in paginatedClientes"
               :key="rowKey(cliente)"
             >
-              <td class="fitba-key-link">{{ formatText(cliente.clienteId) }}</td>
-              <td>{{ formatText(cliente.nombre) }}</td>
+              <td>
+                <div class="cliente-id-with-copy">
+                  <a
+                    href="#"
+                    class="fitba-inline-link fitba-key-link"
+                    @click.prevent="selectCliente(cliente)"
+                  >
+                    {{ formatText(cliente.clienteId) }}
+                  </a>
+                  <button
+                    v-if="canCopyClienteId(cliente.clienteId)"
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    aria-label="Copiar CLI_ID"
+                    title="Copiar CLI_ID"
+                    @click="copyClienteId(cliente.clienteId)"
+                  >
+                    📋
+                  </button>
+                </div>
+              </td>
+              <td>
+                <a
+                  href="#"
+                  class="fitba-inline-link fitba-key-link"
+                  @click.prevent="selectCliente(cliente)"
+                >
+                  {{ formatText(cliente.nombre) }}
+                </a>
+              </td>
               <td>{{ formatText(cliente.razonSocial) }}</td>
               <td>{{ formatText(cliente.email) }}</td>
               <td>{{ formatText(cliente.telefono) }}</td>
@@ -146,10 +230,11 @@ const clienteInputRef = ref<HTMLInputElement | null>(null);
 const clienteIdInput = ref("");
 const appliedClienteFilter = ref("");
 const clienteSearchErrorMessage = ref("");
+const selectedClienteId = ref<string | null>(null);
 const clientesQuery = useClientesQuery(clientesRepository);
 
 watch(
-  () => route.query.cliente,
+  () => route.query.nombre,
   (value) => {
     const normalized = readQueryValue(value) ?? "";
     if (normalized === appliedClienteFilter.value && normalized === clienteIdInput.value) {
@@ -162,14 +247,26 @@ watch(
 );
 
 watch(
+  () => route.query.cliente,
+  (value) => {
+    const selectedId = readQueryValue(value);
+    if (selectedId === selectedClienteId.value) {
+      return;
+    }
+    selectedClienteId.value = selectedId;
+  },
+  { immediate: true }
+);
+
+watch(
   () => clienteIdInput.value,
   async (value) => {
     const normalized = value.trim();
     clienteSearchErrorMessage.value = "";
     appliedClienteFilter.value = normalized;
 
-    const currentQueryCliente = readQueryValue(route.query.cliente) ?? "";
-    if (normalized === currentQueryCliente) {
+    const currentQueryNombre = readQueryValue(route.query.nombre) ?? "";
+    if (normalized === currentQueryNombre) {
       return;
     }
 
@@ -177,7 +274,7 @@ watch(
       await router.replace({
         query: {
           ...route.query,
-          cliente: normalized || undefined
+          nombre: normalized || undefined
         }
       });
     } catch (error) {
@@ -187,12 +284,17 @@ watch(
 );
 
 const clientes = computed(() => clientesQuery.data.value ?? []);
+const selectedCliente = computed(() =>
+  clientes.value.find((cliente) => formatText(cliente.clienteId) === selectedClienteId.value) ?? null
+);
 const filteredClientes = computed(() => {
-  const filter = appliedClienteFilter.value.trim();
+  const filter = appliedClienteFilter.value.trim().toLowerCase();
   if (!filter) {
     return clientes.value;
   }
-  return clientes.value.filter((cliente) => formatText(cliente.clienteId).includes(filter));
+  return clientes.value.filter((cliente) =>
+    formatText(cliente.nombre).toLowerCase().includes(filter)
+  );
 });
 
 const clientesPagination = usePaginatedRows(filteredClientes, {
@@ -212,10 +314,34 @@ const errorMessage = computed(() => {
 
 useAs400Shortcuts({
   onF2: () => clienteInputRef.value?.focus(),
-  onF3: clearSearch,
+  onF3: onShortcutF3,
   onF5: reloadClientes,
   onBack: () => router.back()
 });
+
+function selectCliente(cliente: Cliente) {
+  const resolvedId = String(cliente.clienteId ?? "").trim();
+  if (!resolvedId) {
+    return;
+  }
+  selectedClienteId.value = resolvedId;
+  void router.replace({
+    query: {
+      ...route.query,
+      cliente: resolvedId
+    }
+  });
+}
+
+function clearSelectedCliente() {
+  selectedClienteId.value = null;
+  void router.replace({
+    query: {
+      ...route.query,
+      cliente: undefined
+    }
+  });
+}
 
 function rowKey(cliente: Cliente) {
   return formatText(cliente.clienteId || cliente.cuit || cliente.email || cliente.nombre);
@@ -237,6 +363,11 @@ function formatText(value: unknown): string {
 
   const normalized = String(value).trim();
   return normalized ? normalized : "-";
+}
+
+function canCopyClienteId(value: unknown): boolean {
+  const normalized = String(value ?? "").trim();
+  return normalized.length > 0 && normalized !== "-";
 }
 
 function formatCatalog(value: SimpleCatalog | null): string {
@@ -283,29 +414,6 @@ function formatProvincia(value: ProvinciaCatalog | null): string {
   return parts.length > 0 ? parts.join(" | ") : "-";
 }
 
-async function submitSearch() {
-  const normalized = clienteIdInput.value.trim();
-  if (!normalized) {
-    logger.warn("Busqueda de cliente vacia.");
-    appliedClienteFilter.value = "";
-    clienteSearchErrorMessage.value = "";
-    return;
-  }
-
-  try {
-    clienteSearchErrorMessage.value = "";
-    appliedClienteFilter.value = normalized;
-    await router.replace({
-      query: {
-        ...route.query,
-        cliente: normalized
-      }
-    });
-  } catch (error) {
-    logger.error("Error al buscar cliente", { clienteId: normalized, error });
-  }
-}
-
 async function clearSearch() {
   try {
     clienteIdInput.value = "";
@@ -314,12 +422,20 @@ async function clearSearch() {
     await router.replace({
       query: {
         ...route.query,
-        cliente: undefined
+        nombre: undefined
       }
     });
   } catch (error) {
     logger.error("Error al limpiar busqueda de cliente", { error });
   }
+}
+
+function onShortcutF3() {
+  if (selectedCliente.value) {
+    clearSelectedCliente();
+    return;
+  }
+  void clearSearch();
 }
 
 async function reloadClientes() {
@@ -330,26 +446,29 @@ async function reloadClientes() {
   }
 }
 
-async function pasteClienteIdFromClipboard() {
-  if (!navigator.clipboard?.readText) {
-    clienteSearchErrorMessage.value = "Tu navegador no permite leer portapapeles en este contexto.";
+async function copyClienteId(value: unknown) {
+  const normalized = String(value ?? "").trim();
+  if (!canCopyClienteId(normalized)) {
     return;
   }
-
+  if (!navigator.clipboard?.writeText) {
+    logger.warn("Clipboard API no disponible para copiar CLI_ID.");
+    return;
+  }
   try {
-    const clipboardRaw = await navigator.clipboard.readText();
-    const clipboardValue = String(clipboardRaw ?? "").trim();
-
-    if (!/^\d{3,15}$/.test(clipboardValue)) {
-      clienteSearchErrorMessage.value =
-        "Valor inválido en portapapeles: debe ser solo números, entre 3 y 15 dígitos.";
-      return;
-    }
-
-    clienteIdInput.value = clipboardValue;
-    clienteSearchErrorMessage.value = "";
-  } catch (_error) {
-    clienteSearchErrorMessage.value = "No se pudo leer el portapapeles.";
+    await navigator.clipboard.writeText(normalized);
+  } catch (error) {
+    logger.error("No se pudo copiar CLI_ID al portapapeles", { value: normalized, error });
   }
 }
+
 </script>
+
+<style scoped>
+.cliente-id-with-copy {
+  display: grid;
+  grid-template-columns: minmax(0, auto) 1.9rem;
+  align-items: center;
+  gap: 0.25rem;
+}
+</style>
