@@ -2,6 +2,8 @@ import type { ClientesRepository } from "../domain";
 import { API_ENDPOINTS } from "@/shared/config/apiEndpoints";
 import { MOCK_CLIENTES } from "@/shared/config/mockData";
 import {
+  cloneMockData,
+  fetchLegacyList,
   fetchLegacyByIdOrNull,
   getMockRecordByIdOrNull
 } from "@/shared/lib/http/legacyRepository";
@@ -12,6 +14,15 @@ export function createClientesHttpRepository(
   baseUrl = ""
 ): ClientesRepository {
   return {
+    async list() {
+      return fetchLegacyList({
+        baseUrl,
+        endpoint: API_ENDPOINTS.clientes,
+        schema: clienteDtoSchema,
+        context: "clientes.list",
+        transform: (dtos) => dtos.map((dto) => toClienteDomain(dto))
+      });
+    },
     async getById(clienteId) {
       return fetchLegacyByIdOrNull({
         baseUrl,
@@ -31,6 +42,9 @@ export function createClientesHttpRepository(
 
 export function createClientesMockRepository(): ClientesRepository {
   return {
+    async list() {
+      return cloneMockData(Object.values(MOCK_CLIENTES));
+    },
     async getById(clienteId) {
       return getMockRecordByIdOrNull({
         record: MOCK_CLIENTES,

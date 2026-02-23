@@ -49,5 +49,6 @@ export type Cliente = {
 };
 
 export interface ClientesRepository {
+  list(): Promise<Cliente[]>;
   getById(clienteId: ClienteId): Promise<Cliente | null>;
 }
