@@ -2,6 +2,8 @@ import type { ProductosRepository } from "../domain";
 import { API_ENDPOINTS } from "@/shared/config/apiEndpoints";
 import { MOCK_PRODUCTOS } from "@/shared/config/mockData";
 import {
+  cloneMockData,
+  fetchLegacyList,
   fetchLegacyByIdOrNull,
   getMockRecordByIdOrNull
 } from "@/shared/lib/http/legacyRepository";
@@ -12,6 +14,15 @@ export function createProductosHttpRepository(
   baseUrl = ""
 ): ProductosRepository {
   return {
+    async list() {
+      return fetchLegacyList({
+        baseUrl,
+        endpoint: API_ENDPOINTS.productos,
+        schema: productoDtoSchema,
+        context: "productos.list",
+        transform: (dtos) => dtos.map((dto) => toProductoDomain(dto))
+      });
+    },
     async getById(productoId) {
       return fetchLegacyByIdOrNull({
         baseUrl,
@@ -31,6 +42,9 @@ export function createProductosHttpRepository(
 
 export function createProductosMockRepository(): ProductosRepository {
   return {
+    async list() {
+      return cloneMockData(Object.values(MOCK_PRODUCTOS));
+    },
     async getById(productoId) {
       return getMockRecordByIdOrNull({
         record: MOCK_PRODUCTOS,

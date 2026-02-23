@@ -261,7 +261,7 @@
                 <div class="small mb-1">
                   <a
                     v-if="item.productoId"
-                    class="fitba-inline-link"
+                    class="fitba-inline-link fitba-key-link"
                     :href="buildProductoLink(item.productoId)"
                     :aria-label="buildGoToProductoLabel(item.productoId)"
                     @click.prevent="goToProducto(item.productoId)"
@@ -300,7 +300,7 @@
                   <td>
                     <a
                       v-if="item.productoId"
-                      class="fitba-inline-link"
+                      class="fitba-inline-link fitba-key-link"
                       data-nav-main="true"
                       :href="buildProductoLink(item.productoId)"
                       :aria-label="buildGoToProductoLabel(item.productoId)"

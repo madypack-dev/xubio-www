@@ -31,5 +31,6 @@ export type Producto = {
 };
 
 export interface ProductosRepository {
+  list(): Promise<Producto[]>;
   getById(productoId: ProductoId): Promise<Producto | null>;
 }
