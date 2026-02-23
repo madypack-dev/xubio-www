@@ -20,6 +20,14 @@ on:
         required: false
         default: ""
         type: string
+      dry_run:
+        description: "Run preflight diagnostics only (no publish/deploy)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 concurrency:
   group: deploy-ftp-${{ github.ref }}
@@ -87,10 +95,12 @@ jobs:
     env:
       DEPLOY_PROTOCOL: ${{ inputs.deploy_protocol || 'ftps' }}
       DEPLOY_PORT: ${{ inputs.deploy_port || '' }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
     outputs:
       deploy_port: ${{ steps.preflight.outputs.deploy_port }}
       deploy_protocol: ${{ steps.preflight.outputs.deploy_protocol }}
       resolved_host: ${{ steps.preflight.outputs.resolved_host }}
+      dry_run: ${{ steps.preflight.outputs.dry_run }}
 
     steps:
       - name: Debug validate deploy secrets and DNS
@@ -103,8 +113,15 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           DEPLOY_PROTOCOL: ${{ env.DEPLOY_PROTOCOL }}
           DEPLOY_PORT: ${{ env.DEPLOY_PORT }}
+          DRY_RUN: ${{ env.DRY_RUN }}
         run: |
           set -euo pipefail
+          dry_run_value="$(echo "${DRY_RUN:-false}" | tr '[:upper:]' '[:lower:]')"
+          if [ "$dry_run_value" != "true" ] && [ "$dry_run_value" != "false" ]; then
+            echo "ERROR: DRY_RUN debe ser 'true' o 'false'. Valor actual: '$dry_run_value'" >&2
+            exit 1
+          fi
+
           protocol="$(echo "${DEPLOY_PROTOCOL:-ftp}" | tr '[:upper:]' '[:lower:]')"
           if [ "$protocol" != "ftp" ] && [ "$protocol" != "ftps" ] && [ "$protocol" != "ftps-legacy" ] && [ "$protocol" != "sftp" ]; then
             echo "ERROR: DEPLOY_PROTOCOL debe ser 'ftp', 'ftps', 'ftps-legacy' o 'sftp'. Valor actual: '$protocol'" >&2
@@ -219,6 +236,7 @@ jobs:
           echo "deploy_port=$target_port" >> "$GITHUB_OUTPUT"
           echo "deploy_protocol=$protocol" >> "$GITHUB_OUTPUT"
           echo "resolved_host=$resolved_target" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run_value" >> "$GITHUB_OUTPUT"
           echo "Testing TCP reachability on target port..."
           if command -v nc >/dev/null 2>&1; then
             if nc -z -w5 "$resolved_target" "$target_port" >/dev/null 2>&1; then
@@ -227,6 +245,14 @@ jobs:
               echo "ERROR: Port $target_port is NOT reachable on $resolved_target" >&2
               exit 1
             fi
+            echo "Extra diagnostics (common protocol ports):"
+            for port in 22 21 990; do
+              if nc -z -w3 "$resolved_target" "$port" >/dev/null 2>&1; then
+                echo " - Port $port reachable"
+              else
+                echo " - Port $port NOT reachable"
+              fi
+            done
           else
             echo "nc not available; skipping port checks (install netcat if needed)."
           fi
@@ -235,6 +261,7 @@ jobs:
 
   deploy_publish:
     needs: [build_dist, deploy_preflight]
+    if: ${{ needs.deploy_preflight.outputs.dry_run != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

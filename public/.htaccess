@@ -9,3 +9,11 @@
   RewriteRule . /index.html [L]
 
 </IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header always set Content-Security-Policy "base-uri 'self'; frame-ancestors 'none'; object-src 'none'"
+</IfModule>

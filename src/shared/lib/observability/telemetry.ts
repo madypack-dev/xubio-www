@@ -11,6 +11,8 @@ type TelemetryPayload = {
 
 const MAX_BUFFER_SIZE = 120;
 const telemetryBuffer: TelemetryPayload[] = [];
+const MAX_ERROR_MESSAGE_LENGTH = 400;
+const MAX_ERROR_STACK_LENGTH = 1600;
 
 function nowIsoString() {
   return new Date().toISOString();
@@ -32,6 +34,34 @@ function shouldTrackBySampleRate() {
     return false;
   }
   return Math.random() <= sampleRate;
+}
+
+function withMaxLength(value: string, maxLength: number) {
+  const normalized = value.trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, maxLength)}...`;
+}
+
+function sanitizeTelemetryUrl(value: string) {
+  const raw = String(value ?? "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  try {
+    const fallbackOrigin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "http://localhost";
+    const parsedUrl = new URL(raw, fallbackOrigin);
+    parsedUrl.search = "";
+    parsedUrl.hash = "";
+    return parsedUrl.toString();
+  } catch (_error) {
+    return raw.split("?")[0]?.split("#")[0] ?? raw;
+  }
 }
 
 function flushToEndpoint(payload: TelemetryPayload) {
@@ -111,7 +141,7 @@ export function trackHttpRequest(input: {
     "http_request",
     {
       method: input.method,
-      url: input.url,
+      url: sanitizeTelemetryUrl(input.url),
       durationMs: input.durationMs,
       status: input.status,
       outcome: input.outcome,
@@ -154,7 +184,17 @@ export function trackUnhandledError(input: {
   errorName: string | null;
   stack: string | null;
 }) {
-  trackTelemetryEvent("frontend_error", input, "error");
+  const safeStack = import.meta.env.DEV ? input.stack : null;
+
+  trackTelemetryEvent(
+    "frontend_error",
+    {
+      ...input,
+      message: withMaxLength(String(input.message ?? ""), MAX_ERROR_MESSAGE_LENGTH),
+      stack: safeStack ? withMaxLength(safeStack, MAX_ERROR_STACK_LENGTH) : null
+    },
+    "error"
+  );
 }
 
 export function getTelemetryBufferSnapshot() {

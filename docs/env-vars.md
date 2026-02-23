@@ -35,6 +35,7 @@ Operativa para despliegue CI/CD (GitHub Actions):
 - Inputs de `workflow_dispatch` (al lanzar deploy manual):
   - `deploy_protocol` (opcional, `ftps` por defecto; opciones: `ftps`, `ftps-legacy`, `ftp`, `sftp`).
   - `deploy_port` (opcional; si no se define, usa `21` para `ftp/ftps`, `990` para `ftps-legacy` y `22` para `sftp`).
+  - `dry_run` (opcional, `false` por defecto): si se define en `true`, ejecuta solo preflight/diagnóstico y no publica `dist/`.
 
 - El workflow de deploy usa estas secrets y sube `./dist/` a `public_html/xubio-www/`.
 - Si `PUBLIC_BASE_URL` está definido, el workflow ejecuta smoke checks de `GET /` y `GET /remitos` al finalizar publish.

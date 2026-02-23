@@ -129,6 +129,69 @@ function debugHttpLog(message: string, payload: Record<string, unknown>) {
   console.info(`[MVP][HTTP DEBUG] ${message}`, payload);
 }
 
+const SENSITIVE_HEADER_NAMES = new Set([
+  "authorization",
+  "cookie",
+  "set-cookie",
+  "proxy-authorization",
+  "x-api-key",
+  "api-key",
+  "x-auth-token"
+]);
+
+const SENSITIVE_BODY_KEYS = new Set([
+  "password",
+  "pass",
+  "token",
+  "access_token",
+  "refresh_token",
+  "secret",
+  "authorization",
+  "apikey",
+  "api_key",
+  "cookie"
+]);
+
+function sanitizeDebugHeaders(headers: Headers) {
+  const sanitized: Record<string, string> = {};
+  for (const [key, value] of headers.entries()) {
+    sanitized[key] = SENSITIVE_HEADER_NAMES.has(key.toLowerCase()) ? "<redacted>" : value;
+  }
+  return sanitized;
+}
+
+function sanitizeJsonLikeValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeJsonLikeValue(item));
+  }
+
+  if (value && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(source)) {
+      result[key] = SENSITIVE_BODY_KEYS.has(key.toLowerCase())
+        ? "<redacted>"
+        : sanitizeJsonLikeValue(entry);
+    }
+    return result;
+  }
+
+  return value;
+}
+
+function sanitizeBodyPreviewForDebug(serializedBody: unknown) {
+  if (typeof serializedBody !== "string") {
+    return "<non-string-body>";
+  }
+
+  try {
+    const parsed = JSON.parse(serializedBody) as unknown;
+    return previewText(JSON.stringify(sanitizeJsonLikeValue(parsed)));
+  } catch (_error) {
+    return previewText(serializedBody);
+  }
+}
+
 let requestSequence = 0;
 
 function nextRequestId() {
@@ -319,8 +382,8 @@ async function request<TResponse, TBody = unknown>(
     url,
     parseAs,
     timeoutMs,
-    headers: Object.fromEntries(headers.entries()),
-    bodyPreview: typeof serializedBody === "string" ? previewText(serializedBody) : "<non-string-body>"
+    headers: sanitizeDebugHeaders(headers),
+    bodyPreview: sanitizeBodyPreviewForDebug(serializedBody)
   });
   const requestSignal = mergeSignals(timeoutController.signal, signal);
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);

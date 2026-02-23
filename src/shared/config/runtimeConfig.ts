@@ -1,3 +1,14 @@
+type RuntimeConfig = Readonly<{
+  apiBaseUrl: string;
+  useDevProxyForApi: boolean;
+  useRelativeApiBase: boolean;
+  verboseStartupLogs: boolean;
+  debugRemitos: boolean;
+  observabilityEnabled: boolean;
+  observabilityEndpoint: string | null;
+  observabilitySampleRate: number;
+}>;
+
 const DEFAULT_RUNTIME_ENV = {
   apiBaseUrl: "",
   devApiBaseUrl: "http://127.0.0.1:8000",
@@ -105,7 +116,7 @@ const observabilityEnabled = DEFAULT_RUNTIME_ENV.observabilityEnabled;
 const observabilityEndpoint = DEFAULT_RUNTIME_ENV.observabilityEndpoint;
 const observabilitySampleRate = DEFAULT_RUNTIME_ENV.observabilitySampleRate;
 
-export const runtimeConfig = {
+export const runtimeConfig: RuntimeConfig = Object.freeze({
   apiBaseUrl: resolvedApiBaseUrl,
   useDevProxyForApi,
   useRelativeApiBase,
@@ -114,4 +125,4 @@ export const runtimeConfig = {
   observabilityEnabled,
   observabilityEndpoint,
   observabilitySampleRate
-};
+});
