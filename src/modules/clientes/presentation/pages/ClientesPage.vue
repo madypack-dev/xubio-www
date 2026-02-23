@@ -1,6 +1,12 @@
 <template>
-  <section class="card shadow-sm" :aria-busy="clienteQuery.isLoading.value">
+  <section class="card shadow-sm fitba-screen--phosphor" :aria-busy="clienteQuery.isLoading.value">
     <div class="card-body">
+      <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
+        <span class="fitba-statusbar-item">MODULO: CLIENTES</span>
+        <span class="fitba-statusbar-item">VISTA: DETALLE</span>
+        <span class="fitba-statusbar-item">CLI_ID: {{ submittedClienteId ?? "-" }}</span>
+      </div>
+
       <h2 class="h5 mb-3">Cliente por ID (MVP)</h2>
 
       <form class="fitba-search-form row g-2 mb-3" @submit.prevent="submitSearch">

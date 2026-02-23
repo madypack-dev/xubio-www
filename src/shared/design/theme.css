@@ -275,6 +275,101 @@ body {
   color: #143f1c;
 }
 
+.fitba-screen--phosphor {
+  --fitba-phosphor-bg: #08110a;
+  --fitba-phosphor-panel: #0d1b10;
+  --fitba-phosphor-grid: #13301b;
+  --fitba-phosphor-ink: #92f5a7;
+  --fitba-phosphor-ink-soft: #66c97f;
+  --fitba-phosphor-focus: #d6ff9a;
+  color: var(--fitba-phosphor-ink);
+  letter-spacing: 0.01em;
+}
+
+.fitba-screen--phosphor .card {
+  background-color: var(--fitba-phosphor-panel);
+  border-color: #2d6a3f;
+  box-shadow:
+    0 0 0 1px rgba(146, 245, 167, 0.12),
+    inset 0 0 0 1px rgba(146, 245, 167, 0.06);
+}
+
+.fitba-screen--phosphor .h5,
+.fitba-screen--phosphor .h6 {
+  color: var(--fitba-phosphor-ink);
+}
+
+.fitba-screen--phosphor .fitba-inline-link {
+  color: #b9ff7d;
+  text-decoration-color: rgba(185, 255, 125, 0.42);
+}
+
+.fitba-screen--phosphor .fitba-inline-link:hover {
+  color: #d6ff9a;
+  text-decoration-color: #d6ff9a;
+}
+
+.fitba-screen--phosphor .table {
+  color: var(--fitba-phosphor-ink);
+  border-color: rgba(146, 245, 167, 0.2);
+}
+
+.fitba-screen--phosphor .table thead th {
+  border-color: rgba(146, 245, 167, 0.25);
+}
+
+.fitba-screen--phosphor .table tbody td {
+  border-color: rgba(146, 245, 167, 0.18);
+}
+
+.fitba-screen--phosphor .table-dark th {
+  background-color: var(--fitba-phosphor-grid) !important;
+  color: #d6ff9a !important;
+}
+
+.fitba-screen--phosphor .table tbody tr.table-primary > * {
+  --bs-table-accent-bg: rgba(64, 130, 78, 0.45);
+  color: #e7ffbc;
+}
+
+.fitba-screen--phosphor .table-hover > tbody > tr:hover > * {
+  --bs-table-accent-bg: rgba(64, 130, 78, 0.18);
+}
+
+.fitba-screen--phosphor :focus-visible {
+  outline: 2px solid var(--fitba-phosphor-focus);
+  outline-offset: 2px;
+}
+
+.fitba-statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+  border: 1px solid rgba(17, 37, 21, 0.38);
+  background-color: rgba(223, 238, 224, 0.72);
+  padding: 0.22rem 0.4rem;
+  font-size: 0.67rem;
+  text-transform: uppercase;
+}
+
+.fitba-statusbar-item {
+  border: 1px solid rgba(17, 37, 21, 0.25);
+  background-color: rgba(241, 250, 241, 0.9);
+  padding: 0.08rem 0.35rem;
+  font-weight: 700;
+}
+
+.fitba-screen--phosphor .fitba-statusbar {
+  border-color: rgba(146, 245, 167, 0.38);
+  background-color: var(--fitba-phosphor-bg);
+}
+
+.fitba-screen--phosphor .fitba-statusbar-item {
+  border-color: rgba(146, 245, 167, 0.28);
+  background-color: rgba(19, 48, 27, 0.9);
+  color: var(--fitba-phosphor-ink);
+}
+
 .fitba-table-shell {
   border: 1px solid #9fb9a4;
   border-radius: 2px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="app-shell">
+  <div class="app-shell fitba-screen--phosphor">
     <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
 
     <header class="app-header border-bottom border-2 border-success-subtle mb-3">

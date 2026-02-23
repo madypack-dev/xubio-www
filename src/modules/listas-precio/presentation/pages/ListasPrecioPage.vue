@@ -1,6 +1,12 @@
 <template>
-  <section class="card shadow-sm" :aria-busy="listasPrecioQuery.isLoading.value">
+  <section class="card shadow-sm fitba-screen--phosphor" :aria-busy="listasPrecioQuery.isLoading.value">
     <div class="card-body">
+      <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
+        <span class="fitba-statusbar-item">MODULO: LISTAS_PRECIO</span>
+        <span class="fitba-statusbar-item">VISTA: LISTADO</span>
+        <span class="fitba-statusbar-item">TOTAL: {{ listasPrecio.length }}</span>
+      </div>
+
       <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
         <h2 class="h5 mb-0">Listas de precio (MVP)</h2>
         <button
@@ -51,10 +57,10 @@
             </caption>
             <thead class="table-dark">
               <tr>
-                <th scope="col">listaPrecioId</th>
-                <th scope="col">nombre</th>
-                <th scope="col">descripcion</th>
-                <th scope="col">activo</th>
+                <th scope="col">LPR_ID</th>
+                <th scope="col">NOM</th>
+                <th scope="col">DESC</th>
+                <th scope="col">ACT</th>
               </tr>
             </thead>
             <tbody>

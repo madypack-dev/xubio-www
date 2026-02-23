@@ -1,7 +1,13 @@
 <template>
-  <div class="d-flex flex-column gap-3">
+  <div class="d-flex flex-column gap-3 remitos-screen fitba-screen--phosphor">
     <section v-if="!selectedRemito" class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
       <div class="card-body">
+        <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
+          <span class="fitba-statusbar-item">MODULO: REMITOS</span>
+          <span class="fitba-statusbar-item">VISTA: LISTADO</span>
+          <span class="fitba-statusbar-item">TOTAL: {{ remitos.length }}</span>
+        </div>
+
         <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Remitos</h2>
           <div class="fitba-toolbar-actions d-flex gap-2">
@@ -64,12 +70,12 @@
                     {{ remito.transaccionId }}
                   </a>
                   <span v-else class="fw-semibold">-</span>
-                  <span class="small text-body-secondary">
+                  <span class="small remito-mobile-meta">
                     {{ formatDateDdMmYyyy(remito.fecha) }}
                   </span>
                 </div>
                 <div class="small mb-1">
-                  <span class="text-body-secondary">Cliente:</span>
+                  <span class="remito-mobile-label">Cliente:</span>
                   <a
                     v-if="remito.clienteId"
                     class="fitba-inline-link"
@@ -79,13 +85,13 @@
                   >
                     {{ remito.clienteId }}
                   </a>
-                  <span v-else>-</span>
+                  <span v-else class="remito-mobile-value">-</span>
                 </div>
-                <div class="small text-body-secondary remito-mobile-observacion">
+                <div class="small remito-mobile-observacion">
                   {{ remito.observacion || "-" }}
                 </div>
                 <div class="small mt-1">
-                  <span class="text-body-secondary">Items:</span>
+                  <span class="remito-mobile-label">Items:</span>
                   <span class="fw-semibold">{{ remito.items.length }}</span>
                 </div>
               </div>
@@ -103,16 +109,16 @@
               </caption>
               <thead class="table-dark">
                 <tr>
-                  <th scope="col">transaccionId</th>
-                  <th scope="col" class="remitos-numero-remito-col">numeroRemito</th>
-                  <th scope="col" class="remitos-fecha-col">fecha</th>
-                  <th scope="col">observacion</th>
-                  <th scope="col">clienteId</th>
-                  <th scope="col" class="d-none d-lg-table-cell">vendedorId</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">comisionVendedor</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">depositoId</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">circuitoContableId</th>
-                  <th scope="col" class="text-center">items</th>
+                  <th scope="col">TRX_ID</th>
+                  <th scope="col" class="remitos-numero-remito-col">RTO_NRO</th>
+                  <th scope="col" class="remitos-fecha-col">FEC</th>
+                  <th scope="col">OBS</th>
+                  <th scope="col">CLI_ID</th>
+                  <th scope="col" class="d-none d-lg-table-cell">VND_ID</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">COM_%</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">DEP_ID</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">CC_ID</th>
+                  <th scope="col" class="text-center">ITMS</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,6 +195,13 @@
 
     <section v-else class="card shadow-sm">
       <div class="card-body">
+        <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
+          <span class="fitba-statusbar-item">MODULO: REMITOS</span>
+          <span class="fitba-statusbar-item">VISTA: DETALLE</span>
+          <span class="fitba-statusbar-item">RTO_ID: {{ selectedRemito.transaccionId ?? "-" }}</span>
+          <span class="fitba-statusbar-item">ITMS: {{ selectedRemito.items.length }}</span>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h3 class="h6 mb-0">Detalle de items del remito</h3>
           <button
@@ -247,12 +260,12 @@
               </caption>
               <thead class="table-dark">
                 <tr>
-                  <th scope="col">itemId</th>
-                  <th scope="col">transaccionId</th>
-                  <th scope="col">productoId</th>
-                  <th scope="col">descripcion</th>
-                  <th scope="col">cantidad</th>
-                  <th scope="col">precio</th>
+                  <th scope="col">ITM_ID</th>
+                  <th scope="col">TRX_ID</th>
+                  <th scope="col">PRD_ID</th>
+                  <th scope="col">DESC</th>
+                  <th scope="col">CANT</th>
+                  <th scope="col">PREC</th>
                 </tr>
               </thead>
               <tbody>
@@ -474,6 +487,10 @@ async function reloadRemitos() {
   white-space: nowrap;
 }
 
+.remitos-screen {
+  letter-spacing: 0.01em;
+}
+
 .remitos-fecha-col {
   min-width: 120px;
   white-space: nowrap;
@@ -488,6 +505,7 @@ async function reloadRemitos() {
 .fitba-table-readable td,
 .fitba-table-readable th {
   vertical-align: middle;
+  font-variant-numeric: tabular-nums;
 }
 
 .fitba-table-readable tbody tr {
@@ -495,17 +513,46 @@ async function reloadRemitos() {
 }
 
 .fitba-table-readable tbody tr:hover {
-  background-color: rgba(25, 88, 37, 0.08);
+  background-color: rgba(64, 130, 78, 0.18);
 }
 
 .remito-mobile-card {
   border-width: 1px;
+  border-radius: 2px;
+  border-color: rgba(146, 245, 167, 0.3);
+  background:
+    linear-gradient(180deg, rgba(10, 26, 14, 0.95), rgba(8, 17, 10, 0.95)),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 17px,
+      rgba(146, 245, 167, 0.03) 17px,
+      rgba(146, 245, 167, 0.03) 18px
+    );
+  box-shadow: inset 0 0 0 1px rgba(146, 245, 167, 0.1);
+}
+
+.remito-mobile-label {
+  color: var(--fitba-phosphor-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.65rem;
+}
+
+.remito-mobile-value {
+  color: var(--fitba-phosphor-ink);
+}
+
+.remito-mobile-meta {
+  color: var(--fitba-phosphor-ink-soft);
+  font-variant-numeric: tabular-nums;
 }
 
 .remito-mobile-observacion {
-  line-clamp: 2;
+  color: var(--fitba-phosphor-ink-soft);
   display: -webkit-box;
   overflow: hidden;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }

@@ -1,7 +1,13 @@
 <template>
-  <div class="d-flex flex-column gap-3">
+  <div class="d-flex flex-column gap-3 fitba-screen--phosphor">
     <section class="card shadow-sm" :aria-busy="comprobantesQuery.isLoading.value">
       <div class="card-body">
+        <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
+          <span class="fitba-statusbar-item">MODULO: COMPROBANTES</span>
+          <span class="fitba-statusbar-item">VISTA: LISTADO</span>
+          <span class="fitba-statusbar-item">TOTAL: {{ comprobantes.length }}</span>
+        </div>
+
         <div class="fitba-toolbar d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 mb-0">Comprobantes (MVP)</h2>
           <button
@@ -55,11 +61,11 @@
               </caption>
               <thead class="table-dark">
                 <tr>
-                  <th scope="col">id</th>
-                  <th scope="col">nombre</th>
-                  <th scope="col">fecha</th>
-                  <th scope="col">cliente</th>
-                  <th scope="col">importeTotal</th>
+                  <th scope="col">CBT_ID</th>
+                  <th scope="col">NOM</th>
+                  <th scope="col">FEC</th>
+                  <th scope="col">CLI</th>
+                  <th scope="col">IMP_TOT</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,6 +102,12 @@
 
     <section class="card shadow-sm" :aria-busy="detailQuery.isLoading.value">
       <div class="card-body">
+        <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
+          <span class="fitba-statusbar-item">MODULO: COMPROBANTES</span>
+          <span class="fitba-statusbar-item">VISTA: DETALLE</span>
+          <span class="fitba-statusbar-item">CBT_ID: {{ selectedComprobanteId ?? "-" }}</span>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h3 class="h6 mb-0">Detalle de comprobante</h3>
           <button
