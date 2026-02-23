@@ -11,5 +11,6 @@ export type Vendedor = {
 };
 
 export interface VendedoresRepository {
+  list(): Promise<Vendedor[]>;
   getById(vendedorId: VendedorId): Promise<Vendedor | null>;
 }
