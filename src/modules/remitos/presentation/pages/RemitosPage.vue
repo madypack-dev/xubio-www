@@ -72,7 +72,6 @@
           <DataPaginationControls
             v-if="remitosPagination.isActive.value"
             entity-label="remitos"
-            :show-page-size-selector="false"
             :page="remitosPagination.page.value"
             :page-size="remitosPagination.pageSize.value"
             :page-size-options="remitosPagination.pageSizeOptions"
@@ -354,7 +353,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useRemitosQuery } from "../useRemitosQuery";
 import type { Remito } from "../../domain";
@@ -401,6 +400,8 @@ const {
 const clienteSearchInput = ref("");
 const appliedClienteSearch = ref("");
 const clienteSearchErrorMessage = ref("");
+const sharedPageSizeOptions = [10, 20, 50, 100];
+const sharedPageSizeStorageKey = "fitba.pageSize.listados";
 
 watch(
   () => [selectedRemitoId.value, remitosQuery.data.value] as const,
@@ -508,35 +509,13 @@ const visibleRemitos = computed(() => {
   return filteredRemitos.value;
 });
 
-const dynamicPageSizeOptions = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40];
-
 const remitosPagination = usePaginatedRows(visibleRemitos, {
-  threshold: 8,
-  defaultPageSize: 12,
-  pageSizeOptions: dynamicPageSizeOptions
+  threshold: 10,
+  defaultPageSize: 20,
+  pageSizeOptions: sharedPageSizeOptions
 });
 
 const paginatedVisibleRemitos = computed(() => remitosPagination.rows.value);
-
-function resolveDynamicRowsPerPage() {
-  if (typeof window === "undefined") {
-    return 12;
-  }
-  const viewportHeight = window.innerHeight;
-  const mobile = window.innerWidth < 768;
-  const reservedHeight = mobile ? 360 : 320;
-  const rowHeight = mobile ? 128 : 44;
-  const estimated = Math.max(8, Math.floor((viewportHeight - reservedHeight) / rowHeight));
-  return dynamicPageSizeOptions.reduce((closest, candidate) => {
-    const closestDiff = Math.abs(closest - estimated);
-    const candidateDiff = Math.abs(candidate - estimated);
-    return candidateDiff < closestDiff ? candidate : closest;
-  }, dynamicPageSizeOptions[0]);
-}
-
-function syncDynamicPageSize() {
-  remitosPagination.setPageSize(resolveDynamicRowsPerPage());
-}
 
 const errorMessage = computed(() => {
   const error = remitosQuery.error.value;
@@ -548,14 +527,25 @@ const errorMessage = computed(() => {
 
 useTableRowNavigation();
 
-onMounted(() => {
-  syncDynamicPageSize();
-  window.addEventListener("resize", syncDynamicPageSize);
-});
+if (typeof window !== "undefined") {
+  const storedPageSize = Number(window.localStorage.getItem(sharedPageSizeStorageKey) ?? "");
+  if (sharedPageSizeOptions.includes(storedPageSize)) {
+    remitosPagination.setPageSize(storedPageSize);
+  }
+}
 
-onUnmounted(() => {
-  window.removeEventListener("resize", syncDynamicPageSize);
-});
+watch(
+  () => remitosPagination.pageSize.value,
+  (value) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (!sharedPageSizeOptions.includes(value)) {
+      return;
+    }
+    window.localStorage.setItem(sharedPageSizeStorageKey, String(value));
+  }
+);
 
 useAs400Shortcuts({
   onF2: () => {

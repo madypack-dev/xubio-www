@@ -9,7 +9,7 @@
         <span class="fitba-statusbar-item">TOTAL: {{ filteredClientes.length }}</span>
       </div>
 
-      <h2 class="h5 mb-3">Clientes (MVP)</h2>
+      <h2 class="h5 mb-3">Clientes</h2>
 
       <div v-if="selectedCliente" class="mb-3 d-flex justify-content-between align-items-center">
         <p class="mb-0 small">Detalle de cliente seleccionado.</p>
@@ -232,6 +232,8 @@ const appliedClienteFilter = ref("");
 const clienteSearchErrorMessage = ref("");
 const selectedClienteId = ref<string | null>(null);
 const clientesQuery = useClientesQuery(clientesRepository);
+const sharedPageSizeOptions = [10, 20, 50, 100];
+const sharedPageSizeStorageKey = "fitba.pageSize.listados";
 
 watch(
   () => route.query.nombre,
@@ -298,9 +300,9 @@ const filteredClientes = computed(() => {
 });
 
 const clientesPagination = usePaginatedRows(filteredClientes, {
-  threshold: 20,
+  threshold: 10,
   defaultPageSize: 20,
-  pageSizeOptions: [10, 20, 50, 100]
+  pageSizeOptions: sharedPageSizeOptions
 });
 const paginatedClientes = computed(() => clientesPagination.rows.value);
 
@@ -318,6 +320,26 @@ useAs400Shortcuts({
   onF5: reloadClientes,
   onBack: () => router.back()
 });
+
+if (typeof window !== "undefined") {
+  const storedPageSize = Number(window.localStorage.getItem(sharedPageSizeStorageKey) ?? "");
+  if (sharedPageSizeOptions.includes(storedPageSize)) {
+    clientesPagination.setPageSize(storedPageSize);
+  }
+}
+
+watch(
+  () => clientesPagination.pageSize.value,
+  (value) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (!sharedPageSizeOptions.includes(value)) {
+      return;
+    }
+    window.localStorage.setItem(sharedPageSizeStorageKey, String(value));
+  }
+);
 
 function selectCliente(cliente: Cliente) {
   const resolvedId = String(cliente.clienteId ?? "").trim();
