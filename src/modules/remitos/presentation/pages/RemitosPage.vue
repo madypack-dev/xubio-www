@@ -62,7 +62,7 @@
                 <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
                   <a
                     v-if="remito.transaccionId"
-                    class="fitba-inline-link fw-semibold"
+                    class="fitba-inline-link fitba-key-link fw-semibold"
                     :href="buildRemitoLink(remito.transaccionId)"
                     :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
                     @click.prevent="selectRemito(remito.transaccionId)"
@@ -75,10 +75,23 @@
                   </span>
                 </div>
                 <div class="small mb-1">
+                  <span class="remito-mobile-label">Rto:</span>
+                  <a
+                    v-if="remito.transaccionId"
+                    class="fitba-inline-link fitba-key-link fw-semibold"
+                    :href="buildRemitoLink(remito.transaccionId)"
+                    :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
+                    @click.prevent="selectRemito(remito.transaccionId)"
+                  >
+                    {{ remito.numeroRemito || "-" }}
+                  </a>
+                  <span v-else class="remito-mobile-value fw-semibold">{{ remito.numeroRemito || "-" }}</span>
+                </div>
+                <div class="small mb-1">
                   <span class="remito-mobile-label">Cliente:</span>
                   <a
                     v-if="remito.clienteId"
-                    class="fitba-inline-link"
+                    class="fitba-inline-link fitba-key-link"
                     :href="buildClienteLink(remito.clienteId)"
                     :aria-label="buildGoToClienteLabel(remito.clienteId)"
                     @click.prevent="goToCliente(remito.clienteId)"
@@ -132,7 +145,7 @@
                   <td>
                     <a
                       v-if="remito.transaccionId"
-                      class="fitba-inline-link"
+                      class="fitba-inline-link fitba-key-link"
                       data-nav-main="true"
                       :href="buildRemitoLink(remito.transaccionId)"
                       :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
@@ -144,7 +157,16 @@
                     <span v-else>-</span>
                   </td>
                   <td class="remitos-numero-remito-col">
-                    <div class="fw-semibold">{{ remito.numeroRemito || "-" }}</div>
+                    <a
+                      v-if="remito.transaccionId"
+                      class="fitba-inline-link fitba-key-link fw-semibold"
+                      :href="buildRemitoLink(remito.transaccionId)"
+                      :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
+                      @click.prevent="selectRemito(remito.transaccionId)"
+                    >
+                      {{ remito.numeroRemito || "-" }}
+                    </a>
+                    <div v-else class="fw-semibold">{{ remito.numeroRemito || "-" }}</div>
                   </td>
                   <td class="remitos-fecha-col">
                     {{ formatDateDdMmYyyy(remito.fecha) }}
@@ -158,7 +180,7 @@
                   <td>
                     <a
                       v-if="remito.clienteId"
-                      class="fitba-inline-link"
+                      class="fitba-inline-link fitba-key-link"
                       :href="buildClienteLink(remito.clienteId)"
                       :aria-label="buildGoToClienteLabel(remito.clienteId)"
                       @click.prevent="goToCliente(remito.clienteId)"
@@ -170,7 +192,7 @@
                   <td class="d-none d-lg-table-cell">
                     <a
                       v-if="remito.vendedorId"
-                      class="fitba-inline-link"
+                      class="fitba-inline-link fitba-key-link"
                       :href="buildVendedorLink(remito.vendedorId)"
                       :aria-label="buildGoToVendedorLabel(remito.vendedorId)"
                       @click.prevent="goToVendedor(remito.vendedorId)"
@@ -555,5 +577,38 @@ async function reloadRemitos() {
   line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+@media (max-width: 767px) {
+  .remito-mobile-card {
+    border-color: rgba(20, 58, 31, 0.35);
+    background:
+      linear-gradient(180deg, rgba(247, 253, 247, 0.98), rgba(237, 247, 238, 0.98)),
+      repeating-linear-gradient(
+        180deg,
+        transparent 0,
+        transparent 17px,
+        rgba(20, 58, 31, 0.035) 17px,
+        rgba(20, 58, 31, 0.035) 18px
+      );
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  }
+
+  .remito-mobile-card .fitba-key-link {
+    color: #0f3a1e !important;
+    text-decoration-color: rgba(15, 58, 30, 0.65) !important;
+  }
+
+  .remito-mobile-card .fitba-key-link:hover {
+    color: #08210f !important;
+    text-decoration-color: #08210f !important;
+  }
+
+  .remito-mobile-card .remito-mobile-label,
+  .remito-mobile-card .remito-mobile-meta,
+  .remito-mobile-card .remito-mobile-observacion,
+  .remito-mobile-card .remito-mobile-value {
+    color: #234a2f;
+  }
 }
 </style>

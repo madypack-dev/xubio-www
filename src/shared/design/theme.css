@@ -275,6 +275,17 @@ body {
   color: #143f1c;
 }
 
+.fitba-key-link {
+  color: #1b4a29;
+  text-decoration-color: rgba(27, 74, 41, 0.6);
+  font-weight: 700;
+}
+
+.fitba-key-link:hover {
+  color: #10311b;
+  text-decoration-color: #10311b;
+}
+
 .fitba-screen--phosphor {
   --fitba-phosphor-bg: #08110a;
   --fitba-phosphor-panel: #0d1b10;
@@ -307,6 +318,16 @@ body {
 .fitba-screen--phosphor .fitba-inline-link:hover {
   color: #d6ff9a;
   text-decoration-color: #d6ff9a;
+}
+
+.fitba-screen--phosphor .fitba-inline-link.fitba-key-link {
+  color: #06150b !important;
+  text-decoration-color: #06150b !important;
+}
+
+.fitba-screen--phosphor .fitba-inline-link.fitba-key-link:hover {
+  color: #000 !important;
+  text-decoration-color: #000 !important;
 }
 
 .fitba-screen--phosphor .table {

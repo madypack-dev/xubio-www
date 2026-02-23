@@ -78,7 +78,7 @@
                   <td>
                     <a
                       v-if="comprobante.comprobanteVentaId"
-                      class="fitba-inline-link"
+                      class="fitba-inline-link fitba-key-link"
                       data-nav-main="true"
                       :href="buildComprobanteLink(comprobante.comprobanteVentaId)"
                       :aria-label="buildDetailLabel(comprobante.comprobanteVentaId)"
