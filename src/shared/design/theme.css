@@ -23,6 +23,9 @@
   --fitba-accent-soft: #d7ecd8;
   --fitba-focus: #f0b63f;
   --fitba-danger: #8e1d1d;
+  --fitba-danger-ink-on-light: #3a0e0e;
+  --fitba-danger-soft-bg: #ffd9d9;
+  --fitba-danger-soft-border: #d46a6a;
   --fitba-row-active: #b9dcbf;
   --fitba-row-hover: #d2e8d6;
   --fitba-table-head: #1b3520;
@@ -558,8 +561,14 @@ body {
 }
 
 .fitba-async-error {
-  color: var(--fitba-danger);
-  border-left-color: var(--fitba-danger);
+  color: var(--fitba-danger-ink-on-light);
+  border-left-color: var(--fitba-danger-soft-border);
+  background-color: var(--fitba-danger-soft-bg);
+  border: 1px solid var(--fitba-danger-soft-border);
+  border-radius: 2px;
+  display: inline-block;
+  padding: 0.12rem 0.38rem;
+  font-weight: 600;
 }
 
 .fitba-async-empty {

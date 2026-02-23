@@ -73,7 +73,7 @@
             </tr>
             <tr>
               <th scope="row" class="fitba-detail-key">P_ULT_COMPRA</th>
-              <td class="fitba-cell-num">{{ selectedProducto.precioUltCompra ?? "-" }}</td>
+              <td class="fitba-cell-num">{{ formatMoney(selectedProducto.precioUltCompra) }}</td>
             </tr>
             <tr>
               <th scope="row" class="fitba-detail-key">ACTIVO</th>
@@ -127,7 +127,7 @@
               </td>
               <td>{{ formatText(producto.codigo) }}</td>
               <td>{{ formatText(producto.codigoBarra) }}</td>
-              <td class="fitba-cell-num">{{ producto.precioUltCompra ?? "-" }}</td>
+              <td class="fitba-cell-num">{{ formatMoney(producto.precioUltCompra) }}</td>
               <td>{{ formatBoolean(producto.activo) }}</td>
             </tr>
           </tbody>
@@ -151,6 +151,7 @@ import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
 import EntityFilterBar from "@/shared/ui/EntityFilterBar.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 import { createLogger } from "@/shared/lib/observability/logger";
+import { formatMoney } from "@/shared/lib/formatters/money";
 import { useProductosDependencies } from "../productosDependencies";
 
 const route = useRoute();

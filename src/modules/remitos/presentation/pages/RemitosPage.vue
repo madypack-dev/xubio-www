@@ -312,7 +312,7 @@
                   </td>
                   <td>{{ item.descripcion || "-" }}</td>
                   <td class="fitba-cell-num">{{ item.cantidad ?? "-" }}</td>
-                  <td class="fitba-cell-num">{{ item.precio ?? "-" }}</td>
+                  <td class="fitba-cell-num">{{ formatMoney(item.precio) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -341,6 +341,7 @@ import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 import { buildHttpErrorLogContext } from "@/shared/lib/http/httpErrorDiagnostics";
 import { useRemitosDependencies } from "../remitosDependencies";
 import { createLogger } from "@/shared/lib/observability/logger";
+import { formatMoney } from "@/shared/lib/formatters/money";
 import { useRemitosNavigation } from "../useRemitosNavigation";
 import {
   buildGoToClienteLabel,
