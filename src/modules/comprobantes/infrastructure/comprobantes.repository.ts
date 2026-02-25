@@ -11,12 +11,14 @@ import { toComprobanteDomain, toComprobantesDomain } from "./comprobantes.mapper
 import { comprobanteDtoSchema } from "./comprobantes.schemas";
 
 export function createComprobantesHttpRepository(
-  baseUrl = ""
+  baseUrlOrBaseUrls: string | readonly string[] = ""
 ): ComprobantesRepository {
+  const baseUrls = Array.isArray(baseUrlOrBaseUrls) ? baseUrlOrBaseUrls : [baseUrlOrBaseUrls];
+
   return {
     async list() {
       return fetchLegacyList({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.comprobantesVenta,
         schema: comprobanteDtoSchema,
         context: "comprobantes.list",
@@ -25,7 +27,7 @@ export function createComprobantesHttpRepository(
     },
     async getById(comprobanteVentaId) {
       return fetchLegacyByIdOrNull({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.comprobantesVenta,
         id: comprobanteVentaId,
         schema: comprobanteDtoSchema,

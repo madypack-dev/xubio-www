@@ -9,12 +9,14 @@ import { toRemitosDomain } from "./remitos.mapper";
 import { remitoDtoSchema } from "./remitos.schemas";
 
 export function createRemitosHttpRepository(
-  baseUrl = ""
+  baseUrlOrBaseUrls: string | readonly string[] = ""
 ): RemitosRepository {
+  const baseUrls = Array.isArray(baseUrlOrBaseUrls) ? baseUrlOrBaseUrls : [baseUrlOrBaseUrls];
+
   return {
     async list() {
       return fetchLegacyList({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.remitos,
         schema: remitoDtoSchema,
         context: "remitos.list",

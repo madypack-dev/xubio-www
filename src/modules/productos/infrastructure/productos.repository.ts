@@ -11,12 +11,14 @@ import { toProductoDomain } from "./productos.mapper";
 import { productoDtoSchema } from "./productos.schemas";
 
 export function createProductosHttpRepository(
-  baseUrl = ""
+  baseUrlOrBaseUrls: string | readonly string[] = ""
 ): ProductosRepository {
+  const baseUrls = Array.isArray(baseUrlOrBaseUrls) ? baseUrlOrBaseUrls : [baseUrlOrBaseUrls];
+
   return {
     async list() {
       return fetchLegacyList({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.productos,
         schema: productoDtoSchema,
         context: "productos.list",
@@ -25,7 +27,7 @@ export function createProductosHttpRepository(
     },
     async getById(productoId) {
       return fetchLegacyByIdOrNull({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.productos,
         id: productoId,
         schema: productoDtoSchema,

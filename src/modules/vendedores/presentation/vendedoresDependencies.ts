@@ -13,7 +13,7 @@ export const vendedoresDependenciesKey: InjectionKey<VendedoresDependencies> = S
 
 export function createDefaultVendedoresDependencies(): VendedoresDependencies {
   return {
-    vendedoresRepository: createVendedoresHttpRepository(runtimeConfig.apiBaseUrl)
+    vendedoresRepository: createVendedoresHttpRepository(runtimeConfig.apiBaseUrls)
   };
 }
 

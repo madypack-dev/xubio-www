@@ -45,11 +45,15 @@ Variables de entorno Vue (política actualizada):
 
 - No es obligatorio definir `.env` para levantar el proyecto: los defaults se mantienen en código.
 - Ruta de defaults: `frontend-vue/src/shared/config/runtimeConfig.ts` y `frontend-vue/vite.config.ts`.
-- Política: sólo se documenta y soporta `VITE_API_BASE_URL` como variable de entorno.
+- Política: se soporta únicamente `VITE_API_BASE_URLS` (lista para failover, hasta 3 URLs).
 
 Soporte actual:
 
-- `VITE_API_BASE_URL`: base URL del backend. Única variable recomendada para sobrescribir por entorno (`.env.local`, `.env.production.local`).
+- `VITE_API_BASE_URLS`: lista CSV de URLs backend para failover ordenado `URL1 -> URL2 -> URL3`.
+- Si `VITE_API_BASE_URLS` no está definida, el runtime usa un fallback hardcodeado temporal:
+  - `https://api.madygraf.local/`
+  - `https://10.176.61.33:8000/`
+  - `https://confined-unexcused-garland.ngrok-free.dev/`
 
 Nota operativa:
 
@@ -64,15 +68,15 @@ Decisiones MVP vigentes:
 
 Nota CORS en desarrollo:
 
-- Si `VITE_API_BASE_URL` es absoluto (ej. `http://127.0.0.1:8000`),
+- Si la primera URL resuelta en `VITE_API_BASE_URLS` es absoluta (ej. `http://127.0.0.1:8000`),
   el frontend usa proxy de Vite para `/API` y evita CORS.
 - Para desarrollo local se recomienda `127.0.0.1` en lugar de `localhost` para evitar problemas de proxy por IPv6 (`::1`).
 - El modo mock/fallback del frontend Vue esta deshabilitado.
 
 Nota produccion:
 
-- Si frontend y backend se sirven en el mismo origen (ej. `http://localhost:8000`), deja
-  `VITE_API_BASE_URL` vacio para usar rutas relativas (`/API/...`).
+- Si frontend y backend se sirven en el mismo origen (ej. `http://localhost:8000`), deja vacia la configuración de backend
+  para usar rutas relativas (`/API/...`).
 
 ## Ejecutar frontend legacy (actual)
 

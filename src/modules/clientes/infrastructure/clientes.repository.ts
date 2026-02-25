@@ -11,12 +11,14 @@ import { toClienteDomain } from "./clientes.mapper";
 import { clienteDtoSchema } from "./clientes.schemas";
 
 export function createClientesHttpRepository(
-  baseUrl = ""
+  baseUrlOrBaseUrls: string | readonly string[] = ""
 ): ClientesRepository {
+  const baseUrls = Array.isArray(baseUrlOrBaseUrls) ? baseUrlOrBaseUrls : [baseUrlOrBaseUrls];
+
   return {
     async list() {
       return fetchLegacyList({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.clientes,
         schema: clienteDtoSchema,
         context: "clientes.list",
@@ -25,7 +27,7 @@ export function createClientesHttpRepository(
     },
     async getById(clienteId) {
       return fetchLegacyByIdOrNull({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.clientes,
         id: clienteId,
         schema: clienteDtoSchema,

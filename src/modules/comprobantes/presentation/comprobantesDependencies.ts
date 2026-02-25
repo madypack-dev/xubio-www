@@ -13,7 +13,7 @@ export const comprobantesDependenciesKey: InjectionKey<ComprobantesDependencies>
 
 export function createDefaultComprobantesDependencies(): ComprobantesDependencies {
   return {
-    comprobantesRepository: createComprobantesHttpRepository(runtimeConfig.apiBaseUrl)
+    comprobantesRepository: createComprobantesHttpRepository(runtimeConfig.apiBaseUrls)
   };
 }
 

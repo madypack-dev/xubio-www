@@ -9,12 +9,14 @@ import { toListaPrecioDomain } from "./listasPrecio.mapper";
 import { listaPrecioDtoSchema } from "./listasPrecio.schemas";
 
 export function createListasPrecioHttpRepository(
-  baseUrl = ""
+  baseUrlOrBaseUrls: string | readonly string[] = ""
 ): ListasPrecioRepository {
+  const baseUrls = Array.isArray(baseUrlOrBaseUrls) ? baseUrlOrBaseUrls : [baseUrlOrBaseUrls];
+
   return {
     async list() {
       return fetchLegacyList({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.listaPrecios,
         schema: listaPrecioDtoSchema,
         context: "listasPrecio.list",

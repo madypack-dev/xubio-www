@@ -13,7 +13,7 @@ export const clientesDependenciesKey: InjectionKey<ClientesDependencies> = Symbo
 
 export function createDefaultClientesDependencies(): ClientesDependencies {
   return {
-    clientesRepository: createClientesHttpRepository(runtimeConfig.apiBaseUrl)
+    clientesRepository: createClientesHttpRepository(runtimeConfig.apiBaseUrls)
   };
 }
 

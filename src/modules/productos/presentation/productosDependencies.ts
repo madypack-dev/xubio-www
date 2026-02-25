@@ -13,7 +13,7 @@ export const productosDependenciesKey: InjectionKey<ProductosDependencies> = Sym
 
 export function createDefaultProductosDependencies(): ProductosDependencies {
   return {
-    productosRepository: createProductosHttpRepository(runtimeConfig.apiBaseUrl)
+    productosRepository: createProductosHttpRepository(runtimeConfig.apiBaseUrls)
   };
 }
 

@@ -2,7 +2,12 @@
 
 Resumen de la decisión tomada:
 
-- Mantener una sola variable de entorno pública para el frontend: `VITE_API_BASE_URL`.
+- Mantener una configuración de backend acotada:
+  - `VITE_API_BASE_URLS` para failover ordenado (hasta 3 URLs).
+- Si `VITE_API_BASE_URLS` no está definida, la app usa un fallback hardcodeado temporal:
+  - `https://api.madygraf.local/`
+  - `https://10.176.61.33:8000/`
+  - `https://confined-unexcused-garland.ngrok-free.dev/`
 - Todos los demás valores (flags de depuración, observabilidad, defaults de desarrollo) se definen en código en `src/shared/config/runtimeConfig.ts`.
 
 ¿Qué poner en archivos `.env`?
@@ -10,8 +15,8 @@ Resumen de la decisión tomada:
 - Para desarrollo local, crea `frontend-vue/.env.local` y, si necesitas, solo sobrescribe la URL del backend:
 
 ```dotenv
-# frontend-vue/.env.local
-VITE_API_BASE_URL=http://127.0.0.1:8000
+# Multi-backend con failover URL1 -> URL2 -> URL3
+VITE_API_BASE_URLS=http://127.0.0.1:8000,https://api-backup-1.example.com,https://api-backup-2.example.com
 ```
 
 ¿Por qué esta restricción?
@@ -29,7 +34,7 @@ Operativa para despliegue CI/CD (GitHub Actions):
   - `FTP_PASSWORD`
 
 - Variables de repositorio (Settings > Secrets and variables > Actions > Variables):
-  - `VITE_API_BASE_URL` (URL del backend para el build).
+  - `VITE_API_BASE_URLS` (lista CSV para failover ordenado, hasta 3 URLs).
   - `PUBLIC_BASE_URL` (opcional, URL pública del frontend para smoke checks post-deploy; ejemplo: `https://xubio.madygraf.com`).
 
 - Inputs de `workflow_dispatch` (al lanzar deploy manual):

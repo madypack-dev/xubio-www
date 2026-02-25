@@ -1,4 +1,5 @@
 type RuntimeConfig = Readonly<{
+  apiBaseUrls: readonly string[];
   apiBaseUrl: string;
   useDevProxyForApi: boolean;
   useRelativeApiBase: boolean;
@@ -10,8 +11,11 @@ type RuntimeConfig = Readonly<{
 }>;
 
 const DEFAULT_RUNTIME_ENV = {
-  apiBaseUrl: "",
-  devApiBaseUrl: "http://127.0.0.1:8000",
+  fallbackApiBaseUrls: [
+    "https://api.madygraf.local/",
+    "https://10.176.61.33:8000/",
+    "https://confined-unexcused-garland.ngrok-free.dev/"
+  ],
   verboseStartupLogs: false,
   debugRemitos: false,
   observabilityEnabled: import.meta.env.PROD,
@@ -28,6 +32,14 @@ function normalizeString(value: unknown) {
   return String(value).trim();
 }
 
+export function normalizeBaseUrl(value: unknown) {
+  const normalized = normalizeString(value);
+  if (!normalized) {
+    return "";
+  }
+  return normalized.replace(/\/+$/g, "");
+}
+
 // parseBoolean removed: debug/observability env parsing is no longer used.
 
 function parseOptionalString(value: unknown): string | null {
@@ -35,6 +47,54 @@ function parseOptionalString(value: unknown): string | null {
     return null;
   }
   return String(value).trim();
+}
+
+export function parseApiBaseUrls(value: unknown) {
+  const raw = parseOptionalString(value);
+  if (raw === null) {
+    return [] as string[];
+  }
+
+  return raw
+    .split(/[\n,;]+/g)
+    .map((entry) => normalizeBaseUrl(entry))
+    .filter((entry) => entry.length > 0);
+}
+
+export function dedupeBaseUrls(baseUrls: readonly string[]) {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  for (const baseUrl of baseUrls) {
+    const normalized = normalizeBaseUrl(baseUrl);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+}
+
+export function resolveApiBaseUrls({
+  envApiBaseUrls,
+  defaultApiBaseUrls,
+  maxUrls = 3
+}: {
+  envApiBaseUrls: string | null;
+  defaultApiBaseUrls: readonly string[];
+  maxUrls?: number;
+}) {
+  const configuredFromList = parseApiBaseUrls(envApiBaseUrls);
+
+  const fallbackList = dedupeBaseUrls(defaultApiBaseUrls);
+
+  const baseUrls = dedupeBaseUrls(
+    (configuredFromList.length > 0 ? configuredFromList : fallbackList).filter(Boolean)
+  );
+
+  return baseUrls.slice(0, Math.max(maxUrls, 1));
 }
 
 function isLoopbackHost(hostname: string) {
@@ -86,28 +146,32 @@ function shouldUseRelativeApiBase(apiBaseUrl: string) {
 // observability and debug defaults are now provided directly from
 // `DEFAULT_RUNTIME_ENV` and are not driven by environment variables.
 
-const envApiBaseUrl = parseOptionalString(import.meta.env.VITE_API_BASE_URL);
-const apiBaseUrlInput =
-  envApiBaseUrl ??
-  (import.meta.env.DEV ? DEFAULT_RUNTIME_ENV.devApiBaseUrl : DEFAULT_RUNTIME_ENV.apiBaseUrl);
-const normalizedApiBaseUrl = normalizeString(apiBaseUrlInput);
-const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(normalizedApiBaseUrl);
+const envApiBaseUrls = parseOptionalString(import.meta.env.VITE_API_BASE_URLS);
+const configuredApiBaseUrls = resolveApiBaseUrls({
+  envApiBaseUrls,
+  defaultApiBaseUrls: DEFAULT_RUNTIME_ENV.fallbackApiBaseUrls
+});
+const primaryConfiguredApiBaseUrl = configuredApiBaseUrls[0] ?? "";
+const isAbsoluteApiBaseUrl = /^https?:\/\//i.test(primaryConfiguredApiBaseUrl);
 const useDevProxyForApi = import.meta.env.DEV && isAbsoluteApiBaseUrl;
 
-const useRelativeApiBase = shouldUseRelativeApiBase(normalizedApiBaseUrl);
-const resolvedApiBaseUrl =
-  useDevProxyForApi || useRelativeApiBase ? "" : normalizedApiBaseUrl;
+const useRelativeApiBase = shouldUseRelativeApiBase(primaryConfiguredApiBaseUrl);
+const resolvedApiBaseUrls =
+  useDevProxyForApi || useRelativeApiBase ? [""] : configuredApiBaseUrls;
+const resolvedApiBaseUrl = resolvedApiBaseUrls[0] ?? "";
 // Observability and debug flags are controlled by defaults in this file.
 // We intentionally avoid reading additional VITE_ variables here; only
-// `VITE_API_BASE_URL` is kept as an override coming from the environment.
-if (import.meta.env.DEV && envApiBaseUrl === null) {
+// `VITE_API_BASE_URLS` is kept as network override.
+if (import.meta.env.DEV && envApiBaseUrls === null) {
   console.info(
-    `[MVP] VITE_API_BASE_URL no definido. Se usa default de desarrollo ${DEFAULT_RUNTIME_ENV.devApiBaseUrl}.`
+    `[MVP] VITE_API_BASE_URLS no definido. Se usa fallback hardcodeado temporal ${dedupeBaseUrls(
+      DEFAULT_RUNTIME_ENV.fallbackApiBaseUrls
+    ).join(", ")}.`
   );
 }
-if (import.meta.env.DEV && normalizedApiBaseUrl === "" && !useDevProxyForApi) {
+if (import.meta.env.DEV && resolvedApiBaseUrl === "" && !useDevProxyForApi) {
   console.warn(
-    "[MVP] VITE_API_BASE_URL esta vacio. Se usara base URL relativa y cualquier error vendra del backend real."
+    "[MVP] API base resuelta vacia. Se usara base URL relativa y cualquier error vendra del backend real."
   );
 }
 const verboseStartupLogs = import.meta.env.DEV && DEFAULT_RUNTIME_ENV.verboseStartupLogs;
@@ -117,6 +181,7 @@ const observabilityEndpoint = DEFAULT_RUNTIME_ENV.observabilityEndpoint;
 const observabilitySampleRate = DEFAULT_RUNTIME_ENV.observabilitySampleRate;
 
 export const runtimeConfig: RuntimeConfig = Object.freeze({
+  apiBaseUrls: Object.freeze([...resolvedApiBaseUrls]),
   apiBaseUrl: resolvedApiBaseUrl,
   useDevProxyForApi,
   useRelativeApiBase,

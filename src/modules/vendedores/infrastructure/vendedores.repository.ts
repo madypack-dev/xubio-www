@@ -11,12 +11,14 @@ import { toVendedorDomain } from "./vendedores.mapper";
 import { vendedorDtoSchema } from "./vendedores.schemas";
 
 export function createVendedoresHttpRepository(
-  baseUrl = ""
+  baseUrlOrBaseUrls: string | readonly string[] = ""
 ): VendedoresRepository {
+  const baseUrls = Array.isArray(baseUrlOrBaseUrls) ? baseUrlOrBaseUrls : [baseUrlOrBaseUrls];
+
   return {
     async list() {
       return fetchLegacyList({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.vendedores,
         schema: vendedorDtoSchema,
         context: "vendedores.list",
@@ -25,7 +27,7 @@ export function createVendedoresHttpRepository(
     },
     async getById(vendedorId) {
       return fetchLegacyByIdOrNull({
-        baseUrl,
+        baseUrls,
         endpoint: API_ENDPOINTS.vendedores,
         id: vendedorId,
         schema: vendedorDtoSchema,

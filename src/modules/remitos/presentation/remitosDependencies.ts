@@ -12,7 +12,7 @@ export const remitosDependenciesKey: InjectionKey<RemitosDependencies> =
 
 export function createDefaultRemitosDependencies(): RemitosDependencies {
   return {
-    remitosRepository: createRemitosHttpRepository(runtimeConfig.apiBaseUrl)
+    remitosRepository: createRemitosHttpRepository(runtimeConfig.apiBaseUrls)
   };
 }
 

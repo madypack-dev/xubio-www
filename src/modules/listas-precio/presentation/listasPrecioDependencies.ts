@@ -13,7 +13,7 @@ export const listasPrecioDependenciesKey: InjectionKey<ListasPrecioDependencies>
 
 export function createDefaultListasPrecioDependencies(): ListasPrecioDependencies {
   return {
-    listasPrecioRepository: createListasPrecioHttpRepository(runtimeConfig.apiBaseUrl)
+    listasPrecioRepository: createListasPrecioHttpRepository(runtimeConfig.apiBaseUrls)
   };
 }
 
