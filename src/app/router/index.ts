@@ -49,9 +49,14 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true }
   },
   {
-    path: "/comprobantes",
+    path: "/comprobante-venta",
     name: "comprobantes",
     component: ComprobantesPage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: "/comprobantes",
+    redirect: { name: "comprobantes" },
     meta: { requiresAuth: true }
   },
   {

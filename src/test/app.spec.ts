@@ -15,7 +15,7 @@ function createTestRouter() {
         component: { template: "<div>Listas de precio</div>" }
       },
       {
-        path: "/comprobantes",
+        path: "/comprobante-venta",
         component: { template: "<div>Comprobantes</div>" }
       },
       { path: "/clientes", component: { template: "<div>Clientes</div>" } },

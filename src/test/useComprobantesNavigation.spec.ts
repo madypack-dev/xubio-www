@@ -8,7 +8,7 @@ import type { AppLogger } from "@/shared/lib/observability/logger";
 function createTestRouter() {
   return createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/comprobantes", name: "comprobantes", component: { template: "<div />" } }]
+    routes: [{ path: "/comprobante-venta", name: "comprobantes", component: { template: "<div />" } }]
   });
 }
 

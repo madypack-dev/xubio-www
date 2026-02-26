@@ -94,6 +94,10 @@
               <td>{{ comprobanteDetail.fechaVto ?? "-" }}</td>
             </tr>
             <tr>
+              <th scope="row" class="fitba-detail-key">CAE_FEC_VTO</th>
+              <td>{{ comprobanteDetail.caeFechaVto ?? "-" }}</td>
+            </tr>
+            <tr>
               <th scope="row" class="fitba-detail-key">CLIENTE</th>
               <td>{{ comprobanteDetail.clienteNombre || "-" }}</td>
             </tr>

@@ -11,6 +11,8 @@ export const comprobanteDtoSchema = z
     nombre: z.unknown().optional(),
     fecha: z.unknown().optional(),
     fechaVto: z.unknown().optional(),
+    caefechaVto: z.unknown().optional(),
+    caeFechaVto: z.unknown().optional(),
     tipo: z.unknown().optional(),
     numeroDocumento: z.unknown().optional(),
     CAE: z.unknown().optional(),

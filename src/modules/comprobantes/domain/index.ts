@@ -15,6 +15,7 @@ export type ComprobanteVenta = {
   nombre: string;
   fecha: FechaComercial | null;
   fechaVto: FechaComercial | null;
+  caeFechaVto: FechaComercial | null;
   tipo: string | null;
   numeroDocumento: string;
   cae: string;

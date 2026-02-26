@@ -66,6 +66,6 @@ const navItems = [
   { to: "/depositos", label: "Depositos" },
   { to: "/circuitos-contables", label: "Circuitos contables" },
   { to: "/listas-precio", label: "Listas de precio" },
-  { to: "/comprobantes", label: "Comprobantes" }
+  { to: "/comprobante-venta", label: "Comprobantes" }
 ];
 </script>

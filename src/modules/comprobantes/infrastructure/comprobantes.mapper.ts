@@ -31,6 +31,23 @@ function resolveClienteNombre(value: unknown) {
   return asStringOrNull(cliente.nombre) ?? "";
 }
 
+function toFechaComercialFromArray(value: unknown) {
+  if (!Array.isArray(value) || value.length < 3) {
+    return null;
+  }
+  const year = Number(value[0]);
+  const month = Number(value[1]);
+  const day = Number(value[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return null;
+  }
+  const normalized = `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return toFechaComercial(normalized);
+}
+
 function mapComprobante(dto: ComprobanteDto): ComprobanteVenta {
   return {
     comprobanteVentaId: toTransaccionId(
@@ -44,6 +61,9 @@ function mapComprobante(dto: ComprobanteDto): ComprobanteVenta {
     nombre: asStringOrNull(dto.nombre) ?? "",
     fecha: toFechaComercial(asStringOrNull(dto.fecha)),
     fechaVto: toFechaComercial(asStringOrNull(dto.fechaVto)),
+    caeFechaVto:
+      toFechaComercial(asStringOrNull(dto.caeFechaVto)) ??
+      toFechaComercialFromArray(dto.caefechaVto),
     tipo: asStringOrNull(dto.tipo),
     numeroDocumento: asStringOrNull(dto.numeroDocumento) ?? "",
     cae: asStringOrNull(dto.CAE) ?? "",
