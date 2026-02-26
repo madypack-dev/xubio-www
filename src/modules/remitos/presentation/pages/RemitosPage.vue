@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-column gap-3 remitos-screen fitba-screen--phosphor">
-    <section v-if="!selectedRemito" class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
+    <section class="card shadow-sm" :aria-busy="remitosQuery.isLoading.value">
       <div class="card-body">
         <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
           <span class="fitba-statusbar-item">MODULO: REMITOS</span>
@@ -117,7 +117,6 @@
               v-for="remito in paginatedVisibleRemitos"
               :key="`${rowKey(remito)}-card`"
               class="card mb-2 remito-mobile-card"
-              :class="{ 'border-primary': isSelectedRemito(remito) }"
             >
               <div class="card-body py-2 px-3">
                 <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
@@ -174,7 +173,7 @@
 
           <div class="table-responsive fitba-table-responsive fitba-table-responsive--wide d-none d-md-block">
             <table
-              class="table table-sm table-hover align-middle fitba-table-grid fitba-table-sticky fitba-table-readable"
+              class="table table-sm align-middle fitba-table-grid fitba-table-sticky fitba-table-readable"
               data-nav-table="true"
               aria-label="Tabla de remitos de venta"
             >
@@ -281,7 +280,6 @@
                   :key="rowKey(remito)"
                   data-nav-row="true"
                   tabindex="-1"
-                  :class="{ 'table-primary': isSelectedRemito(remito) }"
                 >
                   <td class="remitos-numero-remito-col">
                     <a
@@ -344,7 +342,7 @@
       </div>
     </section>
 
-    <section v-else class="card shadow-sm">
+    <section v-if="selectedRemito" class="card shadow-sm">
       <div class="card-body">
         <div class="fitba-statusbar mb-3" role="status" aria-live="polite">
           <span class="fitba-statusbar-item">MODULO: REMITOS</span>
