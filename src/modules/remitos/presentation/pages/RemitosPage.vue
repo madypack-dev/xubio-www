@@ -70,6 +70,16 @@
               aria-label="Buscar remitos por nombre de deposito"
               autocomplete="off"
             />
+            <label for="remitos-circuito-search-mobile" class="form-label form-label-sm mb-1 mt-2">Circuito contable</label>
+            <input
+              id="remitos-circuito-search-mobile"
+              v-model="circuitoSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Nombre circuito"
+              aria-label="Buscar remitos por nombre de circuito contable"
+              autocomplete="off"
+            />
           </div>
 
           <div class="d-md-none">
@@ -150,7 +160,7 @@
                   <th scope="col" class="d-none d-lg-table-cell">VENDEDOR</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">COM_%</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">DEPOSITO</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">CC_ID</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">CIRCUITO</th>
                   <th scope="col" class="text-center">ITMS</th>
                 </tr>
                 <tr>
@@ -191,7 +201,17 @@
                       autocomplete="off"
                     />
                   </th>
-                  <th scope="col" class="d-none d-xl-table-cell"></th>
+                  <th scope="col" class="d-none d-xl-table-cell">
+                    <input
+                      id="remitos-circuito-search"
+                      v-model="circuitoSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar circuito..."
+                      aria-label="Buscar remitos por nombre de circuito contable"
+                      autocomplete="off"
+                    />
+                  </th>
                   <th scope="col"></th>
                 </tr>
               </thead>
@@ -254,7 +274,7 @@
                     {{ remito.comisionVendedor ?? "-" }}
                   </td>
                   <td class="text-center d-none d-xl-table-cell">{{ depositoDisplayName(remito.depositoId) }}</td>
-                  <td class="text-center d-none d-xl-table-cell">{{ remito.circuitoContableId ?? "-" }}</td>
+                  <td class="text-center d-none d-xl-table-cell">{{ circuitoDisplayName(remito.circuitoContableId) }}</td>
                   <td class="fitba-cell-num text-center">{{ remito.items.length }}</td>
                 </tr>
               </tbody>
@@ -381,6 +401,8 @@ import { useVendedoresQuery } from "@/modules/vendedores/application";
 import { useVendedoresDependencies } from "@/modules/vendedores/presentation/vendedoresDependencies";
 import { useDepositosQuery } from "@/modules/depositos/application";
 import { useDepositosDependencies } from "@/modules/depositos/presentation/depositosDependencies";
+import { useCircuitosContablesQuery } from "@/modules/circuitos-contables/application";
+import { useCircuitosContablesDependencies } from "@/modules/circuitos-contables/presentation/circuitosContablesDependencies";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
@@ -410,10 +432,12 @@ const { remitosRepository } = useRemitosDependencies();
 const { clientesRepository } = useClientesDependencies();
 const { vendedoresRepository } = useVendedoresDependencies();
 const { depositosRepository } = useDepositosDependencies();
+const { circuitosContablesRepository } = useCircuitosContablesDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
 const clientesQuery = useClientesQuery(clientesRepository);
 const vendedoresQuery = useVendedoresQuery(vendedoresRepository);
 const depositosQuery = useDepositosQuery(depositosRepository);
+const circuitosContablesQuery = useCircuitosContablesQuery(circuitosContablesRepository);
 const {
   router,
   selectedRemitoId,
@@ -433,6 +457,8 @@ const vendedorSearchInput = ref("");
 const appliedVendedorSearch = ref("");
 const depositoSearchInput = ref("");
 const appliedDepositoSearch = ref("");
+const circuitoSearchInput = ref("");
+const appliedCircuitoSearch = ref("");
 const sharedPageSizeOptions = [10, 20, 50, 100];
 const sharedPageSizeStorageKey = "fitba.pageSize.listados";
 
@@ -505,11 +531,28 @@ const depositosById = computed(() => {
   return index;
 });
 const normalizedDepositoSearch = computed(() => appliedDepositoSearch.value.trim().toLowerCase());
+const circuitosById = computed(() => {
+  const index = new Map<string, string>();
+  for (const circuito of circuitosContablesQuery.data.value ?? []) {
+    const circuitoId = String(circuito.circuitoContableId ?? "").trim();
+    if (!circuitoId) {
+      continue;
+    }
+    const nombre = String(circuito.nombre ?? "").trim();
+    if (!nombre) {
+      continue;
+    }
+    index.set(circuitoId, nombre);
+  }
+  return index;
+});
+const normalizedCircuitoSearch = computed(() => appliedCircuitoSearch.value.trim().toLowerCase());
 const filteredRemitos = computed(() => {
   if (
     !normalizedClienteSearch.value &&
     !normalizedVendedorSearch.value &&
-    !normalizedDepositoSearch.value
+    !normalizedDepositoSearch.value &&
+    !normalizedCircuitoSearch.value
   ) {
     return remitos.value;
   }
@@ -517,13 +560,16 @@ const filteredRemitos = computed(() => {
     const nombreCliente = clienteDisplayName(remito.clienteId).toLowerCase();
     const nombreVendedor = vendedorDisplayName(remito.vendedorId).toLowerCase();
     const nombreDeposito = depositoDisplayName(remito.depositoId).toLowerCase();
+    const nombreCircuito = circuitoDisplayName(remito.circuitoContableId).toLowerCase();
     const matchesCliente =
       !normalizedClienteSearch.value || nombreCliente.includes(normalizedClienteSearch.value);
     const matchesVendedor =
       !normalizedVendedorSearch.value || nombreVendedor.includes(normalizedVendedorSearch.value);
     const matchesDeposito =
       !normalizedDepositoSearch.value || nombreDeposito.includes(normalizedDepositoSearch.value);
-    return matchesCliente && matchesVendedor && matchesDeposito;
+    const matchesCircuito =
+      !normalizedCircuitoSearch.value || nombreCircuito.includes(normalizedCircuitoSearch.value);
+    return matchesCliente && matchesVendedor && matchesDeposito && matchesCircuito;
   });
 });
 
@@ -562,6 +608,19 @@ watch(
     }
     depositoSearchInput.value = normalized;
     appliedDepositoSearch.value = normalized;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => route.query.circuitoNombre,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (normalized === appliedCircuitoSearch.value && normalized === circuitoSearchInput.value) {
+      return;
+    }
+    circuitoSearchInput.value = normalized;
+    appliedCircuitoSearch.value = normalized;
   },
   { immediate: true }
 );
@@ -620,6 +679,38 @@ watch(
       });
     } catch (error) {
       logger.error("Error al sincronizar filtro de deposito en URL", { error, normalized });
+    }
+  }
+);
+
+watch(
+  () => circuitoSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    appliedCircuitoSearch.value = normalized;
+
+    const currentQueryCircuito = String(
+      Array.isArray(route.query.circuitoNombre)
+        ? route.query.circuitoNombre[0] ?? ""
+        : route.query.circuitoNombre ?? ""
+    ).trim();
+
+    if (normalized === currentQueryCircuito) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          circuitoNombre: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de circuito contable en URL", {
+        error,
+        normalized
+      });
     }
   }
 );
@@ -768,6 +859,14 @@ function depositoDisplayName(depositoId: string | null) {
     return "-";
   }
   return depositosById.value.get(normalizedDepositoId) ?? normalizedDepositoId;
+}
+
+function circuitoDisplayName(circuitoContableId: string | null) {
+  const normalizedCircuitoId = String(circuitoContableId ?? "").trim();
+  if (!normalizedCircuitoId) {
+    return "-";
+  }
+  return circuitosById.value.get(normalizedCircuitoId) ?? normalizedCircuitoId;
 }
 
 async function reloadRemitos() {

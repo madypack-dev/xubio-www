@@ -32,6 +32,10 @@ import {
   createDefaultDepositosDependencies,
   depositosDependenciesKey
 } from "./modules/depositos/presentation/depositosDependencies";
+import {
+  createDefaultCircuitosContablesDependencies,
+  circuitosContablesDependenciesKey
+} from "./modules/circuitos-contables/presentation/circuitosContablesDependencies";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./shared/design/theme.css";
 
@@ -62,6 +66,10 @@ app.provide(productosDependenciesKey, createDefaultProductosDependencies());
 app.provide(vendedoresDependenciesKey, createDefaultVendedoresDependencies());
 app.provide(listasPrecioDependenciesKey, createDefaultListasPrecioDependencies());
 app.provide(depositosDependenciesKey, createDefaultDepositosDependencies());
+app.provide(
+  circuitosContablesDependenciesKey,
+  createDefaultCircuitosContablesDependencies()
+);
 app.use(router);
 installObservability(router);
 app.mount("#app");

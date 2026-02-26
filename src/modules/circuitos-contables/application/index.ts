@@ -1,0 +1,1 @@
+export { useCircuitosContablesQuery } from "./useCircuitosContablesQuery";

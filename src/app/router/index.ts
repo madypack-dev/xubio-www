@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from "vue-router";
 import { createRouter, createWebHistory } from "vue-router";
 import ClientesPage from "@/modules/clientes/presentation/pages/ClientesPage.vue";
+import CircuitosContablesPage from "@/modules/circuitos-contables/presentation/pages/CircuitosContablesPage.vue";
 import ComprobantesPage from "@/modules/comprobantes/presentation/pages/ComprobantesPage.vue";
 import DepositosPage from "@/modules/depositos/presentation/pages/DepositosPage.vue";
 import ListasPrecioPage from "@/modules/listas-precio/presentation/pages/ListasPrecioPage.vue";
@@ -49,6 +50,11 @@ const routes: RouteRecordRaw[] = [
     path: "/depositos",
     name: "depositos",
     component: DepositosPage
+  },
+  {
+    path: "/circuitos-contables",
+    name: "circuitos-contables",
+    component: CircuitosContablesPage
   },
   {
     path: "/productos",

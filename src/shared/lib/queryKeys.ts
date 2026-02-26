@@ -9,6 +9,7 @@ export const queryKeys = {
   vendedores: () => ["vendedores"] as const,
   vendedorById: (id: string) => ["vendedores", "by-id", id] as const,
   depositos: () => ["depositos"] as const,
+  circuitosContables: () => ["circuitos-contables"] as const,
   productos: () => ["productos"] as const,
   productoById: (id: string) => ["productos", "by-id", id] as const
 };
