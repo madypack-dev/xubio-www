@@ -39,7 +39,7 @@
             @update:page-size="remitosPagination.setPageSize"
           />
 
-          <div class="d-md-none mb-2">
+          <div v-if="!selectedRemito" class="d-md-none mb-2">
             <label for="remitos-numero-search-mobile" class="form-label form-label-sm mb-1">Numero remito</label>
             <input
               id="remitos-numero-search-mobile"
@@ -192,7 +192,7 @@
                   <th scope="col" class="text-center d-none d-xl-table-cell">COMISIÓN %</th>
                   <th scope="col" class="text-center">ITEMS</th>
                 </tr>
-                <tr>
+                <tr v-if="!selectedRemito">
                   <th scope="col">
                     <input
                       id="remitos-numero-search"
@@ -390,7 +390,7 @@
                     :aria-label="buildGoToProductoLabel(item.productoId)"
                     @click.prevent="goToProducto(item.productoId)"
                   >
-                    {{ item.productoId }}
+                    {{ productoDisplayName(item.productoId) }}
                   </a>
                   <span v-else>-</span>
                 </div>
@@ -411,10 +411,10 @@
                 <tr>
                   <th scope="col">ITM_ID</th>
                   <th scope="col">TRX_ID</th>
-                  <th scope="col">PRD_ID</th>
-                  <th scope="col">DESC</th>
-                  <th scope="col">CANT</th>
-                  <th scope="col">PREC</th>
+                  <th scope="col">Producto</th>
+                  <th scope="col">Descripción</th>
+                  <th scope="col" class="text-center">Cantidades</th>
+                  <th scope="col" class="text-center">PREC</th>
                 </tr>
               </thead>
               <tbody>
@@ -430,13 +430,13 @@
                       :aria-label="buildGoToProductoLabel(item.productoId)"
                       @click.prevent="goToProducto(item.productoId)"
                     >
-                      {{ item.productoId }}
+                      {{ productoDisplayName(item.productoId) }}
                     </a>
                     <span v-else>-</span>
                   </td>
                   <td>{{ item.descripcion || "-" }}</td>
-                  <td class="fitba-cell-num">{{ item.cantidad ?? "-" }}</td>
-                  <td class="fitba-cell-num">{{ formatMoney(item.precio) }}</td>
+                  <td class="fitba-cell-num text-center">{{ item.cantidad ?? "-" }}</td>
+                  <td class="fitba-cell-num text-center">{{ formatMoney(item.precio) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -461,6 +461,8 @@ import { useDepositosQuery } from "@/modules/depositos/application";
 import { useDepositosDependencies } from "@/modules/depositos/presentation/depositosDependencies";
 import { useCircuitosContablesQuery } from "@/modules/circuitos-contables/application";
 import { useCircuitosContablesDependencies } from "@/modules/circuitos-contables/presentation/circuitosContablesDependencies";
+import { useProductosQuery } from "@/modules/productos/application";
+import { useProductosDependencies } from "@/modules/productos/presentation/productosDependencies";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
@@ -491,11 +493,13 @@ const { clientesRepository } = useClientesDependencies();
 const { vendedoresRepository } = useVendedoresDependencies();
 const { depositosRepository } = useDepositosDependencies();
 const { circuitosContablesRepository } = useCircuitosContablesDependencies();
+const { productosRepository } = useProductosDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
 const clientesQuery = useClientesQuery(clientesRepository);
 const vendedoresQuery = useVendedoresQuery(vendedoresRepository);
 const depositosQuery = useDepositosQuery(depositosRepository);
 const circuitosContablesQuery = useCircuitosContablesQuery(circuitosContablesRepository);
+const productosQuery = useProductosQuery(productosRepository);
 const {
   router,
   selectedRemitoId,
@@ -614,6 +618,21 @@ const circuitosById = computed(() => {
       continue;
     }
     index.set(circuitoId, nombre);
+  }
+  return index;
+});
+const productosById = computed(() => {
+  const index = new Map<string, string>();
+  for (const producto of productosQuery.data.value ?? []) {
+    const productoId = String(producto.productoId ?? "").trim();
+    if (!productoId) {
+      continue;
+    }
+    const nombre = String(producto.nombre ?? "").trim();
+    if (!nombre) {
+      continue;
+    }
+    index.set(productoId, nombre);
   }
   return index;
 });
@@ -1099,6 +1118,14 @@ function circuitoDisplayName(circuitoContableId: string | null) {
     return "-";
   }
   return circuitosById.value.get(normalizedCircuitoId) ?? normalizedCircuitoId;
+}
+
+function productoDisplayName(productoId: string | null) {
+  const normalizedProductoId = String(productoId ?? "").trim();
+  if (!normalizedProductoId) {
+    return "-";
+  }
+  return productosById.value.get(normalizedProductoId) ?? normalizedProductoId;
 }
 
 async function reloadRemitos() {

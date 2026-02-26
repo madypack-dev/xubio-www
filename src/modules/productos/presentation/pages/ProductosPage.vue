@@ -5,7 +5,7 @@
         <span class="fitba-statusbar-item">MODULO: PRODUCTOS</span>
         <span class="fitba-statusbar-item">VISTA: {{ selectedProducto ? "DETALLE" : "LISTADO" }}</span>
         <span class="fitba-statusbar-item">NOM_FILTRO: {{ appliedProductoFilter || "-" }}</span>
-        <span class="fitba-statusbar-item">PRD_ID: {{ selectedProductoId ?? "-" }}</span>
+        <span class="fitba-statusbar-item">Producto: {{ selectedProductoId ?? "-" }}</span>
         <span class="fitba-statusbar-item">TOTAL: {{ filteredProductos.length }}</span>
       </div>
 
@@ -56,7 +56,7 @@
           <caption class="visually-hidden">Detalle del producto seleccionado.</caption>
           <tbody>
             <tr>
-              <th scope="row" class="fitba-detail-key">PRD_ID</th>
+              <th scope="row" class="fitba-detail-key">Producto</th>
               <td class="fitba-key-link">{{ formatText(selectedProducto.productoId) }}</td>
             </tr>
             <tr>
@@ -105,7 +105,7 @@
           <caption class="visually-hidden">Listado de productos con filtro por nombre.</caption>
           <thead class="table-dark">
             <tr>
-              <th scope="col">PRD_ID</th>
+              <th scope="col">Producto</th>
               <th scope="col">NOM</th>
               <th scope="col">COD</th>
               <th scope="col">COD_BARRA</th>
