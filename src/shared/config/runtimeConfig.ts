@@ -1,4 +1,5 @@
 type RuntimeConfig = Readonly<{
+  authEnabled: boolean;
   apiBaseUrls: readonly string[];
   apiBaseUrl: string;
   useDevProxyForApi: boolean;
@@ -11,6 +12,7 @@ type RuntimeConfig = Readonly<{
 }>;
 
 const DEFAULT_RUNTIME_ENV = {
+  authEnabled: false,
   fallbackApiBaseUrls: [
     "https://api.madygraf.local/",
     "https://10.176.61.33:8000/",
@@ -32,6 +34,20 @@ function normalizeString(value: unknown) {
   return String(value).trim();
 }
 
+function parseBoolean(value: unknown, fallback: boolean) {
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+  const normalized = String(value).trim().toLowerCase();
+  if (["1", "true", "yes", "y", "on"].includes(normalized)) {
+    return true;
+  }
+  if (["0", "false", "no", "n", "off"].includes(normalized)) {
+    return false;
+  }
+  return fallback;
+}
+
 export function normalizeBaseUrl(value: unknown) {
   const normalized = normalizeString(value);
   if (!normalized) {
@@ -39,8 +55,6 @@ export function normalizeBaseUrl(value: unknown) {
   }
   return normalized.replace(/\/+$/g, "");
 }
-
-// parseBoolean removed: debug/observability env parsing is no longer used.
 
 function parseOptionalString(value: unknown): string | null {
   if (value === undefined || value === null) {
@@ -175,12 +189,17 @@ if (import.meta.env.DEV && resolvedApiBaseUrl === "" && !useDevProxyForApi) {
   );
 }
 const verboseStartupLogs = import.meta.env.DEV && DEFAULT_RUNTIME_ENV.verboseStartupLogs;
+const authEnabled = parseBoolean(
+  import.meta.env.VITE_AUTH_ENABLED,
+  DEFAULT_RUNTIME_ENV.authEnabled
+);
 const debugRemitos = import.meta.env.DEV && DEFAULT_RUNTIME_ENV.debugRemitos;
 const observabilityEnabled = DEFAULT_RUNTIME_ENV.observabilityEnabled;
 const observabilityEndpoint = DEFAULT_RUNTIME_ENV.observabilityEndpoint;
 const observabilitySampleRate = DEFAULT_RUNTIME_ENV.observabilitySampleRate;
 
 export const runtimeConfig: RuntimeConfig = Object.freeze({
+  authEnabled,
   apiBaseUrls: Object.freeze([...resolvedApiBaseUrls]),
   apiBaseUrl: resolvedApiBaseUrl,
   useDevProxyForApi,

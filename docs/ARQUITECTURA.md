@@ -136,3 +136,23 @@ Para agregar un nuevo modulo:
 - El build de produccion del frontend (`npm run build`) esta configurado para escribir en `/var/www/html/xubio-www` (directorio servido por Apache).
 - En entornos locales, si el directorio no existe o no tiene permisos de escritura para el usuario actual, el build falla con `EACCES`.
 - La preparacion de permisos se documenta en `docs/env-vars.md`.
+
+## 10. Autenticacion (Vue actual)
+
+- Estrategia acordada: OIDC + sesion backend con cookie HttpOnly.
+- El frontend incluye un modulo `auth` y ruta publica `/login`.
+- Las rutas de negocio se marcan con `meta.requiresAuth`.
+- Un guard global consulta sesion y redirige a `/login?redirect=...` si no hay sesion.
+
+### Activacion/desactivacion
+
+- Flag de runtime: `VITE_AUTH_ENABLED`.
+- Default actual: `false`.
+- `true`: activa guard de auth.
+- `false`: desactiva auth y mantiene navegacion actual.
+
+### Endpoints backend esperados por frontend
+
+- `GET /auth/session`
+- `POST /auth/login/google`
+- `POST /auth/logout`

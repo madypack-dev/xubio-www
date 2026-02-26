@@ -1,4 +1,5 @@
 export const queryKeys = {
+  authSession: () => ["auth", "session"] as const,
   remitos: () => ["remitos"] as const,
   remitoById: (id: string) => ["remitos", "by-id", id] as const,
   listasPrecio: () => ["listas-precio"] as const,

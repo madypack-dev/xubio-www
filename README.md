@@ -45,15 +45,29 @@ Variables de entorno Vue (política actualizada):
 
 - No es obligatorio definir `.env` para levantar el proyecto: los defaults se mantienen en código.
 - Ruta de defaults: `frontend-vue/src/shared/config/runtimeConfig.ts` y `frontend-vue/vite.config.ts`.
-- Política: se soporta únicamente `VITE_API_BASE_URLS` (lista para failover, hasta 3 URLs).
+- Política: se soportan:
+  - `VITE_API_BASE_URLS` (lista para failover, hasta 3 URLs).
+  - `VITE_AUTH_ENABLED` (`true/false`) para activar/desactivar guard de autenticación.
 
 Soporte actual:
 
 - `VITE_API_BASE_URLS`: lista CSV de URLs backend para failover ordenado `URL1 -> URL2 -> URL3`.
+- `VITE_AUTH_ENABLED`: habilita autenticación en frontend (`true`) o la deshabilita (`false`).
 - Si `VITE_API_BASE_URLS` no está definida, el runtime usa un fallback hardcodeado temporal:
   - `https://api.madygraf.local/`
   - `https://10.176.61.33:8000/`
   - `https://confined-unexcused-garland.ngrok-free.dev/`
+
+Valor por defecto de auth:
+
+- `VITE_AUTH_ENABLED` no definido -> `false` (auth desactivada).
+
+Ejemplo (`.env.local`):
+
+```dotenv
+VITE_API_BASE_URLS=http://127.0.0.1:8001
+VITE_AUTH_ENABLED=true
+```
 
 Nota operativa:
 

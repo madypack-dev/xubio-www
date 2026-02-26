@@ -33,23 +33,9 @@
 - Cobertura de tests para autenticacion es inexistente (solo hay tests de routing/utilidades/transporte generico).
 
 ### Tareas propuestas (pendientes)
-- [ ] Definir estrategia de sesion:
-  - OIDC Authorization Code + PKCE.
-  - Sesion backend con cookie HttpOnly `Secure; SameSite=Lax/Strict`.
-- [ ] Crear modulo `auth` por capas:
-  - `src/modules/auth/domain/*`
-  - `src/modules/auth/application/*`
-  - `src/modules/auth/infrastructure/*`
-  - `src/modules/auth/presentation/*`
 - [ ] Agregar estado de sesion (Pinia):
   - usuario autenticado, loading, error, expiracion, logout.
-- [ ] Router guards:
-  - ruta publica `/login`.
-  - rutas de negocio protegidas con `meta.requiresAuth`.
-  - redireccion a login y retorno seguro (`redirect` whitelisteado).
-- [ ] UI:
-  - pantalla `/login` con boton "Continuar con Google".
-  - estado de usuario en header + accion logout.
+- [ ] Estado de usuario en header + accion logout.
 - [ ] Integrar `httpClient` con credenciales:
   - si sesion cookie: `credentials: "include"` (solo para origenes permitidos).
   - manejo consistente de `401/403` -> invalidar sesion + redirigir.
@@ -63,8 +49,10 @@
   - smoke de login/logout y acceso a rutas protegidas.
 
 ### Dudas abiertas (requieren definicion)
-- [ ] Confirmar proveedor de identidad:
-  - Google directo (GIS) o Google via broker (Auth0/Keycloak/Firebase Auth).
+- [ ] Confirmar contrato backend auth (bloqueante para completar):
+  - endpoint session (actual asumido: `GET /auth/session`).
+  - endpoint inicio login (actual asumido: `POST /auth/login/google`).
+  - endpoint logout (actual asumido: `POST /auth/logout`).
 - [ ] Confirmar dominio final y entorno:
   - para definir `Secure`, `SameSite`, callback URL y CORS exactos.
 

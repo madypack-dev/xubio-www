@@ -36,6 +36,10 @@ import {
   createDefaultCircuitosContablesDependencies,
   circuitosContablesDependenciesKey
 } from "./modules/circuitos-contables/presentation/circuitosContablesDependencies";
+import {
+  authDependenciesKey,
+  createDefaultAuthDependencies
+} from "./modules/auth/presentation/authDependencies";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./shared/design/theme.css";
 
@@ -70,6 +74,7 @@ app.provide(
   circuitosContablesDependenciesKey,
   createDefaultCircuitosContablesDependencies()
 );
+app.provide(authDependenciesKey, createDefaultAuthDependencies());
 app.use(router);
 installObservability(router);
 app.mount("#app");

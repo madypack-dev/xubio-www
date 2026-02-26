@@ -32,3 +32,27 @@
 - Contrato multi-backend operativo con `VITE_API_BASE_URLS` (hasta 3 URLs).
 - Fallback centralizado en `src/shared/lib/http/legacyRepository.ts`.
 - Semantica de `404` detalle preservada (`null` sin fallback).
+
+## Google Login (parcial implementado)
+
+- Fecha de avance: 2026-02-26
+
+### Tareas completadas
+- [x] Definir estrategia de sesion OIDC + backend session cookie HttpOnly.
+- [x] Crear modulo `auth` por capas (frontend):
+  - `src/modules/auth/domain/index.ts`
+  - `src/modules/auth/application/*`
+  - `src/modules/auth/infrastructure/*`
+  - `src/modules/auth/presentation/*`
+- [x] Crear pantalla `/login` con boton "Continuar con Google".
+- [x] Agregar ruta publica `/login`.
+- [x] Agregar `meta.requiresAuth` en rutas de negocio.
+- [x] Guard de router con redireccion a login y retorno por `redirect`.
+- [x] Wiring de dependencias `auth` en `main.ts`.
+
+### Notas
+- `auth` queda desactivado por defecto (`runtimeConfig.authEnabled = false`) para evitar romper el flujo actual hasta cerrar contrato backend.
+- Endpoints asumidos temporalmente en frontend:
+  - `GET /auth/session`
+  - `POST /auth/login/google`
+  - `POST /auth/logout`

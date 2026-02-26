@@ -4,6 +4,7 @@ Resumen de la decisión tomada:
 
 - Mantener una configuración de backend acotada:
   - `VITE_API_BASE_URLS` para failover ordenado (hasta 3 URLs).
+  - `VITE_AUTH_ENABLED` para activar/desactivar autenticación frontend.
 - Si `VITE_API_BASE_URLS` no está definida, la app usa un fallback hardcodeado temporal:
   - `https://api.madygraf.local/`
   - `https://10.176.61.33:8000/`
@@ -17,7 +18,16 @@ Resumen de la decisión tomada:
 ```dotenv
 # Multi-backend con failover URL1 -> URL2 -> URL3
 VITE_API_BASE_URLS=http://127.0.0.1:8000,https://api-backup-1.example.com,https://api-backup-2.example.com
+
+# Auth frontend
+VITE_AUTH_ENABLED=true
 ```
+
+`VITE_AUTH_ENABLED`:
+
+- `true` -> habilita guard de autenticación y ruta de login.
+- `false` -> deshabilita autenticación (comportamiento actual legacy-like).
+- Si no se define, el default es `false`.
 
 ¿Por qué esta restricción?
 

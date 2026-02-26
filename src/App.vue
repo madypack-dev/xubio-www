@@ -58,6 +58,7 @@
 import { RouterLink, RouterView } from "vue-router";
 
 const navItems = [
+  { to: "/login", label: "Login" },
   { to: "/remitos", label: "Remitos" },
   { to: "/clientes", label: "Clientes" },
   { to: "/productos", label: "Productos" },
