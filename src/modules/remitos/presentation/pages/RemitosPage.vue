@@ -50,6 +50,16 @@
               aria-label="Buscar remitos por nombre de cliente"
               autocomplete="off"
             />
+            <label for="remitos-vendedor-search-mobile" class="form-label form-label-sm mb-1 mt-2">Vendedor</label>
+            <input
+              id="remitos-vendedor-search-mobile"
+              v-model="vendedorSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Nombre vendedor"
+              aria-label="Buscar remitos por nombre de vendedor"
+              autocomplete="off"
+            />
           </div>
 
           <div class="d-md-none">
@@ -127,7 +137,7 @@
                   <th scope="col" class="remitos-fecha-col">FEC</th>
                   <th scope="col">OBS</th>
                   <th scope="col">CLIENTE</th>
-                  <th scope="col" class="d-none d-lg-table-cell">VND_ID</th>
+                  <th scope="col" class="d-none d-lg-table-cell">VENDEDOR</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">COM_%</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">DEP_ID</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">CC_ID</th>
@@ -148,7 +158,17 @@
                       autocomplete="off"
                     />
                   </th>
-                  <th scope="col" class="d-none d-lg-table-cell"></th>
+                  <th scope="col" class="d-none d-lg-table-cell">
+                    <input
+                      id="remitos-vendedor-search"
+                      v-model="vendedorSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar vendedor..."
+                      aria-label="Buscar remitos por nombre de vendedor"
+                      autocomplete="off"
+                    />
+                  </th>
                   <th scope="col" class="d-none d-xl-table-cell"></th>
                   <th scope="col" class="d-none d-xl-table-cell"></th>
                   <th scope="col" class="d-none d-xl-table-cell"></th>
@@ -206,7 +226,7 @@
                       :aria-label="buildGoToVendedorLabel(remito.vendedorId)"
                       @click.prevent="goToVendedor(remito.vendedorId)"
                     >
-                      {{ remito.vendedorId }}
+                      {{ vendedorDisplayName(remito.vendedorId) }}
                     </a>
                     <span v-else>-</span>
                   </td>
@@ -337,6 +357,8 @@ import type { Remito } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
 import { useClientesQuery } from "@/modules/clientes/application";
 import { useClientesDependencies } from "@/modules/clientes/presentation/clientesDependencies";
+import { useVendedoresQuery } from "@/modules/vendedores/application";
+import { useVendedoresDependencies } from "@/modules/vendedores/presentation/vendedoresDependencies";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
@@ -364,8 +386,10 @@ const logger = createLogger("MVP RemitosPage");
 const route = useRoute();
 const { remitosRepository } = useRemitosDependencies();
 const { clientesRepository } = useClientesDependencies();
+const { vendedoresRepository } = useVendedoresDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
 const clientesQuery = useClientesQuery(clientesRepository);
+const vendedoresQuery = useVendedoresQuery(vendedoresRepository);
 const {
   router,
   selectedRemitoId,
@@ -381,6 +405,8 @@ const {
 } = useRemitosNavigation(logger);
 const clienteSearchInput = ref("");
 const appliedClienteSearch = ref("");
+const vendedorSearchInput = ref("");
+const appliedVendedorSearch = ref("");
 const sharedPageSizeOptions = [10, 20, 50, 100];
 const sharedPageSizeStorageKey = "fitba.pageSize.listados";
 
@@ -418,14 +444,37 @@ const clientesById = computed(() => {
   }
   return index;
 });
+const vendedoresById = computed(() => {
+  const index = new Map<string, string>();
+  for (const vendedor of vendedoresQuery.data.value ?? []) {
+    const vendedorId = String(vendedor.vendedorId ?? "").trim();
+    if (!vendedorId) {
+      continue;
+    }
+    const nombre = String(vendedor.nombre ?? "").trim();
+    const apellido = String(vendedor.apellido ?? "").trim();
+    const nombreCompleto = [nombre, apellido].filter(Boolean).join(" ").trim();
+    if (!nombreCompleto) {
+      continue;
+    }
+    index.set(vendedorId, nombreCompleto);
+  }
+  return index;
+});
 const normalizedClienteSearch = computed(() => appliedClienteSearch.value.trim().toLowerCase());
+const normalizedVendedorSearch = computed(() => appliedVendedorSearch.value.trim().toLowerCase());
 const filteredRemitos = computed(() => {
-  if (!normalizedClienteSearch.value) {
+  if (!normalizedClienteSearch.value && !normalizedVendedorSearch.value) {
     return remitos.value;
   }
   return remitos.value.filter((remito) => {
     const nombreCliente = clienteDisplayName(remito.clienteId).toLowerCase();
-    return nombreCliente.includes(normalizedClienteSearch.value);
+    const nombreVendedor = vendedorDisplayName(remito.vendedorId).toLowerCase();
+    const matchesCliente =
+      !normalizedClienteSearch.value || nombreCliente.includes(normalizedClienteSearch.value);
+    const matchesVendedor =
+      !normalizedVendedorSearch.value || nombreVendedor.includes(normalizedVendedorSearch.value);
+    return matchesCliente && matchesVendedor;
   });
 });
 
@@ -438,6 +487,19 @@ watch(
     }
     clienteSearchInput.value = normalized;
     appliedClienteSearch.value = normalized;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => route.query.vendedorNombre,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (normalized === appliedVendedorSearch.value && normalized === vendedorSearchInput.value) {
+      return;
+    }
+    vendedorSearchInput.value = normalized;
+    appliedVendedorSearch.value = normalized;
   },
   { immediate: true }
 );
@@ -467,6 +529,35 @@ watch(
       });
     } catch (error) {
       logger.error("Error al sincronizar filtro de cliente en URL", { error, normalized });
+    }
+  }
+);
+
+watch(
+  () => vendedorSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    appliedVendedorSearch.value = normalized;
+
+    const currentQueryVendedor = String(
+      Array.isArray(route.query.vendedorNombre)
+        ? route.query.vendedorNombre[0] ?? ""
+        : route.query.vendedorNombre ?? ""
+    ).trim();
+
+    if (normalized === currentQueryVendedor) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          vendedorNombre: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de vendedor en URL", { error, normalized });
     }
   }
 );
@@ -570,6 +661,14 @@ function clienteDisplayName(clienteId: string | null) {
     return "-";
   }
   return clientesById.value.get(normalizedClienteId) ?? normalizedClienteId;
+}
+
+function vendedorDisplayName(vendedorId: string | null) {
+  const normalizedVendedorId = String(vendedorId ?? "").trim();
+  if (!normalizedVendedorId) {
+    return "-";
+  }
+  return vendedoresById.value.get(normalizedVendedorId) ?? normalizedVendedorId;
 }
 
 async function reloadRemitos() {
