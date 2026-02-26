@@ -182,6 +182,7 @@
               </caption>
               <thead class="table-dark">
                 <tr>
+                  <th v-if="selectedRemito" scope="col">TRX_ID</th>
                   <th scope="col" class="remitos-numero-remito-col">NÚMERO DE REMITO</th>
                   <th scope="col" class="remitos-fecha-col">FECHA</th>
                   <th scope="col">OBSERVACIÓN</th>
@@ -281,6 +282,18 @@
                   data-nav-row="true"
                   tabindex="-1"
                 >
+                  <td v-if="selectedRemito">
+                    <a
+                      v-if="remito.transaccionId"
+                      class="fitba-inline-link fitba-key-link"
+                      :href="buildRemitoLink(remito.transaccionId)"
+                      :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
+                      @click.prevent="selectRemito(remito.transaccionId)"
+                    >
+                      {{ remito.transaccionId }}
+                    </a>
+                    <span v-else>-</span>
+                  </td>
                   <td class="remitos-numero-remito-col">
                     <a
                       v-if="remito.transaccionId"
@@ -410,7 +423,6 @@
               <thead class="table-dark">
                 <tr>
                   <th scope="col">ITM_ID</th>
-                  <th scope="col">TRX_ID</th>
                   <th scope="col">Producto</th>
                   <th scope="col">Descripción</th>
                   <th scope="col" class="text-center">Cantidades</th>
@@ -420,7 +432,6 @@
               <tbody>
                 <tr v-for="item in selectedRemito.items" :key="itemRowKey(item)" data-nav-row="true" tabindex="-1">
                   <td>{{ item.transaccionCVItemId ?? "-" }}</td>
-                  <td>{{ item.transaccionId ?? "-" }}</td>
                   <td>
                     <a
                       v-if="item.productoId"
