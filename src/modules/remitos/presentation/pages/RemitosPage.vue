@@ -9,22 +9,7 @@
         </div>
 
         <div class="fitba-toolbar mb-3">
-          <h2 class="h5 mb-2">Remitos</h2>
-          <EntityFilterBar
-            input-id="remitos-cliente-search"
-            help-id="remitos-search-help"
-            label="clienteId"
-            placeholder="CLI_ID"
-            input-aria-label="Buscar remitos por clienteId"
-            help-text="Filtra por clienteId (búsqueda parcial)."
-            :model-value="clienteSearchInput"
-            :error-message="clienteSearchErrorMessage"
-            :show-paste-button="true"
-            paste-aria-label="Pegar clienteId desde portapapeles"
-            paste-title="Pegar clienteId"
-            @update:model-value="onClienteSearchInput"
-            @paste="pasteClienteSearchFromClipboard"
-          />
+          <h2 class="h5 mb-0">Remitos</h2>
         </div>
 
         <AsyncLoadingMessage
@@ -53,6 +38,19 @@
             @update:page="remitosPagination.setPage"
             @update:page-size="remitosPagination.setPageSize"
           />
+
+          <div class="d-md-none mb-2">
+            <label for="remitos-cliente-search-mobile" class="form-label form-label-sm mb-1">Cliente</label>
+            <input
+              id="remitos-cliente-search-mobile"
+              v-model="clienteSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Nombre cliente"
+              aria-label="Buscar remitos por nombre de cliente"
+              autocomplete="off"
+            />
+          </div>
 
           <div class="d-md-none">
             <div
@@ -99,7 +97,7 @@
                     :aria-label="buildGoToClienteLabel(remito.clienteId)"
                     @click.prevent="goToCliente(remito.clienteId)"
                   >
-                    {{ remito.clienteId }}
+                    {{ clienteDisplayName(remito.clienteId) }}
                   </a>
                   <span v-else class="remito-mobile-value">-</span>
                 </div>
@@ -125,16 +123,36 @@
               </caption>
               <thead class="table-dark">
                 <tr>
-                  <th scope="col">TRX_ID</th>
                   <th scope="col" class="remitos-numero-remito-col">RTO_NRO</th>
                   <th scope="col" class="remitos-fecha-col">FEC</th>
                   <th scope="col">OBS</th>
-                  <th scope="col">CLI_ID</th>
+                  <th scope="col">CLIENTE</th>
                   <th scope="col" class="d-none d-lg-table-cell">VND_ID</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">COM_%</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">DEP_ID</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">CC_ID</th>
                   <th scope="col" class="text-center">ITMS</th>
+                </tr>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col"></th>
+                  <th scope="col"></th>
+                  <th scope="col">
+                    <input
+                      id="remitos-cliente-search"
+                      v-model="clienteSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar cliente..."
+                      aria-label="Buscar remitos por nombre de cliente"
+                      autocomplete="off"
+                    />
+                  </th>
+                  <th scope="col" class="d-none d-lg-table-cell"></th>
+                  <th scope="col" class="d-none d-xl-table-cell"></th>
+                  <th scope="col" class="d-none d-xl-table-cell"></th>
+                  <th scope="col" class="d-none d-xl-table-cell"></th>
+                  <th scope="col"></th>
                 </tr>
               </thead>
               <tbody>
@@ -145,26 +163,14 @@
                   tabindex="-1"
                   :class="{ 'table-primary': isSelectedRemito(remito) }"
                 >
-                  <td>
-                    <a
-                      v-if="remito.transaccionId"
-                      class="fitba-inline-link fitba-key-link"
-                      data-nav-main="true"
-                      :href="buildRemitoLink(remito.transaccionId)"
-                      :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
-                      :aria-current="isSelectedRemito(remito) ? 'true' : undefined"
-                      @click.prevent="selectRemito(remito.transaccionId)"
-                    >
-                      {{ remito.transaccionId }}
-                    </a>
-                    <span v-else>-</span>
-                  </td>
                   <td class="remitos-numero-remito-col">
                     <a
                       v-if="remito.transaccionId"
                       class="fitba-inline-link fitba-key-link fw-semibold"
+                      data-nav-main="true"
                       :href="buildRemitoLink(remito.transaccionId)"
                       :aria-label="buildSelectRemitoIdLabel(remito.transaccionId)"
+                      :aria-current="isSelectedRemito(remito) ? 'true' : undefined"
                       @click.prevent="selectRemito(remito.transaccionId)"
                     >
                       {{ remito.numeroRemito || "-" }}
@@ -188,7 +194,7 @@
                       :aria-label="buildGoToClienteLabel(remito.clienteId)"
                       @click.prevent="goToCliente(remito.clienteId)"
                     >
-                      {{ remito.clienteId }}
+                      {{ clienteDisplayName(remito.clienteId) }}
                     </a>
                     <span v-else>-</span>
                   </td>
@@ -329,6 +335,8 @@ import { useRoute } from "vue-router";
 import { useRemitosQuery } from "../useRemitosQuery";
 import type { Remito } from "../../domain";
 import { runtimeConfig } from "@/shared/config/runtimeConfig";
+import { useClientesQuery } from "@/modules/clientes/application";
+import { useClientesDependencies } from "@/modules/clientes/presentation/clientesDependencies";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
@@ -336,7 +344,6 @@ import AsyncLoadingMessage from "@/shared/ui/AsyncLoadingMessage.vue";
 import AsyncErrorMessage from "@/shared/ui/AsyncErrorMessage.vue";
 import AsyncEmptyMessage from "@/shared/ui/AsyncEmptyMessage.vue";
 import DataPaginationControls from "@/shared/ui/DataPaginationControls.vue";
-import EntityFilterBar from "@/shared/ui/EntityFilterBar.vue";
 import { resolveErrorMessage } from "@/shared/lib/http/resolveErrorMessage";
 import { buildHttpErrorLogContext } from "@/shared/lib/http/httpErrorDiagnostics";
 import { useRemitosDependencies } from "../remitosDependencies";
@@ -356,7 +363,9 @@ import {
 const logger = createLogger("MVP RemitosPage");
 const route = useRoute();
 const { remitosRepository } = useRemitosDependencies();
+const { clientesRepository } = useClientesDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
+const clientesQuery = useClientesQuery(clientesRepository);
 const {
   router,
   selectedRemitoId,
@@ -372,7 +381,6 @@ const {
 } = useRemitosNavigation(logger);
 const clienteSearchInput = ref("");
 const appliedClienteSearch = ref("");
-const clienteSearchErrorMessage = ref("");
 const sharedPageSizeOptions = [10, 20, 50, 100];
 const sharedPageSizeStorageKey = "fitba.pageSize.listados";
 
@@ -395,14 +403,30 @@ watch(
 );
 
 const remitos = computed(() => remitosQuery.data.value ?? []);
+const clientesById = computed(() => {
+  const index = new Map<string, string>();
+  for (const cliente of clientesQuery.data.value ?? []) {
+    const clienteId = String(cliente.clienteId ?? "").trim();
+    if (!clienteId) {
+      continue;
+    }
+    const nombre = String(cliente.nombre ?? "").trim();
+    if (!nombre) {
+      continue;
+    }
+    index.set(clienteId, nombre);
+  }
+  return index;
+});
 const normalizedClienteSearch = computed(() => appliedClienteSearch.value.trim().toLowerCase());
 const filteredRemitos = computed(() => {
   if (!normalizedClienteSearch.value) {
     return remitos.value;
   }
-  return remitos.value.filter((remito) =>
-    String(remito.clienteId ?? "").toLowerCase().includes(normalizedClienteSearch.value)
-  );
+  return remitos.value.filter((remito) => {
+    const nombreCliente = clienteDisplayName(remito.clienteId).toLowerCase();
+    return nombreCliente.includes(normalizedClienteSearch.value);
+  });
 });
 
 watch(
@@ -422,7 +446,6 @@ watch(
   () => clienteSearchInput.value,
   async (value) => {
     const normalized = value.trim();
-    clienteSearchErrorMessage.value = "";
     appliedClienteSearch.value = normalized;
 
     const currentQueryCliente = String(
@@ -541,8 +564,12 @@ function isSelectedRemito(remito: Remito) {
   return String(remito.transaccionId ?? "") === selectedRemitoId.value;
 }
 
-function onClienteSearchInput(value: string) {
-  clienteSearchInput.value = value;
+function clienteDisplayName(clienteId: string | null) {
+  const normalizedClienteId = String(clienteId ?? "").trim();
+  if (!normalizedClienteId) {
+    return "-";
+  }
+  return clientesById.value.get(normalizedClienteId) ?? normalizedClienteId;
 }
 
 async function reloadRemitos() {
@@ -555,29 +582,6 @@ async function reloadRemitos() {
       ...buildHttpErrorLogContext(error),
       triggeredBy: "manual_reload"
     });
-  }
-}
-
-async function pasteClienteSearchFromClipboard() {
-  if (!navigator.clipboard?.readText) {
-    clienteSearchErrorMessage.value = "Tu navegador no permite leer portapapeles en este contexto.";
-    return;
-  }
-
-  try {
-    const clipboardRaw = await navigator.clipboard.readText();
-    const clipboardValue = String(clipboardRaw ?? "").trim();
-
-    if (!/^\d{3,15}$/.test(clipboardValue)) {
-      clienteSearchErrorMessage.value =
-        "Valor inválido en portapapeles: debe ser solo números, entre 3 y 15 dígitos.";
-      return;
-    }
-
-    clienteSearchInput.value = clipboardValue;
-    clienteSearchErrorMessage.value = "";
-  } catch (_error) {
-    clienteSearchErrorMessage.value = "No se pudo leer el portapapeles.";
   }
 }
 
