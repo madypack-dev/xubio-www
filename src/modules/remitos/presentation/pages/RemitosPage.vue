@@ -40,6 +40,36 @@
           />
 
           <div class="d-md-none mb-2">
+            <label for="remitos-numero-search-mobile" class="form-label form-label-sm mb-1">Numero remito</label>
+            <input
+              id="remitos-numero-search-mobile"
+              v-model="numeroRemitoSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Numero remito"
+              aria-label="Buscar remitos por numero de remito"
+              autocomplete="off"
+            />
+            <label for="remitos-observacion-search-mobile" class="form-label form-label-sm mb-1 mt-2">Observacion</label>
+            <input
+              id="remitos-observacion-search-mobile"
+              v-model="observacionSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Observacion"
+              aria-label="Buscar remitos por observacion"
+              autocomplete="off"
+            />
+            <label for="remitos-fecha-search-mobile" class="form-label form-label-sm mb-1 mt-2">Fecha</label>
+            <input
+              id="remitos-fecha-search-mobile"
+              v-model="fechaSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Fecha"
+              aria-label="Buscar remitos por fecha"
+              autocomplete="off"
+            />
             <label for="remitos-cliente-search-mobile" class="form-label form-label-sm mb-1">Cliente</label>
             <input
               id="remitos-cliente-search-mobile"
@@ -153,50 +183,68 @@
               </caption>
               <thead class="table-dark">
                 <tr>
-                  <th scope="col" class="remitos-numero-remito-col">RTO_NRO</th>
-                  <th scope="col" class="remitos-fecha-col">FEC</th>
-                  <th scope="col">OBS</th>
+                  <th scope="col" class="remitos-numero-remito-col">NÚMERO DE REMITO</th>
+                  <th scope="col" class="remitos-fecha-col">FECHA</th>
+                  <th scope="col">OBSERVACIÓN</th>
                   <th scope="col">CLIENTE</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">DEPÓSITO</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">CIRCUITO CONTABLE</th>
                   <th scope="col" class="d-none d-lg-table-cell">VENDEDOR</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">COM_%</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">DEPOSITO</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">CIRCUITO</th>
-                  <th scope="col" class="text-center">ITMS</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">COMISIÓN %</th>
+                  <th scope="col" class="text-center">ITEMS</th>
                 </tr>
                 <tr>
-                  <th scope="col"></th>
-                  <th scope="col"></th>
-                  <th scope="col"></th>
+                  <th scope="col">
+                    <input
+                      id="remitos-numero-search"
+                      v-model="numeroRemitoSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar numero"
+                      aria-label="Buscar remitos por numero de remito"
+                      autocomplete="off"
+                    />
+                  </th>
+                  <th scope="col">
+                    <input
+                      id="remitos-fecha-search"
+                      v-model="fechaSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar fecha"
+                      aria-label="Buscar remitos por fecha"
+                      autocomplete="off"
+                    />
+                  </th>
+                  <th scope="col">
+                    <input
+                      id="remitos-observacion-search"
+                      v-model="observacionSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar observacion..."
+                      aria-label="Buscar remitos por observacion"
+                      autocomplete="off"
+                    />
+                  </th>
                   <th scope="col">
                     <input
                       id="remitos-cliente-search"
                       v-model="clienteSearchInput"
                       type="text"
                       class="form-control form-control-sm"
-                      placeholder="Filtrar cliente..."
+                      placeholder="Filtrar cliente"
                       aria-label="Buscar remitos por nombre de cliente"
                       autocomplete="off"
                     />
                   </th>
-                  <th scope="col" class="d-none d-lg-table-cell">
-                    <input
-                      id="remitos-vendedor-search"
-                      v-model="vendedorSearchInput"
-                      type="text"
-                      class="form-control form-control-sm"
-                      placeholder="Filtrar vendedor..."
-                      aria-label="Buscar remitos por nombre de vendedor"
-                      autocomplete="off"
-                    />
-                  </th>
-                  <th scope="col" class="d-none d-xl-table-cell"></th>
                   <th scope="col" class="d-none d-xl-table-cell">
                     <input
                       id="remitos-deposito-search"
                       v-model="depositoSearchInput"
                       type="text"
                       class="form-control form-control-sm"
-                      placeholder="Filtrar deposito..."
+                      placeholder="Filtrar deposito"
                       aria-label="Buscar remitos por nombre de deposito"
                       autocomplete="off"
                     />
@@ -207,11 +255,23 @@
                       v-model="circuitoSearchInput"
                       type="text"
                       class="form-control form-control-sm"
-                      placeholder="Filtrar circuito..."
+                      placeholder="Filtrar circuito"
                       aria-label="Buscar remitos por nombre de circuito contable"
                       autocomplete="off"
                     />
                   </th>
+                  <th scope="col" class="d-none d-lg-table-cell">
+                    <input
+                      id="remitos-vendedor-search"
+                      v-model="vendedorSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar vendedor"
+                      aria-label="Buscar remitos por nombre de vendedor"
+                      autocomplete="off"
+                    />
+                  </th>
+                  <th scope="col" class="d-none d-xl-table-cell"></th>
                   <th scope="col"></th>
                 </tr>
               </thead>
@@ -258,6 +318,8 @@
                     </a>
                     <span v-else>-</span>
                   </td>
+                  <td class="text-center d-none d-xl-table-cell">{{ depositoDisplayName(remito.depositoId) }}</td>
+                  <td class="text-center d-none d-xl-table-cell">{{ circuitoDisplayName(remito.circuitoContableId) }}</td>
                   <td class="d-none d-lg-table-cell">
                     <a
                       v-if="remito.vendedorId"
@@ -273,8 +335,6 @@
                   <td class="fitba-cell-num text-center d-none d-xl-table-cell">
                     {{ remito.comisionVendedor ?? "-" }}
                   </td>
-                  <td class="text-center d-none d-xl-table-cell">{{ depositoDisplayName(remito.depositoId) }}</td>
-                  <td class="text-center d-none d-xl-table-cell">{{ circuitoDisplayName(remito.circuitoContableId) }}</td>
                   <td class="fitba-cell-num text-center">{{ remito.items.length }}</td>
                 </tr>
               </tbody>
@@ -453,6 +513,12 @@ const {
 } = useRemitosNavigation(logger);
 const clienteSearchInput = ref("");
 const appliedClienteSearch = ref("");
+const numeroRemitoSearchInput = ref("");
+const appliedNumeroRemitoSearch = ref("");
+const observacionSearchInput = ref("");
+const appliedObservacionSearch = ref("");
+const fechaSearchInput = ref("");
+const appliedFechaSearch = ref("");
 const vendedorSearchInput = ref("");
 const appliedVendedorSearch = ref("");
 const depositoSearchInput = ref("");
@@ -514,6 +580,13 @@ const vendedoresById = computed(() => {
   return index;
 });
 const normalizedClienteSearch = computed(() => appliedClienteSearch.value.trim().toLowerCase());
+const normalizedNumeroRemitoSearch = computed(() =>
+  appliedNumeroRemitoSearch.value.trim().toLowerCase()
+);
+const normalizedObservacionSearch = computed(() =>
+  appliedObservacionSearch.value.trim().toLowerCase()
+);
+const normalizedFechaSearch = computed(() => appliedFechaSearch.value.trim().toLowerCase());
 const normalizedVendedorSearch = computed(() => appliedVendedorSearch.value.trim().toLowerCase());
 const depositosById = computed(() => {
   const index = new Map<string, string>();
@@ -550,6 +623,9 @@ const normalizedCircuitoSearch = computed(() => appliedCircuitoSearch.value.trim
 const filteredRemitos = computed(() => {
   if (
     !normalizedClienteSearch.value &&
+    !normalizedNumeroRemitoSearch.value &&
+    !normalizedObservacionSearch.value &&
+    !normalizedFechaSearch.value &&
     !normalizedVendedorSearch.value &&
     !normalizedDepositoSearch.value &&
     !normalizedCircuitoSearch.value
@@ -558,20 +634,84 @@ const filteredRemitos = computed(() => {
   }
   return remitos.value.filter((remito) => {
     const nombreCliente = clienteDisplayName(remito.clienteId).toLowerCase();
+    const numeroRemito = String(remito.numeroRemito ?? "").toLowerCase();
+    const observacion = String(remito.observacion ?? "").toLowerCase();
+    const fecha = formatDateDdMmYyyy(remito.fecha).toLowerCase();
     const nombreVendedor = vendedorDisplayName(remito.vendedorId).toLowerCase();
     const nombreDeposito = depositoDisplayName(remito.depositoId).toLowerCase();
     const nombreCircuito = circuitoDisplayName(remito.circuitoContableId).toLowerCase();
     const matchesCliente =
       !normalizedClienteSearch.value || nombreCliente.includes(normalizedClienteSearch.value);
+    const matchesNumeroRemito =
+      !normalizedNumeroRemitoSearch.value ||
+      numeroRemito.includes(normalizedNumeroRemitoSearch.value);
+    const matchesObservacion =
+      !normalizedObservacionSearch.value ||
+      observacion.includes(normalizedObservacionSearch.value);
+    const matchesFecha =
+      !normalizedFechaSearch.value || fecha.includes(normalizedFechaSearch.value);
     const matchesVendedor =
       !normalizedVendedorSearch.value || nombreVendedor.includes(normalizedVendedorSearch.value);
     const matchesDeposito =
       !normalizedDepositoSearch.value || nombreDeposito.includes(normalizedDepositoSearch.value);
     const matchesCircuito =
       !normalizedCircuitoSearch.value || nombreCircuito.includes(normalizedCircuitoSearch.value);
-    return matchesCliente && matchesVendedor && matchesDeposito && matchesCircuito;
+    return (
+      matchesCliente &&
+      matchesNumeroRemito &&
+      matchesObservacion &&
+      matchesFecha &&
+      matchesVendedor &&
+      matchesDeposito &&
+      matchesCircuito
+    );
   });
 });
+
+watch(
+  () => route.query.remitoNumero,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (
+      normalized === appliedNumeroRemitoSearch.value &&
+      normalized === numeroRemitoSearchInput.value
+    ) {
+      return;
+    }
+    numeroRemitoSearchInput.value = normalized;
+    appliedNumeroRemitoSearch.value = normalized;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => route.query.observacion,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (
+      normalized === appliedObservacionSearch.value &&
+      normalized === observacionSearchInput.value
+    ) {
+      return;
+    }
+    observacionSearchInput.value = normalized;
+    appliedObservacionSearch.value = normalized;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => route.query.fecha,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (normalized === appliedFechaSearch.value && normalized === fechaSearchInput.value) {
+      return;
+    }
+    fechaSearchInput.value = normalized;
+    appliedFechaSearch.value = normalized;
+  },
+  { immediate: true }
+);
 
 watch(
   () => route.query.cliente,
@@ -623,6 +763,100 @@ watch(
     appliedCircuitoSearch.value = normalized;
   },
   { immediate: true }
+);
+
+watch(
+  () => fechaSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    appliedFechaSearch.value = normalized;
+
+    const currentQueryFecha = String(
+      Array.isArray(route.query.fecha) ? route.query.fecha[0] ?? "" : route.query.fecha ?? ""
+    ).trim();
+
+    if (normalized === currentQueryFecha) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          fecha: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de fecha en URL", {
+        error,
+        normalized
+      });
+    }
+  }
+);
+
+watch(
+  () => numeroRemitoSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    appliedNumeroRemitoSearch.value = normalized;
+
+    const currentQueryNumeroRemito = String(
+      Array.isArray(route.query.remitoNumero)
+        ? route.query.remitoNumero[0] ?? ""
+        : route.query.remitoNumero ?? ""
+    ).trim();
+
+    if (normalized === currentQueryNumeroRemito) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          remitoNumero: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de numero de remito en URL", {
+        error,
+        normalized
+      });
+    }
+  }
+);
+
+watch(
+  () => observacionSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    appliedObservacionSearch.value = normalized;
+
+    const currentQueryObservacion = String(
+      Array.isArray(route.query.observacion)
+        ? route.query.observacion[0] ?? ""
+        : route.query.observacion ?? ""
+    ).trim();
+
+    if (normalized === currentQueryObservacion) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          observacion: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de observacion en URL", {
+        error,
+        normalized
+      });
+    }
+  }
 );
 
 watch(
