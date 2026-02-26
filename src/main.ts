@@ -28,6 +28,10 @@ import {
   createDefaultListasPrecioDependencies,
   listasPrecioDependenciesKey
 } from "./modules/listas-precio/presentation/listasPrecioDependencies";
+import {
+  createDefaultDepositosDependencies,
+  depositosDependenciesKey
+} from "./modules/depositos/presentation/depositosDependencies";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./shared/design/theme.css";
 
@@ -57,6 +61,7 @@ app.provide(clientesDependenciesKey, createDefaultClientesDependencies());
 app.provide(productosDependenciesKey, createDefaultProductosDependencies());
 app.provide(vendedoresDependenciesKey, createDefaultVendedoresDependencies());
 app.provide(listasPrecioDependenciesKey, createDefaultListasPrecioDependencies());
+app.provide(depositosDependenciesKey, createDefaultDepositosDependencies());
 app.use(router);
 installObservability(router);
 app.mount("#app");

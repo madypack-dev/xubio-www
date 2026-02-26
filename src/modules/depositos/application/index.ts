@@ -1,0 +1,1 @@
+export { useDepositosQuery } from "./useDepositosQuery";

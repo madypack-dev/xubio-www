@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from "vue-router";
 import { createRouter, createWebHistory } from "vue-router";
 import ClientesPage from "@/modules/clientes/presentation/pages/ClientesPage.vue";
 import ComprobantesPage from "@/modules/comprobantes/presentation/pages/ComprobantesPage.vue";
+import DepositosPage from "@/modules/depositos/presentation/pages/DepositosPage.vue";
 import ListasPrecioPage from "@/modules/listas-precio/presentation/pages/ListasPrecioPage.vue";
 import ProductosPage from "@/modules/productos/presentation/pages/ProductosPage.vue";
 import RemitosPage from "@/modules/remitos/presentation/pages/RemitosPage.vue";
@@ -43,6 +44,11 @@ const routes: RouteRecordRaw[] = [
     path: "/vendedores",
     name: "vendedores",
     component: VendedoresPage
+  },
+  {
+    path: "/depositos",
+    name: "depositos",
+    component: DepositosPage
   },
   {
     path: "/productos",

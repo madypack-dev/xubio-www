@@ -60,6 +60,16 @@
               aria-label="Buscar remitos por nombre de vendedor"
               autocomplete="off"
             />
+            <label for="remitos-deposito-search-mobile" class="form-label form-label-sm mb-1 mt-2">Deposito</label>
+            <input
+              id="remitos-deposito-search-mobile"
+              v-model="depositoSearchInput"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Nombre deposito"
+              aria-label="Buscar remitos por nombre de deposito"
+              autocomplete="off"
+            />
           </div>
 
           <div class="d-md-none">
@@ -139,7 +149,7 @@
                   <th scope="col">CLIENTE</th>
                   <th scope="col" class="d-none d-lg-table-cell">VENDEDOR</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">COM_%</th>
-                  <th scope="col" class="text-center d-none d-xl-table-cell">DEP_ID</th>
+                  <th scope="col" class="text-center d-none d-xl-table-cell">DEPOSITO</th>
                   <th scope="col" class="text-center d-none d-xl-table-cell">CC_ID</th>
                   <th scope="col" class="text-center">ITMS</th>
                 </tr>
@@ -170,7 +180,17 @@
                     />
                   </th>
                   <th scope="col" class="d-none d-xl-table-cell"></th>
-                  <th scope="col" class="d-none d-xl-table-cell"></th>
+                  <th scope="col" class="d-none d-xl-table-cell">
+                    <input
+                      id="remitos-deposito-search"
+                      v-model="depositoSearchInput"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Filtrar deposito..."
+                      aria-label="Buscar remitos por nombre de deposito"
+                      autocomplete="off"
+                    />
+                  </th>
                   <th scope="col" class="d-none d-xl-table-cell"></th>
                   <th scope="col"></th>
                 </tr>
@@ -233,7 +253,7 @@
                   <td class="fitba-cell-num text-center d-none d-xl-table-cell">
                     {{ remito.comisionVendedor ?? "-" }}
                   </td>
-                  <td class="text-center d-none d-xl-table-cell">{{ remito.depositoId ?? "-" }}</td>
+                  <td class="text-center d-none d-xl-table-cell">{{ depositoDisplayName(remito.depositoId) }}</td>
                   <td class="text-center d-none d-xl-table-cell">{{ remito.circuitoContableId ?? "-" }}</td>
                   <td class="fitba-cell-num text-center">{{ remito.items.length }}</td>
                 </tr>
@@ -359,6 +379,8 @@ import { useClientesQuery } from "@/modules/clientes/application";
 import { useClientesDependencies } from "@/modules/clientes/presentation/clientesDependencies";
 import { useVendedoresQuery } from "@/modules/vendedores/application";
 import { useVendedoresDependencies } from "@/modules/vendedores/presentation/vendedoresDependencies";
+import { useDepositosQuery } from "@/modules/depositos/application";
+import { useDepositosDependencies } from "@/modules/depositos/presentation/depositosDependencies";
 import { usePaginatedRows } from "@/shared/lib/performance/usePaginatedRows";
 import { useAs400Shortcuts } from "@/shared/lib/keyboard/useAs400Shortcuts";
 import { useTableRowNavigation } from "@/shared/lib/keyboard/useTableRowNavigation";
@@ -387,9 +409,11 @@ const route = useRoute();
 const { remitosRepository } = useRemitosDependencies();
 const { clientesRepository } = useClientesDependencies();
 const { vendedoresRepository } = useVendedoresDependencies();
+const { depositosRepository } = useDepositosDependencies();
 const remitosQuery = useRemitosQuery(remitosRepository);
 const clientesQuery = useClientesQuery(clientesRepository);
 const vendedoresQuery = useVendedoresQuery(vendedoresRepository);
+const depositosQuery = useDepositosQuery(depositosRepository);
 const {
   router,
   selectedRemitoId,
@@ -407,6 +431,8 @@ const clienteSearchInput = ref("");
 const appliedClienteSearch = ref("");
 const vendedorSearchInput = ref("");
 const appliedVendedorSearch = ref("");
+const depositoSearchInput = ref("");
+const appliedDepositoSearch = ref("");
 const sharedPageSizeOptions = [10, 20, 50, 100];
 const sharedPageSizeStorageKey = "fitba.pageSize.listados";
 
@@ -463,18 +489,41 @@ const vendedoresById = computed(() => {
 });
 const normalizedClienteSearch = computed(() => appliedClienteSearch.value.trim().toLowerCase());
 const normalizedVendedorSearch = computed(() => appliedVendedorSearch.value.trim().toLowerCase());
+const depositosById = computed(() => {
+  const index = new Map<string, string>();
+  for (const deposito of depositosQuery.data.value ?? []) {
+    const depositoId = String(deposito.depositoId ?? "").trim();
+    if (!depositoId) {
+      continue;
+    }
+    const nombre = String(deposito.nombre ?? "").trim();
+    if (!nombre) {
+      continue;
+    }
+    index.set(depositoId, nombre);
+  }
+  return index;
+});
+const normalizedDepositoSearch = computed(() => appliedDepositoSearch.value.trim().toLowerCase());
 const filteredRemitos = computed(() => {
-  if (!normalizedClienteSearch.value && !normalizedVendedorSearch.value) {
+  if (
+    !normalizedClienteSearch.value &&
+    !normalizedVendedorSearch.value &&
+    !normalizedDepositoSearch.value
+  ) {
     return remitos.value;
   }
   return remitos.value.filter((remito) => {
     const nombreCliente = clienteDisplayName(remito.clienteId).toLowerCase();
     const nombreVendedor = vendedorDisplayName(remito.vendedorId).toLowerCase();
+    const nombreDeposito = depositoDisplayName(remito.depositoId).toLowerCase();
     const matchesCliente =
       !normalizedClienteSearch.value || nombreCliente.includes(normalizedClienteSearch.value);
     const matchesVendedor =
       !normalizedVendedorSearch.value || nombreVendedor.includes(normalizedVendedorSearch.value);
-    return matchesCliente && matchesVendedor;
+    const matchesDeposito =
+      !normalizedDepositoSearch.value || nombreDeposito.includes(normalizedDepositoSearch.value);
+    return matchesCliente && matchesVendedor && matchesDeposito;
   });
 });
 
@@ -505,6 +554,19 @@ watch(
 );
 
 watch(
+  () => route.query.depositoNombre,
+  (value) => {
+    const normalized = String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim();
+    if (normalized === appliedDepositoSearch.value && normalized === depositoSearchInput.value) {
+      return;
+    }
+    depositoSearchInput.value = normalized;
+    appliedDepositoSearch.value = normalized;
+  },
+  { immediate: true }
+);
+
+watch(
   () => clienteSearchInput.value,
   async (value) => {
     const normalized = value.trim();
@@ -529,6 +591,35 @@ watch(
       });
     } catch (error) {
       logger.error("Error al sincronizar filtro de cliente en URL", { error, normalized });
+    }
+  }
+);
+
+watch(
+  () => depositoSearchInput.value,
+  async (value) => {
+    const normalized = value.trim();
+    appliedDepositoSearch.value = normalized;
+
+    const currentQueryDeposito = String(
+      Array.isArray(route.query.depositoNombre)
+        ? route.query.depositoNombre[0] ?? ""
+        : route.query.depositoNombre ?? ""
+    ).trim();
+
+    if (normalized === currentQueryDeposito) {
+      return;
+    }
+
+    try {
+      await router.replace({
+        query: {
+          ...route.query,
+          depositoNombre: normalized || undefined
+        }
+      });
+    } catch (error) {
+      logger.error("Error al sincronizar filtro de deposito en URL", { error, normalized });
     }
   }
 );
@@ -669,6 +760,14 @@ function vendedorDisplayName(vendedorId: string | null) {
     return "-";
   }
   return vendedoresById.value.get(normalizedVendedorId) ?? normalizedVendedorId;
+}
+
+function depositoDisplayName(depositoId: string | null) {
+  const normalizedDepositoId = String(depositoId ?? "").trim();
+  if (!normalizedDepositoId) {
+    return "-";
+  }
+  return depositosById.value.get(normalizedDepositoId) ?? normalizedDepositoId;
 }
 
 async function reloadRemitos() {

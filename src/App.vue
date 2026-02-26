@@ -62,6 +62,7 @@ const navItems = [
   { to: "/clientes", label: "Clientes" },
   { to: "/productos", label: "Productos" },
   { to: "/vendedores", label: "Vendedores" },
+  { to: "/depositos", label: "Depositos" },
   { to: "/listas-precio", label: "Listas de precio" },
   { to: "/comprobantes", label: "Comprobantes" }
 ];
